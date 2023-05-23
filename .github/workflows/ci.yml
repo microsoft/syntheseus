@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.7", "3.9"]
+    defaults:
+      run:
+        shell: bash -l {0}
+    name: build (Python ${{ matrix.python-version }})
+    steps:
+    - uses: actions/checkout@v3
+    - uses: conda-incubator/setup-miniconda@v2
+      with:
+        mamba-version: "*"
+        channels: conda-forge,defaults
+        channel-priority: true
+        python-version: ${{ matrix.python-version }}
+        environment-file: environment.yml
+    - name: Run pre-commit
+      run: |
+        pre-commit run --verbose --all-files
+    - name: Run unit tests and generate coverage report
+      run: |
+        python -m pytest --cov --cov-config=.coveragerc ./syntheseus/tests/

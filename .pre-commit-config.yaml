@@ -1,0 +1,46 @@
+repos:
+  # Generally useful pre-commit hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.3.0  # Use the ref you want to point at
+    hooks:
+    -   id: check-added-large-files
+    -   id: check-case-conflict
+    -   id: check-docstring-first
+    -   id: check-executables-have-shebangs
+    -   id: check-json
+    -   id: check-merge-conflict
+    -   id: check-symlinks
+    -   id: check-toml
+    -   id: check-yaml
+    -   id: debug-statements
+    -   id: destroyed-symlinks
+    -   id: detect-private-key
+    -   id: end-of-file-fixer
+    -   id: name-tests-test
+        args: ["--pytest-test-first"]
+    -   id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+
+  # latest version of black when this pre-commit config is being set up
+  - repo: https://github.com/psf/black
+    rev: 23.3.0
+    hooks:
+      - id: black
+        name: "black"
+        args: ["--config=pyproject.toml"]
+
+  # latest version of mypy at time pre-commit config is being set up
+  # NOTE: only checks code in "syntheseus" directory.
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.2.0
+    hooks:
+      - id: mypy
+        name: "mypy"
+        files: "syntheseus/"
+
+  # Latest ruff (does linting + more)
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: 'v0.0.263'
+    hooks:
+      - id: ruff
+        args: [--fix]

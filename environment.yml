@@ -1,0 +1,19 @@
+# Minimal environment for syntheseus
+name: syntheseus
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  # Core dependencies
+  - python>=3.7  # ideally 3.9+
+  - pip
+  - numpy  # required for some array computing
+  - rdkit  # required for molecule objects
+  - networkx
+  # Optional dependencies for visuzalization
+  - pillow
+  - python-graphviz
+  # For development
+  - pytest
+  - pytest-cov
+  - pre-commit

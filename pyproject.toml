@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "syntheseus"
+authors = [
+    {name = "Austin Tripp", email = "ajt212@cam.ac.uk"},
+    {name = "Krzysztof Maziarz", email = "krzysztof.maziarz@microsoft.com"},
+    {name = "Megan Stanley", email = "meganstanley@microsoft.com"},
+    {name = "Marwin Segler", email = "marwinsegler@microsoft.com"},
+]
+description = "A package for retrosynthetic planning."
+readme = "README.md"
+requires-python = ">=3.7"
+license = {file = "LICENSE"}
+dynamic = ["version"]
+dependencies = [
+    "numpy",
+    "rdkit",
+    "networkx",
+]
+
+[project.optional-dependencies]
+viz = [
+  "pillow",
+  "graphviz"
+]
+dev = [
+  "pytest",
+  "pytest-cov",
+  "pre-commit"
+]
+
+[tool.setuptools.packages.find]
+# Guidance from: https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
+where = ["."]
+include = ["syntheseus*"]
+exclude = ["syntheseus.tests*"]
+namespaces = false
+
+[tool.setuptools_scm]
+
+[tool.black]
+line-length = 100
+include = '\.pyi?$'
+
+[tool.mypy.overrides]
+python_version = 3.9  # pin modern python version
+
+[tool.ruff]
+line-length = 100
+# Check https://beta.ruff.rs/docs/rules/ for full list of rules
+select = [
+  "E", "W",  # pycodestyle
+  "F",  # Pyflakes
+  "I",  # isort
+]
+ignore = [
+  # W605: invalid escape sequence -- triggered by pseudo-LaTeX in comments
+  "W605",
+  # E501: Line too long -- triggered by comments and such. black deals with shortening.
+  "E501",
+  # E741:  Do not use variables named 'l', 'o', or 'i' -- disagree with PEP8
+  "E741",
+]
