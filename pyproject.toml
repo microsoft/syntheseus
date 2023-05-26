@@ -39,6 +39,9 @@ include = ["syntheseus*"]
 exclude = ["syntheseus.tests*"]
 namespaces = false
 
+[tool.setuptools.package-data]
+"syntheseus" = ["py.typed"]
+
 [tool.setuptools_scm]
 
 [tool.black]
