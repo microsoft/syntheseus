@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 from abc import abstractmethod
-from typing import Any, Generic, Optional, TypeVar
+from typing import Any, Dict, Generic, List, Optional, TypeVar
 
 from pydantic import root_validator
 from pydantic.generics import GenericModel
@@ -31,7 +31,7 @@ class Prediction(GenericModel, Generic[InputType, OutputType]):
     score: Optional[float] = None  # Any other score.
     reaction: Optional[str] = None  # Reaction smiles.
     rxnid: Optional[int] = None  # Template id, if applicable.
-    metadata: Optional[dict[str, Any]] = {}  # Additional metadata.
+    metadata: Optional[Dict[str, Any]] = {}  # Additional metadata.
 
     def get_prob(self) -> float:
         if self.probability is not None:
@@ -66,8 +66,8 @@ class PredictionList(GenericModel, Generic[InputType, OutputType]):
         arbitrary_types_allowed = True
 
     input: InputType
-    predictions: list[Prediction[InputType, OutputType]]
-    metadata: Optional[dict[str, Any]] = {}
+    predictions: List[Prediction[InputType, OutputType]]
+    metadata: Optional[Dict[str, Any]] = {}
 
     def truncated(self, num_results: int) -> PredictionList[InputType, OutputType]:
         fields = self.dict()
@@ -82,8 +82,8 @@ class ReactionModel(Generic[InputType, OutputType]):
     # TODO(krmaziar): Decide how to best handle optional reaction type information.
     @abstractmethod
     def __call__(
-        self, inputs: list[InputType], num_results: int
-    ) -> list[PredictionList[InputType, OutputType]]:
+        self, inputs: List[InputType], num_results: int
+    ) -> List[PredictionList[InputType, OutputType]]:
         """Given a batch of inputs to the reaction model, return a batch of results.
 
         Args:
