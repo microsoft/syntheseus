@@ -17,3 +17,6 @@ dependencies:
   - pytest
   - pytest-cov
   - pre-commit
+  - pip:
+    # Optional dependency for the single-step model interface
+    - pydantic>=1.10.5
