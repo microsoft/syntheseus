@@ -79,7 +79,6 @@ class PredictionList(GenericModel, Generic[InputType, OutputType]):
 class ReactionModel(Generic[InputType, OutputType]):
     """Base class for all reaction models, both backward and forward."""
 
-    # TODO(krmaziar): Decide how to best handle optional reaction type information.
     @abstractmethod
     def __call__(
         self, inputs: List[InputType], num_results: int
