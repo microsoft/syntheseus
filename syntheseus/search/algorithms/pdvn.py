@@ -31,8 +31,6 @@ from syntheseus.search.graph.node import BaseGraphNode
 from syntheseus.search.node_evaluation import BaseNodeEvaluator
 
 
-logger = logging.getLogger(__name__)  # TODO: is this used??
-
 class SynthesizabilityOutcome(enum.IntEnum):
     DEAD_END = -1
     NO_SOLN_FOUND = 0
@@ -65,7 +63,7 @@ class PDVN_MCTS(BaseMCTS[AndOrGraph, OrNode, AndNode], AndOrSearchAlgorithm[int]
         value_function_syn: BaseNodeEvaluator[OrNode],
         value_function_cost: BaseNodeEvaluator[OrNode],
         and_node_cost_fn: BaseNodeEvaluator[AndNode],
-        bound_function: Callable[[AndNode], AndOrGraph] = pucb_bound,  # equation 5 of Liu et al 2023
+        bound_function: Callable[[AndNode], AndOrGraph] = pucb_bound,
         **kwargs
     ):
         super().__init__(bound_function=bound_function, value_function=value_function_cost, reward_function=None, **kwargs)
