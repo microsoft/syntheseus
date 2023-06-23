@@ -41,6 +41,16 @@ class _NodeData_Algorithms(TypedDict, total=False):
     mcts_value: float
     mcts_prev_reward: float  # the most recent reward received
 
+    # ==================================================
+    # PDVN MCTS
+    # ==================================================
+    pdvn_reaction_cost: float
+    pdvn_mcts_v_syn: float
+    pdvn_mcts_v_cost: float
+    pdvn_mcts_prev_reward_syn: float
+    pdvn_mcts_prev_reward_cost: float
+    pdvn_min_syn_cost: float
+
 
 class _NodeData_Analysis(TypedDict, total=False):
     """Holds optional data used during analysis of search results."""

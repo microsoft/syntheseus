@@ -6,28 +6,22 @@ See: https://arxiv.org/abs/2301.13755
 
 from __future__ import annotations
 
-import abc
-from collections import defaultdict
 import enum
-import logging
 import math
-import random
-import warnings
+from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Callable, Generic, Optional, TypeVar, cast
+from typing import Callable
 
-import numpy as np
-
-from syntheseus.search import INT_INF
-from syntheseus.search.chem import Molecule, BackwardReaction
 from syntheseus.search.algorithms.base import AndOrSearchAlgorithm
-from syntheseus.search.graph.and_or import ANDOR_NODE, AndNode, AndOrGraph, OrNode
 from syntheseus.search.algorithms.mcts.base import BaseMCTS, pucb_bound, random_argmin
-from syntheseus.search.graph.message_passing import run_message_passing, has_solution_update, depth_update
-from syntheseus.search.algorithms.mixins import ValueFunctionMixin
-from syntheseus.search.graph.base_graph import RetrosynthesisSearchGraph
-from syntheseus.search.graph.node import BaseGraphNode
+from syntheseus.search.chem import BackwardReaction, Molecule
+from syntheseus.search.graph.and_or import ANDOR_NODE, AndNode, AndOrGraph, OrNode
+from syntheseus.search.graph.message_passing import (
+    depth_update,
+    has_solution_update,
+    run_message_passing,
+)
 from syntheseus.search.node_evaluation import BaseNodeEvaluator
 
 
@@ -36,37 +30,44 @@ class SynthesizabilityOutcome(enum.IntEnum):
     NO_SOLN_FOUND = 0
     SOLN_FOUND = 1
 
+
 @dataclass
 class PDVNSearchData:
     """Container for all data extracted from a search graph used to train policies/value functions in PDVN."""
+
     mol_to_synthesizability: dict[Molecule, SynthesizabilityOutcome]
     mol_to_min_syn_cost: dict[Molecule, float]
     mol_to_reactions_for_min_syn: dict[Molecule, set[BackwardReaction]]
 
+
 class PDVN_MCTS(BaseMCTS[AndOrGraph, OrNode, AndNode], AndOrSearchAlgorithm[int]):
     """
-    Code for the MCTS algorithm used to train PDVN.
-    
-    TODO: explain how it is just a modified version of MCTS.
+    Code for the MCTS algorithm used to train PDVN. It is essentially a modified version of MCTS
+    for AND/OR trees. At an OrNode, a child reaction is selection using P-UCB. At and AndNode,
+    one unsolved child is chosen. Two separate rewards are received: one for synthesis success,
+    and another for synthesis costs. Details can be found in the PDVN paper (Liu et al 2023)
 
-    TODO: maybe change the reward type of base MCTS?
-
-    NOTE: value function is set to value function cost
-
-    TODO variables:
+    Key variables used by this algorithm:
     - pdvn_mcts_v_syn: accumulated "synthesizability" value (equation 4/7 of Liu et al 2023)
     - pdvn_mcts_v_cost: accumulated "cost" value (equation 4/7 of Liu et al 2023)
     - rewards: are tuple valued, with values (syn [binary], cost [float])
     """
-    def __init__(self, 
+
+    def __init__(
+        self,
         c_dead: float,  # cost of a dead end (equation 1 of Liu et al 2023)
         value_function_syn: BaseNodeEvaluator[OrNode],
         value_function_cost: BaseNodeEvaluator[OrNode],
         and_node_cost_fn: BaseNodeEvaluator[AndNode],
-        bound_function: Callable[[AndNode], AndOrGraph] = pucb_bound,
-        **kwargs
+        bound_function: Callable[[AndNode], AndOrGraph] = pucb_bound,  # type: ignore[assignment]  # sloppy typing for bounds
+        **kwargs,
     ):
-        super().__init__(bound_function=bound_function, value_function=value_function_cost, reward_function=None, **kwargs)
+        super().__init__(
+            bound_function=bound_function,  # type: ignore[arg-type]  # sloppy typing for bounds
+            value_function=value_function_cost,
+            reward_function=None,  # type: ignore[arg-type]  # reward function is not used for PDVN MCTS
+            **kwargs,
+        )
         self.c_dead = c_dead
         self.value_function_syn = value_function_syn
         self.value_function_cost = value_function_cost
@@ -75,14 +76,18 @@ class PDVN_MCTS(BaseMCTS[AndOrGraph, OrNode, AndNode], AndOrSearchAlgorithm[int]
 
     def set_node_values(self, nodes, graph):
         updated_nodes = super().set_node_values(nodes, graph)
-        
+
         # Ensure synthesis and cost values are initialized
         for node in updated_nodes:
             node.data.setdefault("pdvn_mcts_v_syn", self.init_mcts_value)
             node.data.setdefault("pdvn_mcts_v_cost", self.init_mcts_value)
-        
+
         # Ensure reaction costs are set
-        nodes_without_cost = [n for n in updated_nodes if n.data.get("pdvn_mcts_reaction_cost") is None and isinstance(n, AndNode)]
+        nodes_without_cost = [
+            n
+            for n in updated_nodes
+            if n.data.get("pdvn_reaction_cost") is None and isinstance(n, AndNode)
+        ]
         self._set_and_node_costs(nodes_without_cost, graph)
 
         return updated_nodes
@@ -94,14 +99,14 @@ class PDVN_MCTS(BaseMCTS[AndOrGraph, OrNode, AndNode], AndOrSearchAlgorithm[int]
             node.data["pdvn_reaction_cost"] = cost
 
     def choose_successors_to_visit(
-        self, node: ANDOR_NODE, graph: AndOrGraph,
+        self,
+        node: ANDOR_NODE,  # type: ignore[override]  # AND/OR vs any graph node
+        graph: AndOrGraph,
     ) -> Sequence[ANDOR_NODE]:
-
         if isinstance(node, OrNode):
             # This is equivalent to normal MCTS. Choose single child based on upper confidence bound
             output = super().choose_successors_to_visit(node, graph)
         elif isinstance(node, AndNode):
-
             # From text under equation 5, choose a child which is unsolved and has been visited
             # the fewest times.
             # if all children are solved, choose a random one
@@ -113,16 +118,18 @@ class PDVN_MCTS(BaseMCTS[AndOrGraph, OrNode, AndNode], AndOrSearchAlgorithm[int]
             else:
                 # Some children are unsolved, choose the one with the least visits,
                 # breaking ties randomly
-                output_idx = random_argmin([c.num_visit for c in unsolved_children], random_state=self.random_state)
+                output_idx = random_argmin(
+                    [c.num_visit for c in unsolved_children], random_state=self.random_state
+                )
                 output = [unsolved_children[output_idx]]
         else:
             raise TypeError(f"Unexpected node type: {type(node)}")
-        
+
         # Ensure only 1 node was chosen
         assert len(output) == 1, "PDVN_MCTS can only choose 1 successor to visit."
-        return output
+        return output  # type: ignore[return-value]  # mypy thinks it could be any graph node due to super() call
 
-    def _get_leaf_node_reward(self, node: OrNode, graph: AndOrGraph) -> tuple[float, float]:
+    def _get_leaf_node_reward(self, node: OrNode, graph: AndOrGraph) -> tuple[float, float]:  # type: ignore[override]
         """
         Reward for visiting a leaf node. Leaf nodes are always OrNodes.
         The reward is either:
@@ -141,11 +148,14 @@ class PDVN_MCTS(BaseMCTS[AndOrGraph, OrNode, AndNode], AndOrSearchAlgorithm[int]
         else:
             reward_syn = self.value_function_syn([node], graph)[0]
             reward_cost = self.value_function_cost([node], graph)[0]
-        
+
         return reward_syn, reward_cost
 
-    def _get_reward_from_successors(
-        self, node: ANDOR_NODE, graph: AndOrGraph, children_visited: ANDOR_NODE,
+    def _get_reward_from_successors(  # type: ignore[override]  # returning a tuple
+        self,
+        node: ANDOR_NODE,  # type: ignore[override]  # AND/OR vs any graph node
+        graph: AndOrGraph,
+        children_visited: Sequence[ANDOR_NODE],  # type: ignore[override]  # AND/OR vs any graph node
     ) -> tuple[float, float]:
         """
         Get rewards from children. For an OrNode these are just the rewards from the AndNode visited.
@@ -157,28 +167,28 @@ class PDVN_MCTS(BaseMCTS[AndOrGraph, OrNode, AndNode], AndOrSearchAlgorithm[int]
             reward_syn = children_visited[0].data["pdvn_mcts_prev_reward_syn"]
             reward_cost = children_visited[0].data["pdvn_mcts_prev_reward_cost"]
         elif isinstance(node, AndNode):
-            
             # Synthesis reward is product of reward from current child
             # and the running average from all other children.
             # Cost reward is reaction cost plus cost reward from visited child
             # plus running average of costs from all other children.
             reward_syn = children_visited[0].data["pdvn_mcts_prev_reward_syn"]
             reward_cost = (
-                children_visited[0].data["pdvn_mcts_prev_reward_cost"] +
-                node.data["pdvn_reaction_cost"]
+                children_visited[0].data["pdvn_mcts_prev_reward_cost"]
+                + node.data["pdvn_reaction_cost"]
             )
             for c in graph.successors(node):
                 if c not in children_visited:
                     reward_syn *= c.data["pdvn_mcts_v_syn"]
                     reward_cost += c.data["pdvn_mcts_v_cost"]
-            
+
         else:
             raise TypeError(f"Unexpected node type: {type(node)}")
-            
+
         return reward_syn, reward_cost
 
-    def _update_value_from_reward(self, node: ANDOR_NODE, _: AndOrGraph, reward: tuple[float, float]) -> None:
-        
+    def _update_value_from_reward(
+        self, node: ANDOR_NODE, _: AndOrGraph, reward: tuple[float, float]  # type: ignore[override]
+    ) -> None:
         # Set "last rewards"
         reward_syn, reward_cost = reward
         node.data["pdvn_mcts_prev_reward_syn"] = reward_syn
@@ -193,15 +203,14 @@ class PDVN_MCTS(BaseMCTS[AndOrGraph, OrNode, AndNode], AndOrSearchAlgorithm[int]
             total_reward_cost = reward_cost + node.num_visit * node.data["pdvn_mcts_v_cost"]
             node.data["pdvn_mcts_v_syn"] = total_reward_syn / (node.num_visit + 1)
             node.data["pdvn_mcts_v_cost"] = total_reward_cost / (node.num_visit + 1)
-        
+
         # Update MCTS value (- p_syn * cost_syn - (1-p_syn) * cost_dead)
-        node.data["mcts_value"] = - (
-            node.data["pdvn_mcts_v_syn"] * node.data["pdvn_mcts_v_cost"] + 
-            (1 - node.data["pdvn_mcts_v_syn"]) * self.c_dead
+        node.data["mcts_value"] = -(
+            node.data["pdvn_mcts_v_syn"] * node.data["pdvn_mcts_v_cost"]
+            + (1 - node.data["pdvn_mcts_v_syn"]) * self.c_dead
         )
         node.num_visit += 1
-            
-    
+
 
 def pdvn_min_cost_update(node: ANDOR_NODE, graph: AndOrGraph):
     """
@@ -215,7 +224,6 @@ def pdvn_min_cost_update(node: ANDOR_NODE, graph: AndOrGraph):
             c.data["pdvn_min_syn_cost"] for c in graph.successors(node)
         )
     elif isinstance(node, OrNode):
-
         # Cost is the minimum "pdvn_min_syn_cost" of all children
         # or 0 if the molecule is purchasable, otherwise infinity.
         # NOTE: could later generalize to non-zero purchasable molecule cost.
@@ -245,10 +253,10 @@ def pdvn_extract_training_data(graph: AndOrGraph) -> PDVNSearchData:
 
     # Run message passing to compute "has solution" and min cost
     run_message_passing(
-        graph, 
-        sorted(graph.nodes(), key = lambda n: -n.depth),
-        update_fns=[has_solution_update, pdvn_min_cost_update],
-        update_successors=False
+        graph,
+        sorted(graph.nodes(), key=lambda n: -n.depth),
+        update_fns=[has_solution_update, pdvn_min_cost_update],  # type: ignore[list-item]
+        update_successors=False,
     )
 
     # For each molecule node in the graph, find whether it is solved and its minimum cost.
@@ -258,7 +266,6 @@ def pdvn_extract_training_data(graph: AndOrGraph) -> PDVNSearchData:
     mol_to_all_has_solution = defaultdict(set)
     for node in graph.nodes():
         if isinstance(node, OrNode):
-            
             # Does it have a solution?
             if node.has_solution:
                 syn_outcome = SynthesizabilityOutcome.SOLN_FOUND
@@ -268,33 +275,45 @@ def pdvn_extract_training_data(graph: AndOrGraph) -> PDVNSearchData:
             else:
                 syn_outcome = SynthesizabilityOutcome.NO_SOLN_FOUND
             mol_to_all_has_solution[node.mol].add(syn_outcome)
-            
+
             # What is the minimum synthesis cost?
             # Check that it is consistent with has solution
-            min_syn_cost =node.data["pdvn_min_syn_cost"] 
+            min_syn_cost = node.data["pdvn_min_syn_cost"]
             if syn_outcome <= 0:
                 assert math.isinf(min_syn_cost)
             mol_to_all_route_costs[node.mol].add(min_syn_cost)
 
             del syn_outcome, min_syn_cost
     mol_to_min_route_cost = {mol: min(costs) for mol, costs in mol_to_all_route_costs.items()}
-    mol_to_solution_status = {mol: max(has_solution) for mol, has_solution in mol_to_all_has_solution.items()}
+    mol_to_solution_status = {
+        mol: max(has_solution) for mol, has_solution in mol_to_all_has_solution.items()
+    }
     del mol_to_all_route_costs, mol_to_all_has_solution
 
     # For each molecule, find reactions which achieve the minimum synthesis cost
     mol_to_reactions_for_min_syn = defaultdict(set)
     for node in graph.nodes():
-        if isinstance(node, OrNode) and mol_to_solution_status[node.mol] == SynthesizabilityOutcome.SOLN_FOUND:
+        if (
+            isinstance(node, OrNode)
+            and mol_to_solution_status[node.mol] == SynthesizabilityOutcome.SOLN_FOUND
+        ):
             for and_child in graph.successors(node):
-                if math.isclose(and_child.data["pdvn_min_syn_cost"], mol_to_min_route_cost[node.mol]):
+                assert isinstance(and_child, AndNode)
+                if math.isclose(
+                    and_child.data["pdvn_min_syn_cost"], mol_to_min_route_cost[node.mol]
+                ):
                     mol_to_reactions_for_min_syn[node.mol].add(and_child.reaction)
-    
+
     # Make return object and do some checks
     output = PDVNSearchData(
         mol_to_synthesizability=mol_to_solution_status,
         mol_to_min_syn_cost={mol: c for mol, c in mol_to_min_route_cost.items() if c < math.inf},
-        mol_to_reactions_for_min_syn=mol_to_reactions_for_min_syn
+        mol_to_reactions_for_min_syn=mol_to_reactions_for_min_syn,
     )
-    assert set(output.mol_to_synthesizability.keys()) >= set(output.mol_to_min_syn_cost.keys()), "The solution status of every molecule with a min synthesis cost should be recorded"
-    assert set(output.mol_to_min_syn_cost.keys()) >= set(output.mol_to_reactions_for_min_syn.keys()), "Every molecule with reactions should have a min synthesis cost"
+    assert set(output.mol_to_synthesizability.keys()) >= set(
+        output.mol_to_min_syn_cost.keys()
+    ), "The solution status of every molecule with a min synthesis cost should be recorded"
+    assert set(output.mol_to_min_syn_cost.keys()) >= set(
+        output.mol_to_reactions_for_min_syn.keys()
+    ), "Every molecule with reactions should have a min synthesis cost"
     return output
