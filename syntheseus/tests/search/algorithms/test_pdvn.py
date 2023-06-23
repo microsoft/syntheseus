@@ -14,6 +14,7 @@ from syntheseus.search.node_evaluation.common import ConstantNodeEvaluator
 from syntheseus.tests.search.algorithms.test_base import BaseAlgorithmTest
 from syntheseus.tests.search.conftest import RetrosynthesisTask
 from syntheseus.tests.search.algorithms.test_best_first import rxn_cost_fn, DictMolCost, DictRxnCost
+from syntheseus.search.reaction_models.toy import ListOfReactionsModel
 
 from syntheseus.search.visualization import visualize_andor
 
@@ -64,11 +65,6 @@ rxns_step5 = rxns_step4  + [
     "O>>C",
     "S>>C",
 ]
-
-
-# TODO: write a test for dead-end detection (doesn't occur in hand-worked example)
-
-# TODO: test on long-term running (should find some limiting solutions)
 
 
 class TestPDVN_MCTS(BaseAlgorithmTest):
@@ -291,3 +287,81 @@ class TestPDVN_MCTS(BaseAlgorithmTest):
             Molecule("C"): 1.0,
             }
         assert len(training_data.mol_to_reactions_for_min_syn) == 4
+
+    def test_by_hand_long_term(
+        self,
+        retrosynthesis_task5: RetrosynthesisTask,
+        policy: DictRxnCost,
+        mol_syn_estimate: DictMolCost,
+        mol_cost_estimate: DictMolCost,
+    ) -> None:
+        r"""
+        Continuation of test above.
+        After running for a very long time, the algorithm should find the "true"
+        synthesizability and cost of each node.
+        """
+        
+        output_graph = self.run_alg_for_n_iterations(
+            retrosynthesis_task5, 1_000, policy=policy, value_function_syn=mol_syn_estimate, value_function_cost=mol_cost_estimate,
+        )
+
+        # Check training data is correct
+        training_data = pdvn_extract_training_data(output_graph)
+        assert all(v == 1 for v in training_data.mol_to_synthesizability.values())  # every molecule is synthesizable in this system
+        assert training_data.mol_to_min_syn_cost == {
+            # The only purchasable molecule
+            Molecule("O"): 0.0,
+            # All molecules distance 1 away from O
+            Molecule("C"): 1.0,
+            Molecule("S"): 1.0,
+            Molecule("OO"): 1.0,
+            # all molecules 2 away from O
+            Molecule("CO"): 2.0,
+            Molecule("CC"): 2.0,
+            Molecule("OS"): 2.0,
+            Molecule("SS"): 2.0,
+            # only molecule 3 away from O
+            Molecule("CS"): 3.0,
+            }
+
+        # Check that reactions are correct by comparing reaction SMILES
+        mol_to_rxns_for_min_syn = {
+            mol.smiles: {rxn.reaction_smiles for rxn in rxns}
+            for mol, rxns in training_data.mol_to_reactions_for_min_syn.items()
+        }
+        assert mol_to_rxns_for_min_syn == {
+            "C": {"O>>C"},
+            "S": {"O>>S"},
+            "OO": {"O>>OO"},
+            "CO": {"C.O>>CO", "OO>>CO"},
+            "CC": {"C>>CC",},
+            "OS": {"OO>>OS", "O.S>>OS"},
+            "SS": {"S>>SS"},
+            "CS": {"SS>>CS", "C.S>>CS", "CO>>CS", "OS>>CS"},
+        }
+
+    def test_system_with_dead_ends(
+        self,
+        retrosynthesis_task5: RetrosynthesisTask,
+    ) -> None:
+        """Test PDVN MCTS on a system with dead end reactions."""
+
+        rxn_model = ListOfReactionsModel([
+            BackwardReaction(reactants=frozenset({Molecule("C")}), product=Molecule("CC")),
+            BackwardReaction(reactants=frozenset({Molecule("CO")}), product=Molecule("CC")),
+            BackwardReaction(reactants=frozenset({Molecule("O")}), product=Molecule("C")),
+        ])
+        retrosynthesis_task = RetrosynthesisTask(inventory=retrosynthesis_task5.inventory, target_mol=retrosynthesis_task5.target_mol, reaction_model=rxn_model)
+        output_graph = self.run_alg_for_n_iterations(
+            retrosynthesis_task, 1_000, 
+        )
+
+        # Check training data is correct
+        training_data = pdvn_extract_training_data(output_graph)
+        assert training_data.mol_to_synthesizability == {
+            Molecule("CC"): 1.0,
+            Molecule("C"): 1.0,
+            Molecule("O"): 1.0,
+            Molecule("CO"): -1.0,
+        }
+
