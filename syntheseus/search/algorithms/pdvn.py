@@ -2,6 +2,9 @@
 Contains code related to the "Retrosynthetic Planning with Dual Value Networks" algorithm.
 
 See: https://arxiv.org/abs/2301.13755
+
+In particular, this file contains code for the MCTS algorithm used to make training data for PDVN,
+and the code to extract training data from a completed search graph.
 """
 
 from __future__ import annotations
@@ -45,7 +48,7 @@ class PDVN_MCTS(BaseMCTS[AndOrGraph, OrNode, AndNode], AndOrSearchAlgorithm[int]
     Code for the MCTS algorithm used to train PDVN. It is essentially a modified version of MCTS
     for AND/OR trees. At an OrNode, a child reaction is selection using P-UCB. At and AndNode,
     one unsolved child is chosen. Two separate rewards are received: one for synthesis success,
-    and another for synthesis costs. Details can be found in the PDVN paper (Liu et al 2023)
+    and another for synthesis costs. Details can be found in the PDVN paper (Liu et al 2023).
 
     Key variables used by this algorithm:
     - pdvn_mcts_v_syn: accumulated "synthesizability" value (equation 4/7 of Liu et al 2023)
