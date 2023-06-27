@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 from syntheseus.search.algorithms.base import AndOrSearchAlgorithm
-from syntheseus.search.algorithms.mcts.base import BaseMCTS, pucb_bound, random_argmin
+from syntheseus.search.algorithms.mcts.base import BaseMCTS, pucb_bound
 from syntheseus.search.chem import BackwardReaction, Molecule
 from syntheseus.search.graph.and_or import ANDOR_NODE, AndNode, AndOrGraph, OrNode
 from syntheseus.search.graph.message_passing import (
@@ -50,7 +50,12 @@ class PDVN_MCTS(BaseMCTS[AndOrGraph, OrNode, AndNode], AndOrSearchAlgorithm[int]
     one unsolved child is chosen. Two separate rewards are received: one for synthesis success,
     and another for synthesis costs. Details can be found in the PDVN paper (Liu et al 2023).
 
-    Key variables used by this algorithm:
+    The key logic of this algorithm is inherited from `mcts/base.py`, where the `mcts_visit`
+    function is called recursively to descend the graph and update values based on the reward
+    received. Because PDVN-MCTS uses the same select, expand, and backup steps as normal MCTS,
+    only the different functions are overridden. Each function is explained in its docstring.
+
+    Key `node.data` variables used by this algorithm are:
     - pdvn_mcts_v_syn: accumulated "synthesizability" value (equation 4/7 of Liu et al 2023)
     - pdvn_mcts_v_cost: accumulated "cost" value (equation 4/7 of Liu et al 2023)
     - rewards: are tuple valued, with values (syn [binary], cost [float])
@@ -78,6 +83,14 @@ class PDVN_MCTS(BaseMCTS[AndOrGraph, OrNode, AndNode], AndOrSearchAlgorithm[int]
         assert self.policy is not None, "PDVN_MCTS requires a policy to be specified."
 
     def set_node_values(self, nodes, graph):
+        """
+        This function updates values for all nodes in the graph and ensures everything is
+        properly initialized.
+
+        In addition to the logic in the base class (which sets things like depth and has_solution),
+        this function ensures that the synthesizability and cost values are initialized
+        and that the cost of every reaction is set.
+        """
         updated_nodes = super().set_node_values(nodes, graph)
 
         # Ensure synthesis and cost values are initialized
@@ -96,6 +109,7 @@ class PDVN_MCTS(BaseMCTS[AndOrGraph, OrNode, AndNode], AndOrSearchAlgorithm[int]
         return updated_nodes
 
     def _set_and_node_costs(self, and_nodes: Sequence[AndNode], graph: AndOrGraph) -> None:
+        """Helper function to compute set the cost of each AndNode using the `and_node_cost_fn`."""
         costs = self.and_node_cost_fn(and_nodes, graph=graph)
         assert len(costs) == len(and_nodes)
         for node, cost in zip(and_nodes, costs):
@@ -106,25 +120,41 @@ class PDVN_MCTS(BaseMCTS[AndOrGraph, OrNode, AndNode], AndOrSearchAlgorithm[int]
         node: ANDOR_NODE,  # type: ignore[override]  # AND/OR vs any graph node
         graph: AndOrGraph,
     ) -> Sequence[ANDOR_NODE]:
+        """
+        This function performs the "select" step of MCTS. It chooses which child node(s) to visit.
+
+        In normal MCTS a single child is always chosen using an upper confidence bound. In PDVN-MCTS,
+        the same logic is used to select a child at an OrNode (selecting a single reaction). However,
+        at an AndNode the logic is different: a single OrNode child is chosen using the logic in
+        section 3.2 of Liu et al 2023, which states:
+
+            To select a child molecule node, we prioritize molecules that have not been expanded;
+            if none are available, we choose ones that have not been solved. If molecule nodes are
+            either all expanded or all solved, we randomly select one of them.
+
+        The logic below follows the paragraph above, disregarding that the final clause
+        will only be reached if the childre are all expanded *and* all solved, rather than *or*
+        as it says in the text.
+        """
         if isinstance(node, OrNode):
             # This is equivalent to normal MCTS. Choose single child based on upper confidence bound
             output = super().choose_successors_to_visit(node, graph)
         elif isinstance(node, AndNode):
-            # From text under equation 5, choose a child which is unsolved and has been visited
-            # the fewest times.
-            # if all children are solved, choose a random one
             children = list(graph.successors(node))
             unsolved_children = [c for c in children if not c.has_solution]
-            if len(unsolved_children) == 0:
-                # All children are solved, choose a random one
-                output = [self.random_state.choice(children)]
+            expandable_children = [c for c in children if self.can_expand_node(c, graph)]
+
+            # Choose a child at random from either unexpanded, unsolved, or all children
+            if len(expandable_children) > 0:
+                # First priority: expand an unexpanded child, if it exists
+                children_to_choose_from = expandable_children
+            elif len(unsolved_children) > 0:
+                # Second priority: expand an unsolved node, if it exists
+                children_to_choose_from = unsolved_children
             else:
-                # Some children are unsolved, choose the one with the least visits,
-                # breaking ties randomly
-                output_idx = random_argmin(
-                    [c.num_visit for c in unsolved_children], random_state=self.random_state
-                )
-                output = [unsolved_children[output_idx]]
+                # Third priority: choose a random node
+                children_to_choose_from = children
+            output = [self.random_state.choice(children_to_choose_from)]
         else:
             raise TypeError(f"Unexpected node type: {type(node)}")
 
@@ -135,12 +165,12 @@ class PDVN_MCTS(BaseMCTS[AndOrGraph, OrNode, AndNode], AndOrSearchAlgorithm[int]
     def _get_leaf_node_reward(self, node: OrNode, graph: AndOrGraph) -> tuple[float, float]:  # type: ignore[override]
         """
         Reward for visiting a leaf node. Leaf nodes are always OrNodes.
-        The reward is either:
+        Unlike regular MCTS where the reward is a single value,
+        in PDVN MCTS the reward is a pair of floats representing the synthesizability
+        and cost rewards. In this implementation they take one of the following values:
         - (0, c_dead) if the node is a dead end
-        - (1, 0) if the node is purchasable
+        - (1, 0) if the node is purchasable (NOTE: could generalize to non-zero cost for purchasable mols in future.)
         - (v_syn, v_cost) if the node is expandable (i.e. reward comes from the dual value functions)
-
-        NOTE: in the future we may want to assign a non-zero cost to purchasable nodes.
         """
         assert len(list(graph.successors(node))) == 0, "This is not a leaf node."
 
@@ -161,9 +191,17 @@ class PDVN_MCTS(BaseMCTS[AndOrGraph, OrNode, AndNode], AndOrSearchAlgorithm[int]
         children_visited: Sequence[ANDOR_NODE],  # type: ignore[override]  # AND/OR vs any graph node
     ) -> tuple[float, float]:
         """
-        Get rewards from children. For an OrNode these are just the rewards from the AndNode visited.
+        Get the reward for this node from its children which were visited.
+        This function is used in the "backup" step of MCTS.
 
-        For an AndNode this reward comes from the last reward of all children visited.
+        It sets the values for pdvn_mcts_prev_reward_syn / pdvn_mcts_prev_reward_cost:
+        these are the rewards from the current trajectory, and are denoted by
+        V_T^syn and V_T^cost in the paper. The updates here are an alternative
+        version of equation 6 from Liu et al 2023. Instead of being defined
+        directly from the rewards of the children of the reaction visited,
+        we define V_T^syn/cost for and AndNode as the product/sum of the rewards
+        for its children, then define V_T^syn/cost for an OrNode as the reward
+        from the AndNode that was visited.
         """
         assert len(children_visited) == 1
         if isinstance(node, OrNode):
@@ -192,6 +230,18 @@ class PDVN_MCTS(BaseMCTS[AndOrGraph, OrNode, AndNode], AndOrSearchAlgorithm[int]
     def _update_value_from_reward(
         self, node: ANDOR_NODE, _: AndOrGraph, reward: tuple[float, float]  # type: ignore[override]
     ) -> None:
+        """
+        This is essentially the "backup" step of MCTS, which updates the running reward
+        trackers with the reward from the last trajectory.
+
+        For all nodes, it sets the values for pdvn_mcts_v_syn / pdvn_mcts_v_cost
+        to be the running averages of the rewards from all trajectories.
+        For OrNodes this is exactly what is written between equations 6-7 in Liu et al 2023.
+        For AndNodes, this formula is equivalent for the cost reward,
+        but very slightly different for the synthesis reward: it ends up being the average
+        of products rather than the product of averages. This form is slightly cleaner and
+        should make no difference in practice.
+        """
         # Set "last rewards"
         reward_syn, reward_cost = reward
         node.data["pdvn_mcts_prev_reward_syn"] = reward_syn
@@ -246,15 +296,15 @@ def pdvn_extract_training_data(graph: AndOrGraph) -> PDVNSearchData:
     """
     Given an AndOrGraph, extract training data for the PDVN model.
     This data includes:
-    - for each molecule in the graph, whether it was solved, and if it was not solved whether it was a dead end
-    - for each solved molecule, the minimum synthesis cost for that molecule
-    - for each solved molecule which is not purchasable, the reaction(s) used for the minimum cost synthesis route
+    - for each molecule in the graph, whether it was solved, and if it was not solved whether it was a dead end.
+    - for each solved molecule, the minimum synthesis cost for that molecule.
+    - for each solved molecule which is not purchasable, the reaction(s) used for the minimum cost synthesis route.
     """
 
     # Ensure depth is set for all nodes
     run_message_passing(graph, graph.nodes(), update_fns=[depth_update], update_predecessors=False)
 
-    # Run message passing to compute "has solution" and min cost
+    # Run message passing to recursively compute "has solution" and min cost
     run_message_passing(
         graph,
         sorted(graph.nodes(), key=lambda n: -n.depth),
@@ -293,7 +343,7 @@ def pdvn_extract_training_data(graph: AndOrGraph) -> PDVNSearchData:
     }
     del mol_to_all_route_costs, mol_to_all_has_solution
 
-    # For each molecule, find reactions which achieve the minimum synthesis cost
+    # For each molecule, find all reactions in the graph which achieve the minimum synthesis cost
     mol_to_reactions_for_min_syn = defaultdict(set)
     for node in graph.nodes():
         if (
