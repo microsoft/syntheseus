@@ -8,7 +8,7 @@ import pytest
 
 from syntheseus.search import INT_INF
 from syntheseus.search.algorithms.base import SearchAlgorithm
-from syntheseus.search.analysis.route_extraction import min_cost_routes
+from syntheseus.search.analysis.route_extraction import iter_routes_cost_order
 from syntheseus.search.analysis.solution_time import get_first_solution_time
 from syntheseus.search.chem import Molecule
 from syntheseus.search.graph.and_or import AndNode, AndOrGraph, OrNode
@@ -465,7 +465,7 @@ class BaseAlgorithmTest(abc.ABC):
                 node.data["route_cost"] = 1.0
             else:
                 node.data["route_cost"] = 0.0
-        routes = list(min_cost_routes(output_graph, max_routes=max_routes))
+        routes = list(iter_routes_cost_order(output_graph, max_routes=max_routes))
         route_objs = [output_graph.to_synthesis_graph(route) for route in routes]
         return route_objs
 
