@@ -82,7 +82,7 @@ def test_correct_routes_andor_time_order(
     Test that the correct routes are extracted from an AND/OR graph
     in the order that they should be found.
 
-    To to this, we check that the number of routes found is correct
+    To do this, we check that the number of routes found is correct
     and that the reference route is found at the expected time,
     which is the first route for both the graph and the tree.
     """
