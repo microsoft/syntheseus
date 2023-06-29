@@ -189,3 +189,40 @@ def min_cost_routes(
             break
         else:
             yield route
+
+
+def _route_time_cost(nodes, graph) -> float:
+    """
+    Cost function for routes that is the maximum timestamp of any node in the route
+    (or inf if it is not solved).
+    """
+    if _route_has_solution(nodes, graph):
+        return max(n.creation_time.timestamp() for n in nodes)
+    else:
+        return math.inf
+
+
+def _route_time_partial_cost(nodes, _) -> float:
+    """Partial cost version of above. It is a lower bound to the true cost."""
+    if all(n.has_solution for n in nodes):
+        return max(n.creation_time.timestamp() for n in nodes)
+    else:
+        return math.inf
+
+
+def iter_routes_in_order_found(
+    graph: RetrosynthesisSearchGraph, max_routes: int
+) -> Iterator[Collection[BaseGraphNode]]:
+    """
+    Yield all routes from "graph" in the order they were found.
+    Graph can be AND/OR or MolSet graph. Order is determined by "creation_time".
+    """
+
+    for _, r in _iter_top_routes(
+        graph=graph,
+        cost_fn=_route_time_cost,
+        cost_lower_bound=_route_time_partial_cost,
+        max_routes=max_routes,
+        yield_partial_routes=False,
+    ):
+        yield r

@@ -370,7 +370,24 @@ def andor_graph_non_minimal(
     rxn_model_for_non_minimal_graphs: BackwardReactionModel,
     inventory_for_graph_tests: BaseMolInventory,
 ) -> AndOrGraph:
-    """Return a graph based on "andor_graph_minimal" with extra reactions."""
+    r"""
+    Return a graph based on "andor_graph_minimal" with extra reactions.
+
+    Looks like:
+
+                    COCS
+               /              \
+        rxn:COCS->CO+CS     rxn:COCS->COCC
+         /      \                    \
+         |      CS                  COCC
+         |       |                    |
+         |    rxn:CS->CO       rxn:COCC->CO+CC
+          \      |           /          |
+           ---- CO-----------           |
+               |                        |
+            rxn:CO->CC                  |
+                      \ _______________CC
+    """
 
     return _complete_andor_graph_with_bfs(
         cocs_mol, rxn_model_for_non_minimal_graphs, inventory_for_graph_tests, True
