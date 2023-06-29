@@ -371,7 +371,7 @@ def andor_graph_non_minimal(
     inventory_for_graph_tests: BaseMolInventory,
 ) -> AndOrGraph:
     r"""
-    Return a graph based on "andor_graph_minimal" with extra reactions.
+    Return a graph based on `andor_graph_minimal` with extra reactions.
 
     Looks like:
 
@@ -429,7 +429,7 @@ def molset_tree_almost_minimal(
     inventory_for_graph_tests: BaseMolInventory,
 ) -> MolSetGraph:
     """
-    A non-minimal MolSet tree which is "almost" minimal:
+    A non-minimal MolSet tree which is *almost* minimal:
     it contains only reactions which could form a minimal tree,
     but because they can be executed in different orders it will
     not be minimal.
