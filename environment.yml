@@ -19,4 +19,4 @@ dependencies:
   - pre-commit
   - pip:
     # Optional dependency for the single-step model interface
-    - pydantic>=1.10.5  # earlier versions had a bug involving `default_factory` (see https://github.com/pydantic/pydantic/issues/5065)
+    - pydantic>=1.10.5,<2  # earlier versions had a bug involving `default_factory` (see https://github.com/pydantic/pydantic/issues/5065), later are backward incompatible
