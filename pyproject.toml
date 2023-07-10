@@ -52,8 +52,9 @@ namespaces = false
 line-length = 100
 include = '\.pyi?$'
 
-[tool.mypy.overrides]
+[tool.mypy]
 python_version = 3.9  # pin modern python version
+ignore_missing_imports = true
 
 [tool.ruff]
 line-length = 100

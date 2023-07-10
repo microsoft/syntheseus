@@ -40,6 +40,7 @@ repos:
       - id: mypy
         name: "mypy"
         files: "syntheseus/"
+        args: ["--install-types", "--non-interactive"]
 
   # Latest ruff (does linting + more)
   - repo: https://github.com/charliermarsh/ruff-pre-commit
