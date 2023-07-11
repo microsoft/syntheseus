@@ -152,10 +152,19 @@ class SearchAlgorithm(MinimalSearchAlgorithm[GraphType, AlgReturnType]):
 
     def should_stop_search(self, graph) -> bool:
         """
-        Return true if the search time limit has been reached.
-        "Time" here refers to ANY time metric (e.g. wall clock time, calls to rxn model).
+        Generic checking function for whether search should stop.
+
+        Base implementation checks whether the time limit has been reached
+        (both wall clock time and calls to the reaction model)
+        and whether to stop search because a solution was found (only if `stop_on_first_solution is True`).
+
+        Importantly, this function does NOT check whether the iteration limit is reached:
+        this is because an `iteration` means different things for different algorithms.
+        We recommend putting this check in the main loop of the algorithm.
         """
-        elapsed_time = (datetime.now() - self._start_time).total_seconds()
+        elapsed_time = (
+            datetime.now() - self._start_time
+        ).total_seconds()  # NOTE: `self._start_time` is set in `setup`
         return (
             (elapsed_time >= self.time_limit_s)
             or (self.reaction_model.num_calls() >= self.limit_reaction_model_calls)
