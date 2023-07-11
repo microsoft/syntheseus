@@ -150,7 +150,7 @@ class SearchAlgorithm(MinimalSearchAlgorithm[GraphType, AlgReturnType]):
         """Main method for subclasses to override, which forces them to do setup and teardown."""
         raise NotImplementedError
 
-    def check_stop_search(self, graph) -> bool:
+    def should_stop_search(self, graph) -> bool:
         """
         Return true if the search time limit has been reached.
         "Time" here refers to ANY time metric (e.g. wall clock time, calls to rxn model).
