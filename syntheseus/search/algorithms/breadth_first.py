@@ -28,7 +28,7 @@ class GeneralBreadthFirstSearch(SearchAlgorithm[GraphType, int], Generic[GraphTy
         queue = collections.deque([node for node in graph._graph.nodes() if not node.is_expanded])
         step = 0  # initialize this variable in case loop is not entered
         for step in range(self.limit_iterations):
-            if self.time_limit_reached() or len(queue) == 0:
+            if self.check_stop_search(graph) or len(queue) == 0:
                 break
 
             # Pop node and potentially expand it

@@ -168,7 +168,7 @@ class BaseMCTS(
         # Run search until time limit or queue is empty
         step = 0  # define explicitly to handle 0 iteration edge case
         for step in range(self.limit_iterations):
-            if self.time_limit_reached():
+            if self.check_stop_search(graph):
                 break
 
             # Visit root node
