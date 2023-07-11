@@ -22,7 +22,7 @@ from dataclasses import dataclass, field, fields
 from enum import Enum
 from functools import partial
 from itertools import islice
-from typing import Any, Dict, Generic, Iterable, List, Optional, Set, Union, cast
+from typing import Any, Callable, Dict, Generic, Iterable, List, Optional, Set, Union, cast
 
 import numpy as np
 from more_itertools import batched
@@ -101,9 +101,7 @@ class BackwardModelConfig(ModelConfig):
 
 
 @dataclass
-class EvalConfig(BackwardModelConfig):
-    """Config for running evaluation on a given dataset."""
-
+class BaseEvalConfig:
     data_dir: str = MISSING  # Directory containing preprocessed data
     num_top_results: int = 100  # Number of results to request from the model
     fold: DataFold = DataFold.TEST  # Dataset fold to evaluate on
@@ -126,6 +124,13 @@ class EvalConfig(BackwardModelConfig):
         default_factory=lambda: ForwardModelConfig(model_kwargs={"is_forward": True})
     )
     back_translation_num_results: int = 1
+
+
+@dataclass
+class EvalConfig(BackwardModelConfig, BaseEvalConfig):
+    """Config for running evaluation on a given dataset."""
+
+    pass
 
 
 @dataclass(frozen=True)
@@ -410,6 +415,28 @@ def compute_metrics(
     )
 
 
+def compute_metrics_from_config(
+    model: ReactionModel[InputType, OutputType],
+    dataset: ReactionDataset,
+    back_translation_model: Optional[ReactionModel[OutputType, InputType]],
+    config: BaseEvalConfig,
+) -> EvalResults:
+    """Variant of `compute_metrics` that uses an eval config instead of explicit arguments."""
+
+    return compute_metrics(
+        model,
+        dataset=dataset,
+        num_dataset_truncation=config.num_dataset_truncation,
+        num_top_results=config.num_top_results,
+        back_translation_model=back_translation_model,
+        back_translation_num_results=config.back_translation_num_results,
+        fold=config.fold,
+        batch_size=config.batch_size,
+        skip_repeats=config.skip_repeats,
+        include_predictions=config.include_predictions,
+    )
+
+
 def print_and_save(results: EvalResults, config: EvalConfig, suffix: str = "") -> None:
     # Extract the top_k results for the chosen values of `k`; the other values are not printed.
     chosen_topk_results = {x: results.top_k[x - 1] for x in config.print_idxs}
@@ -470,10 +497,11 @@ def get_model(
         return ParallelReactionModel(model_fn, devices=[f"cuda:{idx}" for idx in range(num_gpus)])
 
 
-def main(argv: Optional[List[str]]) -> None:
+def run_from_config(
+    config: EvalConfig,
+    extra_steps: List[Callable[[ReactionModel, ReactionDataset, Optional[ReactionModel]], None]],
+) -> None:
     set_random_seed(0)
-
-    config: EvalConfig = cli_get_config(argv=argv, config_cls=EvalConfig)
 
     print("Running eval with the following config:")
     print(config)
@@ -487,21 +515,18 @@ def main(argv: Optional[List[str]]) -> None:
         back_translation_model = get_model_fn(config.back_translation_config)
 
     dataset = DiskReactionDataset(config.data_dir, sample_cls=ReactionSample)
-    compute_metrics_fn = partial(
-        compute_metrics,
-        dataset=dataset,
-        num_dataset_truncation=config.num_dataset_truncation,
-        num_top_results=config.num_top_results,
-        back_translation_model=back_translation_model,
-        back_translation_num_results=config.back_translation_num_results,
-        fold=config.fold,
-        batch_size=config.batch_size,
-        skip_repeats=config.skip_repeats,
-        include_predictions=config.include_predictions,
+    results = compute_metrics_from_config(
+        model=model, dataset=dataset, back_translation_model=back_translation_model, config=config
     )
-
-    results = compute_metrics_fn(model=model)
     print_and_save(results, config)
+
+    for extra_step in extra_steps:
+        extra_step(model, dataset, back_translation_model)
+
+
+def main(argv: Optional[List[str]]) -> None:
+    config: EvalConfig = cli_get_config(argv=argv, config_cls=EvalConfig)
+    run_from_config(config, extra_steps=[])
 
 
 if __name__ == "__main__":
