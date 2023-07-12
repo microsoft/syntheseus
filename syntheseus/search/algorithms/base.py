@@ -159,7 +159,7 @@ class SearchAlgorithm(MinimalSearchAlgorithm[GraphType, AlgReturnType]):
         and whether to stop search because a solution was found (only if `stop_on_first_solution is True`).
 
         Importantly, this function does NOT check whether the iteration limit is reached:
-        this is because an `iteration` means different things for different algorithms.
+        this is because an "iteration" means different things for different algorithms.
         We recommend putting this check in the main loop of the algorithm.
         """
         elapsed_time = (

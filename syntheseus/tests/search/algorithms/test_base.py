@@ -507,7 +507,7 @@ class BaseAlgorithmTest(abc.ABC):
         Test that `stop_on_first_solution` really does stop the algorithm once a solution is found.
 
         The test for this is to run the same search as in `test_found_routes1` but with
-        stop_on_first_solution=True. This should find exactly one route for this problem.
+        `stop_on_first_solution=True`. This should find exactly one route for this problem.
 
         Note however that `stop_on_first_solution=True` does not guarantee finding at most one route
         because several routes could possibly be found at the same time. The test works for this specific
