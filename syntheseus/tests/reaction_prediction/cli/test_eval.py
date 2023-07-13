@@ -22,6 +22,9 @@ from syntheseus.reaction_prediction.utils.metrics import ModelTimingResults
 
 
 class DummyModel(BackwardReactionModel):
+    def __init__(self, repeat: bool) -> None:
+        self._repeat = repeat
+
     RESULTS = [
         Bag([Molecule("C"), Molecule("N")]),
         Bag([Molecule("c1ccccc1")]),
@@ -30,8 +33,11 @@ class DummyModel(BackwardReactionModel):
     ]
 
     def __call__(self, inputs: List[Molecule], num_results: int) -> List[BackwardPredictionList]:
-        # Cyclically repeat `RESULTS` until the length reaches `num_results`.
-        outputs = islice(cycle(DummyModel.RESULTS), num_results)
+        if self._repeat:
+            # Cyclically repeat `RESULTS` until the length reaches `num_results`.
+            outputs = islice(cycle(DummyModel.RESULTS), num_results)
+        else:
+            outputs = DummyModel.RESULTS[:num_results]
 
         # Return the same outputs for each input molecule.
         return [
@@ -43,11 +49,12 @@ class DummyModel(BackwardReactionModel):
         ]
 
 
+@pytest.mark.parametrize("repeat", [False, True])
 @pytest.mark.parametrize("measure_time", [False, True])
-def test_get_results(measure_time: bool) -> None:
+def test_get_results(repeat: bool, measure_time: bool) -> None:
     def get_model_results(**kwargs):
         model_results = get_results(
-            model=DummyModel(), inputs=[Molecule("C")], measure_time=measure_time, **kwargs
+            model=DummyModel(repeat), inputs=[Molecule("C")], measure_time=measure_time, **kwargs
         )
 
         assert (model_results.model_timing_results is not None) == measure_time
@@ -60,7 +67,14 @@ def test_get_results(measure_time: bool) -> None:
             DummyModel.RESULTS[idx] for idx in [0, 1, 3] if idx < num_results
         ]
 
-    assert get_model_results(num_results=40, skip_repeats=False) == 10 * DummyModel.RESULTS
+    results_with_repeats = get_model_results(num_results=40, skip_repeats=False)
+
+    if repeat:
+        # If single-step model repeats indefinitely, then we get as many results as we asked for...
+        assert results_with_repeats == 10 * DummyModel.RESULTS
+    else:
+        # ...otherwise we get fewer.
+        assert results_with_repeats == DummyModel.RESULTS
 
 
 def test_print_and_save():
