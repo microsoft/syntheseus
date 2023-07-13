@@ -1,6 +1,6 @@
 import tempfile
 from itertools import cycle, islice
-from typing import List
+from typing import Iterable, List
 
 import pytest
 
@@ -33,6 +33,8 @@ class DummyModel(BackwardReactionModel):
     ]
 
     def __call__(self, inputs: List[Molecule], num_results: int) -> List[BackwardPredictionList]:
+        outputs: Iterable[Bag[Molecule]] = []
+
         if self._repeat:
             # Cyclically repeat `RESULTS` until the length reaches `num_results`.
             outputs = islice(cycle(DummyModel.RESULTS), num_results)
