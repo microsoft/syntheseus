@@ -1,10 +1,10 @@
-import contextlib
 import multiprocessing
 import os
 import random
-import sys
+from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from dataclasses import fields, is_dataclass
 from itertools import islice
+from os import devnull
 from typing import Any, Dict, Iterable, Iterator, List, Optional
 
 import numpy as np
@@ -15,7 +15,7 @@ from syntheseus.interface.molecule import Molecule
 
 
 def set_random_seed(seed: int = 0) -> None:
-    """Set random seed for `Python`, `torch` and `numpy."""
+    """Set random seed for `Python`, `torch` and `numpy`."""
     random.seed(seed)
     np.random.seed(seed)
 
@@ -28,28 +28,12 @@ def set_random_seed(seed: int = 0) -> None:
         pass
 
 
-@contextlib.contextmanager
+@contextmanager
 def suppress_outputs():
     """Suppress messages written to both stdout and stderr."""
-
-    class NoOpStream:
-        def write(self, _):
-            pass
-
-        def flush(self):
-            pass
-
-    stdout_old = sys.stdout
-    stderr_old = sys.stderr
-
-    sys.stdout = NoOpStream()
-    sys.stderr = NoOpStream()
-
-    try:
-        yield
-    finally:
-        sys.stdout = stdout_old
-        sys.stderr = stderr_old
+    with open(devnull, "w") as fnull:
+        with redirect_stderr(fnull), redirect_stdout(fnull):
+            yield
 
 
 def dictify(data: Any) -> Any:
