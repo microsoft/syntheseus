@@ -1,3 +1,5 @@
+# This should not be necessary, except that `conda<4.11` has a bug dealing with `python>=3.10`
+# (see https://github.com/conda/conda/issues/10969), and the below makes that go away.
 default_language_version:
   python: python3
 
