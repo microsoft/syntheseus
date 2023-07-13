@@ -14,32 +14,34 @@ of retrosynthesis algorithms.
 
 ## Installation
 
-Syntheseus is designed to have very few dependencies to allow it to
-be run in a wide range of environments.
-At the moment the only hard dependencies are `numpy`, `rdkit`, and `networkx`.
-It should be easy to install syntheseus into any environment which has these packages.
-
-Currently `syntheseus` is not hosted on `pypi`
+Currently `syntheseus` is not hosted on PyPI
 (although this will likely change in the future).
 To install, please run:
 
 ```bash
-# Clone and cd into repo
+# Clone and cd into the repository.
 git clone https://github.com/microsoft/syntheseus.git
 cd syntheseus
 
-# Option 1: minimal install into current environment.
-# Assumes dependencies are already present in your environment.
-pip install .  --no-dependencies
-
-# Option 2: pip install with dependencies into current environment.
-pip install .
-
-# Option 3: create new conda environment and then install.
-conda env create -f environment.yml  # creates env named syntheseus
+# Create and activate a new conda environment (or use your own).
+conda env create -f environment.yml
 conda activate syntheseus
-pip install .
+
+# Install into the current environment.
+pip install -e .
 ```
+
+Syntheseus contains two subpackages: `reaction_prediction`, which deals with benchmarking single-step reaction models, and `search`, which can use any single-step model to perform multi-step search.
+Each is designed to have minimal dependencies, allowing it to run in a wide range of environments.
+While specific components (single-step models, policies, or value functions) can make use of Deep Learning libraries, the core of `syntheseus` does not depend on any.
+
+If you only want to use either of the two subpackages, you can limit the dependencies further by installing the dependencies separately and then running
+
+```bash
+pip install -e .  --no-dependencies
+```
+
+See `pyproject.toml` for a list of dependencies tied to each subpackage.
 
 ## Development
 
