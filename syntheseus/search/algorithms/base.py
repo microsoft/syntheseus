@@ -77,6 +77,7 @@ class SearchAlgorithm(MinimalSearchAlgorithm[GraphType, AlgReturnType]):
         unique_nodes: bool = False,
         random_state: Optional[random.Random] = None,
         prevent_repeat_mol_in_trees: bool = False,
+        stop_on_first_solution: bool = False,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -88,6 +89,7 @@ class SearchAlgorithm(MinimalSearchAlgorithm[GraphType, AlgReturnType]):
         self.expand_purchasable_mols = expand_purchasable_mols
         self.set_depth = set_depth
         self.set_has_solution = set_has_solution
+        self.stop_on_first_solution = stop_on_first_solution
 
         # Unique nodes
         if self.requires_tree and unique_nodes:
@@ -148,14 +150,25 @@ class SearchAlgorithm(MinimalSearchAlgorithm[GraphType, AlgReturnType]):
         """Main method for subclasses to override, which forces them to do setup and teardown."""
         raise NotImplementedError
 
-    def time_limit_reached(self) -> bool:
+    def should_stop_search(self, graph) -> bool:
         """
-        Return true if the search time limit has been reached.
-        "Time" here refers to ANY time metric (e.g. wall clock time, calls to rxn model).
+        Generic checking function for whether search should stop.
+
+        Base implementation checks whether the time limit has been reached
+        (both wall clock time and calls to the reaction model)
+        and whether to stop search because a solution was found (only if `stop_on_first_solution is True`).
+
+        Importantly, this function does NOT check whether the iteration limit is reached:
+        this is because an "iteration" means different things for different algorithms.
+        We recommend putting this check in the main loop of the algorithm.
         """
-        elapsed_time = (datetime.now() - self._start_time).total_seconds()
-        return (elapsed_time >= self.time_limit_s) or (
-            self.reaction_model.num_calls() >= self.limit_reaction_model_calls
+        elapsed_time = (
+            datetime.now() - self._start_time
+        ).total_seconds()  # NOTE: `self._start_time` is set in `setup`
+        return (
+            (elapsed_time >= self.time_limit_s)
+            or (self.reaction_model.num_calls() >= self.limit_reaction_model_calls)
+            or (self.stop_on_first_solution and graph.root_node.has_solution)
         )
 
     def set_node_values(

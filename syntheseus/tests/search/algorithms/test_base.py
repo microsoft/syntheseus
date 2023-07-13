@@ -447,6 +447,7 @@ class BaseAlgorithmTest(abc.ABC):
         time_limit_s: float,
         limit_iterations: int = 10_000,
         max_routes: int = 100,
+        **kwargs,
     ) -> list[SynthesisGraph]:
         """Utility function to run an algorithm and extract routes."""
 
@@ -456,6 +457,7 @@ class BaseAlgorithmTest(abc.ABC):
             mol_inventory=task.inventory,
             limit_iterations=limit_iterations,
             time_limit_s=time_limit_s,
+            **kwargs,
         )
         output_graph, _ = alg.run_from_mol(task.target_mol)
 
@@ -499,3 +501,23 @@ class BaseAlgorithmTest(abc.ABC):
         for incorrect_route in retrosynthesis_task2.incorrect_routes.values():
             route_matches = [incorrect_route == r for r in route_objs]
             assert not any(route_matches)
+
+    def test_stop_on_first_solution(self, retrosynthesis_task1: RetrosynthesisTask) -> None:
+        """
+        Test that `stop_on_first_solution` really does stop the algorithm once a solution is found.
+
+        The test for this is to run the same search as in `test_found_routes1` but with
+        `stop_on_first_solution=True`. This should find exactly one route for this problem.
+
+        Note however that `stop_on_first_solution=True` does not guarantee finding at most one route
+        because several routes could possibly be found at the same time. The test works for this specific
+        problem because there is only one route found in the first iteration.
+        """
+
+        route_objs = self._run_alg_and_extract_routes(
+            retrosynthesis_task1,
+            time_limit_s=0.1,
+            limit_iterations=10_000,
+            stop_on_first_solution=True,
+        )
+        assert len(route_objs) == 1
