@@ -16,9 +16,13 @@ requires-python = ">=3.7"
 license = {file = "LICENSE"}
 dynamic = ["version"]
 dependencies = [
-    "numpy",
-    "rdkit",
-    "networkx",
+    "more_itertools",       # reaction_prediction
+    "networkx",             # search
+    "numpy",                # reaction_prediction, search
+    "omegaconf",            # reaction_prediction
+    "pydantic>=1.10.5,<2",  # reaction_prediction
+    "rdkit",                # reaction_prediction, search
+    "tqdm",                 # reaction_prediction
 ]
 
 [project.optional-dependencies]
@@ -48,8 +52,9 @@ namespaces = false
 line-length = 100
 include = '\.pyi?$'
 
-[tool.mypy.overrides]
+[tool.mypy]
 python_version = 3.9  # pin modern python version
+ignore_missing_imports = true
 
 [tool.ruff]
 line-length = 100
