@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set up LocalRetro first, which RetroKNN depends on.
-source setup_shared.sh
+source setup_local_retro.sh
 
 # Install extra dependencies specific to RetroKNN.
 conda install faiss-gpu -c pytorch -y
