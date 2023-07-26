@@ -1,4 +1,4 @@
-set -x
+#!/bin/bash
 
 # Make a subdirectory for storing downloaded external repositories.
 mkdir -p external

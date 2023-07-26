@@ -1,4 +1,4 @@
-set -x
+#!/bin/bash
 
 # Install extra dependencies specific to MHNreact.
 conda install rdchiral_cpp -c conda-forge -y

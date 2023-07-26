@@ -1,4 +1,4 @@
-set -x
+#!/bin/bash
 
 # Set up LocalRetro first, which RetroKNN depends on.
 source setup_shared.sh

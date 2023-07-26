@@ -1,4 +1,4 @@
-set -x
+#!/bin/bash
 
 # Install extra dependencies specific to RootAligned.
 pip install OpenNMT-py==2.2.0 textdistance==4.2.2

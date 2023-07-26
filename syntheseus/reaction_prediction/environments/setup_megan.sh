@@ -1,4 +1,4 @@
-set -x
+#!/bin/bash
 
 # Install extra dependencies specific to MEGAN.
 pip install gin-config==0.3.0 tensorflow==2.13.0 torchtext==0.13.1

@@ -1,4 +1,4 @@
-set -x
+#!/bin/bash
 
 # Install extra dependencies specific to Chemformer.
 pip install pytorch-lightning==1.9.4 git+https://github.com/MolecularAI/pysmilesutils.git

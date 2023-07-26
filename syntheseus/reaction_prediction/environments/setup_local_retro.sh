@@ -1,4 +1,4 @@
-set -x
+#!/bin/bash
 
 # Install extra dependencies specific to LocalRetro.
 conda install dgl-cuda11.3 -c dglteam -y
