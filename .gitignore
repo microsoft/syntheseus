@@ -32,3 +32,6 @@ MANIFEST
 # Unit test / coverage reports
 .coverage
 .coverage.*
+
+# Cloned single-step model repositories
+syntheseus/reaction_prediction/environments/external/
