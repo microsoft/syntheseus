@@ -50,6 +50,7 @@ class RootAlignedModel(ReactionModel[InputType, OutputType]):
         for key, value in opt_from_config.items():
             setattr(opt, key, value)
         opt.models = [get_unique_file_in_dir(model_dir, pattern="*.pt")]
+        opt.output = "/dev/null"
         setattr(opt, "synthon", False)
 
         from retrosynthesis import score
