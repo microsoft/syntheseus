@@ -34,15 +34,15 @@ class ChemformerModel(ReactionModel[InputType, OutputType]):
         # There should be exaclty one `*.ckpt` file under `model_dir`.
         chkpt_path = get_unique_file_in_dir(model_dir, pattern="*.ckpt")
 
-        import Chemformer
+        import chemformer
 
         # Fix for Chemformer's relative imports.
-        chemformer_root_dir = get_module_path(Chemformer)
+        chemformer_root_dir = get_module_path(chemformer)
         sys.path.insert(0, chemformer_root_dir)
 
-        import Chemformer.molbart.util as util
-        from Chemformer.molbart.decoder import DecodeSampler
-        from Chemformer.molbart.models.pre_train import BARTModel
+        import chemformer.molbart.util as util
+        from chemformer.molbart.decoder import DecodeSampler
+        from chemformer.molbart.models.pre_train import BARTModel
 
         self._is_forward = is_forward
         self.device = device

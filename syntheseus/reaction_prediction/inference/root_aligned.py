@@ -53,7 +53,7 @@ class RootAlignedModel(ReactionModel[InputType, OutputType]):
         opt.output = "/dev/null"
         setattr(opt, "synthon", False)
 
-        from retrosynthesis import score
+        from root_aligned import score
 
         score.opt = opt
 
@@ -80,7 +80,7 @@ class RootAlignedModel(ReactionModel[InputType, OutputType]):
 
     def _mols_to_batch(self, inputs) -> List[bytes]:
         """Map `Molecule`s into SMILES bytes."""
-        from retrosynthesis.score import smi_tokenizer
+        from root_aligned.score import smi_tokenizer
 
         # Example outcome: b'C C ( = O ) c 1 c c c 2 c ( c c n 2 C ( = O ) O C ( C ) ( C ) C ) c 1\n'.
         return [bytes(smi_tokenizer(input.smiles) + "\n", "utf-8") for input in inputs]
@@ -152,7 +152,7 @@ class RootAlignedModel(ReactionModel[InputType, OutputType]):
                     randomized_mol = Molecule(smiles=randomized_smi, canonicalize=False)
                     augmented_inputs.append(randomized_mol)
         else:
-            from retrosynthesis.preprocessing.generate_PtoR_data import clear_map_canonical_smiles
+            from root_aligned.preprocessing.generate_PtoR_data import clear_map_canonical_smiles
 
             for input in inputs:
                 product_atom_map_numbers = [i + 1 for i in range(input.rdkit_mol.GetNumAtoms())]
@@ -204,7 +204,7 @@ class RootAlignedModel(ReactionModel[InputType, OutputType]):
             for j in range(len(augmented_predictions[i])):
                 lines.append(augmented_predictions[i][j].replace(" ", ""))
 
-        from retrosynthesis.score import canonicalize_smiles_clear_map
+        from root_aligned.score import canonicalize_smiles_clear_map
 
         raw_predictions = []
         pool = multiprocessing.Pool(multiprocessing.cpu_count())
@@ -228,7 +228,7 @@ class RootAlignedModel(ReactionModel[InputType, OutputType]):
         ranked_results = []  # shape: `[data_size, augmentation_size x beam_size]`
         ranked_scores = []
 
-        from retrosynthesis.score import compute_rank
+        from root_aligned.score import compute_rank
 
         for i in range(len(predictions)):
             rank, _ = compute_rank(predictions[i])
