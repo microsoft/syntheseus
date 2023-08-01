@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import abc
 import datetime
+import math
 import warnings
 
 import pytest
@@ -383,11 +384,13 @@ class BaseAlgorithmTest(abc.ABC):
         # Test on depths
         node_depths = [node.depth for node in output_graph.nodes()]
         if set_depth:
-            assert -1 not in node_depths  # this is the default value which should be overridden
+            assert (
+                math.inf not in node_depths
+            )  # this is the default value which should be overridden
             assert 0 in node_depths  # value for root node
             assert 1 in node_depths
         else:
-            assert -1 in node_depths  # default value should be present
+            assert math.inf in node_depths  # default value should be present
             assert 1 not in node_depths
 
     @pytest.mark.parametrize("prevent", [False, True])
