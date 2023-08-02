@@ -31,3 +31,4 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 [@austint]: https://github.com/AustinT
 [@kmaziarz]: https://github.com/kmaziarz
+[@jagarridotorres]: https://github.com/jagarridotorres
