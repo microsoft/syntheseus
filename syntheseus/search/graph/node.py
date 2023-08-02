@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import abc
 import datetime
+import math
 from collections.abc import Collection
 from dataclasses import dataclass, field
 
@@ -66,8 +67,9 @@ class BaseGraphNode(abc.ABC):
     num_visit: int = 0
 
     # How "deep" is this node, i.e. the length of the path from the root node to this node.
-    # It is initialized to -1 to indicate "not set"; it should be set by algorithms.
-    depth: int = -1
+    # It is initialized to inf to indicate "not set" (and this is the only value which will be
+    # stable with graphs with no root node where depth is ill-defined)
+    depth: int = math.inf  # type: ignore
 
     # Whether the node has been expanded
     is_expanded: bool = False
