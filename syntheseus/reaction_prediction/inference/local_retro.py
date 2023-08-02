@@ -31,15 +31,15 @@ class LocalRetroModel(BackwardReactionModel):
         - `model_dir/data` contains `*.csv` data files needed by LocalRetro
         """
 
-        import LocalRetro
-        from LocalRetro import scripts
+        import local_retro
+        from local_retro import scripts
 
         # We need to hack `sys.path` because LocalRetro uses relative imports.
-        sys.path.insert(0, get_module_path(LocalRetro))
+        sys.path.insert(0, get_module_path(local_retro))
         sys.path.insert(0, get_module_path(scripts))
 
-        from LocalRetro.Retrosynthesis import load_templates
-        from LocalRetro.scripts.utils import init_featurizer, load_model
+        from local_retro.Retrosynthesis import load_templates
+        from local_retro.scripts.utils import init_featurizer, load_model
 
         data_dir = Path(model_dir) / "data"
         self.args = init_featurizer(
@@ -67,7 +67,7 @@ class LocalRetroModel(BackwardReactionModel):
 
     def _mols_to_batch(self, mols: List[Molecule]) -> Any:
         from dgllife.utils import smiles_to_bigraph
-        from LocalRetro.scripts.utils import collate_molgraphs_test
+        from local_retro.scripts.utils import collate_molgraphs_test
 
         graphs = [
             smiles_to_bigraph(
@@ -85,8 +85,8 @@ class LocalRetroModel(BackwardReactionModel):
     def _build_batch_predictions(
         self, batch, num_results, inputs, batch_atom_logits, batch_bond_logits
     ):
-        from LocalRetro.scripts.Decode_predictions import get_k_predictions
-        from LocalRetro.scripts.get_edit import combined_edit, get_bg_partition
+        from local_retro.scripts.Decode_predictions import get_k_predictions
+        from local_retro.scripts.get_edit import combined_edit, get_bg_partition
 
         graphs, nodes_sep, edges_sep = get_bg_partition(batch)
         start_node = 0
@@ -135,7 +135,7 @@ class LocalRetroModel(BackwardReactionModel):
 
     def __call__(self, inputs: List[Molecule], num_results: int) -> List[BackwardPredictionList]:
         import torch
-        from LocalRetro.scripts.utils import predict
+        from local_retro.scripts.utils import predict
 
         batch = self._mols_to_batch(inputs)
         batch_atom_logits, batch_bond_logits, _ = predict(self.args, self.model, batch)

@@ -6,17 +6,20 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 Syntheseus is a package for retrosynthetic planning.
-It contains implementations of common search algorithms
-and a simple API to wrap custom reaction models and write
-custom algorithms.
+It contains implementations of common search algorithms, a simple API to wrap custom reaction models and write
+custom algorithms, and wrappers for many state-of-the-art reaction models from the literature.
 It is meant to allow for simple benchmarking of the components
 of retrosynthesis algorithms.
 
-## Installation
+## Setup
 
-Currently `syntheseus` is not hosted on PyPI
-(although this will likely change in the future).
-To install, please run:
+We support two installation modes:
+- *core installation* not tied to a specific reaction model allows you to build and benchmark your own models or search algorithms
+- *full installation* backed by one of the supported models allows you to perform end-to-end retrosynthetic search
+
+For full installation we currently support the following reaction models: Chemformer, LocalRetro, MEGAN, MHNreact, RetroKNN and RootAligned SMILES; see [here](syntheseus/reaction_prediction/environments/README.md) for detailed setup instructions.
+
+For core installation simply run
 
 ```bash
 # Clone and cd into the repository.

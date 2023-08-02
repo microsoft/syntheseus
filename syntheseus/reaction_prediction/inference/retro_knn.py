@@ -53,7 +53,7 @@ class RetroKNNModel(LocalRetroModel):
         self.adapter.eval()
 
     def _forward_localretro(self, bg):
-        from LocalRetro.scripts.model_utils import pair_atom_feats, unbatch_feats, unbatch_mask
+        from local_retro.scripts.model_utils import pair_atom_feats, unbatch_feats, unbatch_mask
 
         bg = bg.to(self.args["device"])
         node_feats = bg.ndata.pop("h").to(self.args["device"])

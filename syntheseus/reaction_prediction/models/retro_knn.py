@@ -59,7 +59,7 @@ class Adapter(nn.Module):
         nn.init.constant_(self.edge_proj.bias[0], 10.0)
 
     def forward(self, g, nfeat, efeat, ndist, edist):
-        from LocalRetro.scripts.model_utils import pair_atom_feats
+        from local_retro.scripts.model_utils import pair_atom_feats
 
         efeat = reorder_efeat(g, efeat)
         x = self.gnn(g, nfeat, efeat)
