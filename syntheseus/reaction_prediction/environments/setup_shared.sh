@@ -5,7 +5,7 @@ mkdir -p external
 
 # Add the `external/` directory to `PYTHONPATH` when the environment is activated.
 mkdir -p $CONDA_PREFIX/etc/conda/activate.d
-echo "export PYTHONPATH=.:$PWD/external" >> $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh
+echo "export PYTHONPATH=$PWD/external:.:$PYTHONPATH" >> $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh
 source $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh
 
 export GITHUB_NAME="$GITHUB_ORG_NAME/$GITHUB_REPO_NAME"
