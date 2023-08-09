@@ -17,7 +17,8 @@ class ReactionMetaData(TypedDict, total=False):
     source: str  # any explanation of the source of this reaction
     score: float  # any kind of score for this reaction (e.g. softmax value, probability)
     confidence: float  # confidence (probability) that this reaction is possible
-    template_id: int # template id for template-based models
+    template_id: int  # template id for template-based models
+
 
 @dataclass(frozen=True, order=False)
 class BackwardReaction:
