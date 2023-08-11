@@ -1,15 +1,21 @@
-# Syntheseus
+<div align="center">
+    <img src="images/logo.png" height="50px">
+    <h3><i>Navigating the labyrinth of synthesis planning</i></h3>
+</div>
+
+---
 
 [![CI](https://github.com/microsoft/syntheseus/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/microsoft/syntheseus/actions/workflows/ci.yml)
 [![Python Version](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
 [![code style](https://img.shields.io/badge/code%20style-black-202020.svg)](https://github.com/ambv/black)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-Syntheseus is a package for retrosynthetic planning.
-It contains implementations of common search algorithms, a simple API to wrap custom reaction models and write
-custom algorithms, and wrappers for many state-of-the-art reaction models from the literature.
-It is meant to allow for simple benchmarking of the components
-of retrosynthesis algorithms.
+Syntheseus is a package for end-to-end retrosynthetic planning.
+- ⚒️ Combines search algorithms and reaction models in a standardized way
+- 🧭 Includes implementations of common search algorithms
+- 🧪 Includes wrappers for state-of-the-art reaction models
+- ⚙️ Exposes a simple API to plug in custom models and algorithms
+- 📈 Can be used to benchmark components of a retrosynthesis pipeline
 
 ## Setup
 
