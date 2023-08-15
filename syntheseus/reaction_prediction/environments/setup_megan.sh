@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Install extra dependencies specific to MEGAN.
-pip install gin-config==0.3.0 tensorflow==2.13.0 torchtext==0.13.1
+pip install gin-config==0.3.0 gitpython tensorflow==2.13.0 torchtext==0.11.2 scipy
 
 export GITHUB_ORG_NAME=molecule-one
 export GITHUB_REPO_NAME=megan
