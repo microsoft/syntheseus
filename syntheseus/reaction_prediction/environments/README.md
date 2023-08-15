@@ -23,9 +23,27 @@ If you want to use a different one, make sure to edit these two files accordingl
 The GLN model is not compatible with the others, currently requiring a specialized environment creation which includes building `rdkit` from source.
 We packaged all the necessary steps into a Docker environment defined in `gln/Dockerfile`.
 
+## Model checkpoints
+
+See table below for links to model checkpoints trained on USPTO-50K alongside with information on how these checkpoints were obtained.
+Note that all checkpoints were produced in a way that involved external model repositories, hence may be affected by the exact license each model was released with.
+For more details about a particular model see the top of the corresponding model wrapper file in `reaction_prediction/inference/`.
+
+
+| Model checkpoint link                                          | Source |
+|----------------------------------------------------------------|--------|
+| [Chemformer](https://figshare.com/ndownloader/files/42009888)  | finetuned by us starting from checkpoint released by authors |
+| [GLN](https://figshare.com/ndownloader/files/42012720)         | released by authors |
+| [LocalRetro](https://figshare.com/ndownloader/files/42012729)  | trained by us |
+| [MEGAN](https://figshare.com/ndownloader/files/42012732)       | trained by us |
+| [MHNreact](https://figshare.com/ndownloader/files/42012777)    | trained by us |
+| [RetroKNN](https://figshare.com/ndownloader/files/42012786)    | trained by us |
+| [RootAligned](https://figshare.com/ndownloader/files/42012792) | released by authors |
+
 ## Back-translation
 
 In `reaction_prediction/cli/eval.py` a forward model may be used for computing back-translation (round-trip) accuracy.
 Currently, Chemformer is the only supported forward model.
 
 To evaluate a particular model with back-translation computed using Chemformer, simply set up an environment for that model and then run `setup_chemformer.sh` on top.
+See [here](https://figshare.com/ndownloader/files/42012708) for a Chemformer checkpoint finetuned for forward prediction on USPTO-50K. As for the backward direction, pretrained weights released by original authors were used as a starting point.
