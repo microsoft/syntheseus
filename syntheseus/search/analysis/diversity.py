@@ -5,6 +5,8 @@ import random
 from collections.abc import Collection
 from typing import Callable, Optional
 
+import networkx as nx
+
 from syntheseus.search.chem import BackwardReaction, Molecule
 from syntheseus.search.graph.route import SynthesisGraph
 
@@ -18,7 +20,7 @@ def estimate_packing_number(
     radius: float,
     distance_metric: ROUTE_DISTANCE_METRIC,
     max_packing_number: Optional[int] = None,
-    num_tries: int = 100,
+    num_tries: int = 10,
     random_state: Optional[random.Random] = None,
 ) -> list[SynthesisGraph]:
     """
@@ -101,8 +103,8 @@ def _recursive_construct_packing_set(
     Recursive helper function for estimate_packing_number which finds a packing set.
 
     If <= 1 route is provided, the packing set is just the set of routes.
-    If >= 2 routes are provided, then the list is divided into two subsets
-    and the second subset is merged into the first,
+    If >= 2 routes are provided, then the list is divided into two subsets,
+    and the best solutions found within the subsets are merged,
     which requires at most (N/2)^2 distance computations.
     """
 
@@ -130,35 +132,32 @@ def _recursive_construct_packing_set(
         max_packing_number,
     )
     assert (
-        max_packing_number is None or len(route_set1) <= max_packing_number
+        max_packing_number is None or max(len(route_set1), len(route_set2)) <= max_packing_number
     ), "Max packing number exceeded in recursive call."
 
-    # If route set 1 is smaller than route set 2, switch them.
-    # This is done because we will merge route set 2 into route set 1 below,
-    # and this guarantees that the packing set is at least as large as the
-    # largest packing set for the two halves here
-    if len(route_set1) < len(route_set2):
-        route_set1, route_set2 = route_set2, route_set1
+    compatibility_graph = nx.Graph()
 
-    # Which routes from set 2 can be merged into set 1?
-    routes_to_merge: list[SynthesisGraph] = list()
-    for route2 in route_set2:
-        # Optionally break early if there are too many routes
-        if (
-            max_packing_number is not None
-            and len(route_set1) + len(routes_to_merge) >= max_packing_number
-        ):
-            break
+    top_nodes = [(0, idx) for idx in range(len(route_set1))]
+    bottom_nodes = [(1, idx) for idx in range(len(route_set2))]
+    compatibility_graph.add_nodes_from(top_nodes + bottom_nodes)
 
-        for route1 in route_set1:
+    for idx1, route1 in enumerate(route_set1):
+        for idx2, route2 in enumerate(route_set2):
             if distance_metric(route1, route2) <= radius:
-                # If route2 is too close to ANY route in route_set1,
-                # then it cannot be merged
-                break
-        else:
-            routes_to_merge.append(route2)
+                compatibility_graph.add_edge((0, idx1), (1, idx2))
 
-    return route_set1 + routes_to_merge
+    # Compute the minimum vertex cover in `compatibility_graph`.
+    matching = nx.bipartite.maximum_matching(compatibility_graph, top_nodes=top_nodes)
+    vertex_cover = nx.bipartite.to_vertex_cover(compatibility_graph, matching, top_nodes=top_nodes)
+
+    # The maximum independent set is the complement of the vertex cover.
+    independent_set = list(set(compatibility_graph) - vertex_cover)
+
+    if max_packing_number is not None:
+        # Truncate the solution if it is too big (avoids asserts failing downstream).
+        independent_set = independent_set[:max_packing_number]
+
+    return [[route_set1, route_set2][side][idx] for side, idx in independent_set]
 
 
 def _jaccard_distance(
