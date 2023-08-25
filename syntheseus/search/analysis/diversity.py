@@ -40,8 +40,8 @@ def estimate_packing_number(
         distance_metric: distance between two routes.
         max_packing_number: to avoid expensive computations,
             the algorithm is stopped if a packing number
-            larger than this value is found.
-            If None, the algorithm will run until completion.
+            larger or equal to this value is found.
+            If `None`, the algorithm will run until completion.
         num_tries: the number of random restarts to perform.
         random_state: random state to use for shuffling routes.
 
@@ -115,7 +115,7 @@ def _recursive_construct_packing_set(
         return list(routes)
 
     # Recursive case:
-    # first calculate packing set for both halves
+    # First calculate packing set for both halves
     cutoff_idx = len(routes) // 2
     route_set1 = _recursive_construct_packing_set(
         routes[:cutoff_idx],
@@ -232,10 +232,10 @@ def molecule_symmetric_difference_distance(
     route2: SynthesisGraph,
 ) -> float:
     """
-    Calculate the symmetric difference distance between the sets of reactions in 2 routes.
+    Calculate the symmetric difference distance between the sets of molecules in 2 routes.
     """
 
-    # Get sets of reactions
+    # Get sets of molecules
     molecules1 = _get_molecules(route1)
     molecules2 = _get_molecules(route2)
     return len(molecules1 ^ molecules2)
