@@ -4,6 +4,9 @@ import abc
 from collections.abc import Sequence
 from typing import Generic, Optional, TypeVar
 
+import numpy as np
+
+from syntheseus.search.chem import BackwardReaction
 from syntheseus.search.graph.base_graph import RetrosynthesisSearchGraph
 from syntheseus.search.graph.node import BaseGraphNode
 
@@ -81,3 +84,53 @@ class NoCacheNodeEvaluator(BaseNodeEvaluator[NodeType]):
     ) -> Sequence[float]:
         """Override this method to just evaluate the nodes, without counting the number of calls."""
         pass
+
+
+class ReactionModelBasedEvaluator(NoCacheNodeEvaluator[NodeType]):
+    """Evaluator that computes its value based on the probability from the single-step model."""
+
+    def __init__(
+        self,
+        return_log: bool,
+        return_negated: bool,
+        temperature: float = 1.0,
+        clip_probability_min: float = 1e-10,
+        clip_probability_max: float = 0.999,
+    ) -> None:
+        super().__init__()
+
+        assert 0.0 <= clip_probability_min <= clip_probability_max <= 1.0
+
+        if return_log and clip_probability_min == 0.0:
+            raise ValueError("Disabling clipping can lead to NaNs when computing log probability")
+
+        self._return_log = return_log
+        self._return_negated = return_negated
+        self._temperature = temperature
+        self._clip_probability_min = clip_probability_min
+        self._clip_probability_max = clip_probability_max
+
+    @abc.abstractmethod
+    def _get_reaction(self, node, graph) -> BackwardReaction:
+        pass
+
+    def _get_probability(self, node, graph) -> float:
+        metadata = self._get_reaction(node, graph).metadata
+
+        if "probability" not in metadata:
+            raise ValueError("Cannot call node evaluator as reaction model probability is not set")
+        return metadata["probability"]  # type: ignore
+
+    def _evaluate_nodes(self, nodes, graph=None) -> Sequence[float]:
+        probs = np.asarray([self._get_probability(n, graph) for n in nodes])
+        probs = np.clip(probs, a_min=self._clip_probability_min, a_max=self._clip_probability_max)
+
+        if self._return_log:
+            outputs = np.log(probs) / self._temperature
+        else:
+            outputs = probs ** (1.0 / self._temperature)
+
+        if self._return_negated:
+            outputs *= -1.0
+
+        return outputs.tolist()
