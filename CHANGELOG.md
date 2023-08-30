@@ -9,6 +9,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- Improve the heuristic used for estimating diversity ([#22](https://github.com/microsoft/syntheseus/pull/22)) ([@kmaziarz])
 - Improve the aesthetics of `README.md` ([#19](https://github.com/microsoft/syntheseus/pull/19)) ([@kmaziarz])
 
 ### Added
