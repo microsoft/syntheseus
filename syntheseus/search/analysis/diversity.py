@@ -102,10 +102,28 @@ def _recursive_construct_packing_set(
     """
     Recursive helper function for estimate_packing_number which finds a packing set.
 
-    If <= 1 route is provided, the packing set is just the set of routes.
+    The base case is when <= 1 route is provided: here the packing set is just the set of routes.
     If >= 2 routes are provided, then the list is divided into two subsets,
-    and the best solutions found within the subsets are merged,
-    which requires at most (N/2)^2 distance computations.
+    and a recursive call is made to find a packing set for each subset.
+    These packing sets are then optimally merged, requiring at most (N/2)^2 distance computations.
+    
+    The details of the optimal merging are as follows:
+    
+    1. A graph is constructed between all routes in both packing sets A and B,
+       with an edge between any two pairs of nodes with distance <= threshold.
+       Because A and B are individually packing sets, this graph is *bipartite*,
+       i.e. edges will only exist between nodes in A and nodes in B.
+    2. A *minimum vertex cover* (a set of vertices where each edge in the graph
+        links to at least one vertex in the set) is found by first finding a *maximum
+        matching* (a set of edges in a graph such that no two edges share a vertex),
+        then applying Konig's theorem which guarantees a correspondence between
+        a maximum matching and a minimum vertex cover for bipartite graphs.
+        This is all implemented in `networkx`, which provides efficient algorithms.
+    3. The nodes from the minimum vertex cover are removed from the graph.
+        From the definition of vertex cover, this means that no edges will remain in the
+        graph, and because a *minimum* vertex cover was found,
+        this means that the smallest possible number of nodes was deleted.
+        The remaining nodes now form a packing set.
     """
 
     assert (
