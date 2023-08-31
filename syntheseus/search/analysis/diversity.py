@@ -137,18 +137,25 @@ def _recursive_construct_packing_set(
     # Recursive case:
     # First calculate packing set for both halves
     cutoff_idx = len(routes) // 2
+
     route_set1 = _recursive_construct_packing_set(
         routes[:cutoff_idx],
         radius,
         distance_metric,
         max_packing_number,
     )
+    if len(route_set1) == max_packing_number:  # return directly if max packing number is reached
+        return route_set1
+
     route_set2 = _recursive_construct_packing_set(
         routes[cutoff_idx:],
         radius,
         distance_metric,
         max_packing_number,
     )
+    if len(route_set2) == max_packing_number:  # return directly if max packing number is reached
+        return route_set2
+
     assert (
         max_packing_number is None or max(len(route_set1), len(route_set2)) <= max_packing_number
     ), "Max packing number exceeded in recursive call."
