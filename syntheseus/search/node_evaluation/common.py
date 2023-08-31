@@ -34,7 +34,7 @@ class ReactionModelProbPolicy(ReactionModelBasedEvaluator[MolSetNode]):
         normalize: bool = True,
         clip_probability_min: float = 0.0,
         clip_probability_max: float = 1.0,
-        **kwargs
+        **kwargs,
     ) -> None:
         super().__init__(
             return_log=False,
