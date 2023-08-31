@@ -106,11 +106,11 @@ def _recursive_construct_packing_set(
     If >= 2 routes are provided, then the list is divided into two subsets,
     and a recursive call is made to find a packing set for each subset.
     These packing sets are then optimally merged, requiring at most (N/2)^2 distance computations.
-    
+
     The details of the optimal merging are as follows:
-    
+
     1. A graph is constructed between all routes in both packing sets A and B,
-       with an edge between any two pairs of nodes with distance <= threshold.
+       with an edge between two nodes if they correspond to routes with distance at most `radius`.
        Because A and B are individually packing sets, this graph is *bipartite*,
        i.e. edges will only exist between nodes in A and nodes in B.
     2. A *minimum vertex cover* (a set of vertices where each edge in the graph
