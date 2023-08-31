@@ -93,10 +93,25 @@ class ReactionModelBasedEvaluator(NoCacheNodeEvaluator[NodeType]):
         self,
         return_log: bool,
         return_negated: bool,
+        normalize: bool = False,
         temperature: float = 1.0,
         clip_probability_min: float = 1e-10,
         clip_probability_max: float = 0.999,
     ) -> None:
+        """Initialized the evaluator.
+
+        Args:
+            return_log: Whether to return the logarithm of the probability instead of the
+                probability itself.
+            return_negated: Whether to multiply the result by `-1`.
+            normalize: Whether to renormalize the output to be a distribution (or logarithms of
+                probabilities corresponding to a valid distribution). This is mostly useful when
+                `temperature != 1.0`, as otherwise the inputs would typically be normalized.
+            temperature: Temperature to apply (i.e. divide the logits by).
+            clip_probability_min: Minimum probability to clip to. Should be positive if `return_log`
+                is set to avoid NaNs.
+            clip_probability_max: Maximum probability to clip to.
+        """
         super().__init__()
 
         assert 0.0 <= clip_probability_min <= clip_probability_max <= 1.0
@@ -106,6 +121,7 @@ class ReactionModelBasedEvaluator(NoCacheNodeEvaluator[NodeType]):
 
         self._return_log = return_log
         self._return_negated = return_negated
+        self._normalize = normalize
         self._temperature = temperature
         self._clip_probability_min = clip_probability_min
         self._clip_probability_max = clip_probability_max
@@ -125,10 +141,19 @@ class ReactionModelBasedEvaluator(NoCacheNodeEvaluator[NodeType]):
         probs = np.asarray([self._get_probability(n, graph) for n in nodes])
         probs = np.clip(probs, a_min=self._clip_probability_min, a_max=self._clip_probability_max)
 
+        # Process the output based on the options passed in `__init__`. Note that the handling of
+        # temperature and normalization is equivalent in the two branches below; the only difference
+        # is one happenging in log space.
         if self._return_log:
             outputs = np.log(probs) / self._temperature
+            if self._normalize:
+                # Apply `log_softmax` to make `outputs.exp()` a valid probability distribution.
+                outputs -= outputs.max()  # shift before taking exp for numerical stability
+                outputs -= np.log(np.exp(outputs).sum())
         else:
             outputs = probs ** (1.0 / self._temperature)
+            if self._normalize:
+                outputs /= outputs.sum()
 
         if self._return_negated:
             outputs *= -1.0

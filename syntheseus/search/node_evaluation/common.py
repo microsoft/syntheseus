@@ -30,11 +30,16 @@ class ReactionModelLogProbCost(ReactionModelBasedEvaluator[AndNode]):
 
 class ReactionModelProbPolicy(ReactionModelBasedEvaluator[MolSetNode]):
     def __init__(
-        self, clip_probability_min: float = 0.0, clip_probability_max: float = 1.0, **kwargs
+        self,
+        normalize: bool = True,
+        clip_probability_min: float = 0.0,
+        clip_probability_max: float = 1.0,
+        **kwargs
     ) -> None:
         super().__init__(
             return_log=False,
             return_negated=False,
+            normalize=normalize,
             clip_probability_min=clip_probability_min,
             clip_probability_max=clip_probability_max,
             **kwargs,
