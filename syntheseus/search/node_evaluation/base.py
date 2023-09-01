@@ -87,7 +87,10 @@ class NoCacheNodeEvaluator(BaseNodeEvaluator[NodeType]):
 
 
 class ReactionModelBasedEvaluator(NoCacheNodeEvaluator[NodeType]):
-    """Evaluator that computes its value based on the probability from the single-step model."""
+    """
+    Evaluator that computes its value based on the `probability` metadata from the underlying
+    reaction objects (with optional clipping and normalization).
+    """
 
     def __init__(
         self,
@@ -103,8 +106,8 @@ class ReactionModelBasedEvaluator(NoCacheNodeEvaluator[NodeType]):
             return_log: Whether to return the logarithm of the probability instead of the
                 probability itself.
             normalize: Whether to renormalize the output to be a distribution (or logarithms of
-                probabilities corresponding to a valid distribution). This is mostly useful when
-                `temperature != 1.0`, as otherwise the inputs would typically be normalized.
+                probabilities corresponding to a valid distribution). This is especially useful when
+                `temperature != 1.0`.
             temperature: Temperature to apply (i.e. divide the logits by).
             clip_probability_min: Minimum probability to clip to. Should be positive if `return_log`
                 is set to avoid NaNs.

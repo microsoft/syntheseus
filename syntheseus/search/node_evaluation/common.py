@@ -23,6 +23,8 @@ class HasSolutionValueFunction(NoCacheNodeEvaluator):
 
 
 class ReactionModelLogProbCost(ReactionModelBasedEvaluator[AndNode]):
+    """Evaluator that uses the reactions' negative logprob to form a cost (useful for Retro*)."""
+
     def __init__(self, **kwargs) -> None:
         super().__init__(return_log=True, **kwargs)
 
@@ -34,6 +36,8 @@ class ReactionModelLogProbCost(ReactionModelBasedEvaluator[AndNode]):
 
 
 class ReactionModelProbPolicy(ReactionModelBasedEvaluator[MolSetNode]):
+    """Evaluator that uses the reactions' probability to form a policy (useful for OR-MCTS)."""
+
     def __init__(
         self,
         normalize: bool = True,
