@@ -38,20 +38,9 @@ class ReactionModelLogProbCost(ReactionModelBasedEvaluator[AndNode]):
 class ReactionModelProbPolicy(ReactionModelBasedEvaluator[MolSetNode]):
     """Evaluator that uses the reactions' probability to form a policy (useful for OR-MCTS)."""
 
-    def __init__(
-        self,
-        normalize: bool = True,
-        clip_probability_min: float = 0.0,
-        clip_probability_max: float = 1.0,
-        **kwargs,
-    ) -> None:
-        super().__init__(
-            return_log=False,
-            normalize=normalize,
-            clip_probability_min=clip_probability_min,
-            clip_probability_max=clip_probability_max,
-            **kwargs,
-        )
+    def __init__(self, **kwargs) -> None:
+        kwargs["normalize"] = kwargs.get("normalize", True)  # set `normalize = True` by default
+        super().__init__(return_log=False, **kwargs)
 
     def _get_reaction(self, node: MolSetNode, graph) -> BackwardReaction:
         parents = list(graph.predecessors(node))

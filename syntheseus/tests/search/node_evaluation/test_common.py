@@ -79,13 +79,13 @@ class TestReactionModelLogProbCost:
 
     def test_enforces_min_clipping(self) -> None:
         with pytest.raises(ValueError):
-            ReactionModelLogProbCost(clip_probability_min=0.0)
+            ReactionModelLogProbCost(clip_probability_min=0.0)  # should fail as `return_log = True`
 
 
 class TestReactionModelProbPolicy:
     @pytest.mark.parametrize("normalize", [False, True])
     @pytest.mark.parametrize("temperature", [1.0, 2.0])
-    @pytest.mark.parametrize("clip_probability_min", [0.0, 0.5])
+    @pytest.mark.parametrize("clip_probability_min", [0.1, 0.5])
     @pytest.mark.parametrize("clip_probability_max", [0.5, 1.0])
     def test_values(
         self,
@@ -136,3 +136,11 @@ class TestReactionModelProbPolicy:
         assert (
             val_fn.num_calls == len(molset_tree_non_minimal) - 1
         )  # should have been called once per non-root node
+
+    def test_enforces_min_clipping(self) -> None:
+        with pytest.raises(ValueError):
+            ReactionModelProbPolicy(clip_probability_min=0.0)  # should fail as `normalize = True`
+
+        ReactionModelProbPolicy(
+            normalize=False, clip_probability_min=0.0
+        )  # should succeed if we explicitly turn off normalization

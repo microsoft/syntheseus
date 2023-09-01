@@ -110,15 +110,15 @@ class ReactionModelBasedEvaluator(NoCacheNodeEvaluator[NodeType]):
                 `temperature != 1.0`.
             temperature: Temperature to apply (i.e. divide the logits by).
             clip_probability_min: Minimum probability to clip to. Should be positive if `return_log`
-                is set to avoid NaNs.
+                or `normalize` is set to avoid NaNs.
             clip_probability_max: Maximum probability to clip to.
         """
         super().__init__()
 
         assert 0.0 <= clip_probability_min <= clip_probability_max <= 1.0
 
-        if return_log and clip_probability_min == 0.0:
-            raise ValueError("Disabling clipping can lead to NaNs when computing log probability")
+        if (return_log or normalize) and clip_probability_min == 0.0:
+            raise ValueError("Disabling clipping can lead to NaNs")
 
         self._return_log = return_log
         self._normalize = normalize
