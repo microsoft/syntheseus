@@ -1,5 +1,7 @@
 """Common node evaluation functions."""
 
+from collections.abc import Sequence
+
 from syntheseus.search.chem import BackwardReaction
 from syntheseus.search.graph.and_or import AndNode
 from syntheseus.search.graph.molset import MolSetNode
@@ -22,10 +24,13 @@ class HasSolutionValueFunction(NoCacheNodeEvaluator):
 
 class ReactionModelLogProbCost(ReactionModelBasedEvaluator[AndNode]):
     def __init__(self, **kwargs) -> None:
-        super().__init__(return_log=True, return_negated=True, **kwargs)
+        super().__init__(return_log=True, **kwargs)
 
     def _get_reaction(self, node: AndNode, graph) -> BackwardReaction:
         return node.reaction
+
+    def _evaluate_nodes(self, nodes, graph=None) -> Sequence[float]:
+        return [-v for v in super()._evaluate_nodes(nodes, graph)]
 
 
 class ReactionModelProbPolicy(ReactionModelBasedEvaluator[MolSetNode]):
@@ -38,7 +43,6 @@ class ReactionModelProbPolicy(ReactionModelBasedEvaluator[MolSetNode]):
     ) -> None:
         super().__init__(
             return_log=False,
-            return_negated=False,
             normalize=normalize,
             clip_probability_min=clip_probability_min,
             clip_probability_max=clip_probability_max,

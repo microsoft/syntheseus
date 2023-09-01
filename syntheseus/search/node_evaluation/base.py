@@ -92,7 +92,6 @@ class ReactionModelBasedEvaluator(NoCacheNodeEvaluator[NodeType]):
     def __init__(
         self,
         return_log: bool,
-        return_negated: bool,
         normalize: bool = False,
         temperature: float = 1.0,
         clip_probability_min: float = 1e-10,
@@ -103,7 +102,6 @@ class ReactionModelBasedEvaluator(NoCacheNodeEvaluator[NodeType]):
         Args:
             return_log: Whether to return the logarithm of the probability instead of the
                 probability itself.
-            return_negated: Whether to multiply the result by `-1`.
             normalize: Whether to renormalize the output to be a distribution (or logarithms of
                 probabilities corresponding to a valid distribution). This is mostly useful when
                 `temperature != 1.0`, as otherwise the inputs would typically be normalized.
@@ -120,7 +118,6 @@ class ReactionModelBasedEvaluator(NoCacheNodeEvaluator[NodeType]):
             raise ValueError("Disabling clipping can lead to NaNs when computing log probability")
 
         self._return_log = return_log
-        self._return_negated = return_negated
         self._normalize = normalize
         self._temperature = temperature
         self._clip_probability_min = clip_probability_min
@@ -154,8 +151,5 @@ class ReactionModelBasedEvaluator(NoCacheNodeEvaluator[NodeType]):
             outputs = probs ** (1.0 / self._temperature)
             if self._normalize:
                 outputs /= outputs.sum()
-
-        if self._return_negated:
-            outputs *= -1.0
 
         return outputs.tolist()
