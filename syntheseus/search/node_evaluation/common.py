@@ -1,5 +1,7 @@
 """Common node evaluation functions."""
 
+from __future__ import annotations
+
 from collections.abc import Sequence
 
 from syntheseus.search.chem import BackwardReaction
