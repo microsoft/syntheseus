@@ -1,3 +1,17 @@
+"""Script for running end-to-end retrosynthetic search.
+
+The supported single-step model types are listed in `syntheseus/reaction_prediction/cli/eval.py`;
+each can be combined with either MCTS or Retro* to perform search.
+
+Example invocation:
+    python ./syntheseus/cli/search.py \
+        inventory_smiles_file=[INVENTORY_SMILES_FILE_PATH] \
+        search_target="NC1=Nc2ccc(F)cc2C2CCCC12" \
+        model_class=LocalRetro \
+        model_dir=[MODEL_DIR] \
+        time_limit_s=60
+"""
+
 from __future__ import annotations
 
 import datetime
