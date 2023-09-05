@@ -7,7 +7,7 @@ import pickle
 from dataclasses import dataclass, field
 from pathlib import Path
 from pprint import pformat
-from typing import Any, Dict, Iterator, List, Literal, Optional, cast
+from typing import Any, Dict, Iterator, List, Optional, cast
 
 from omegaconf import MISSING, DictConfig, OmegaConf
 from tqdm import tqdm
@@ -163,13 +163,13 @@ def run_from_config(config: SearchConfig) -> None:
 
     alg: Any = None
     if config.search_algorithm == "retro_star":
-        alg_kwargs.update(OmegaConf.to_container(config.retro_star_config))
+        alg_kwargs.update(cast(Dict[str, Any], OmegaConf.to_container(config.retro_star_config)))
         build_node_evaluator("value_function")
         build_node_evaluator("and_node_cost_fn")
 
         alg = RetroStarSearch(**alg_kwargs)
     elif config.search_algorithm == "mcts":
-        alg_kwargs.update(OmegaConf.to_container(config.mcts_config))
+        alg_kwargs.update(cast(Dict[str, Any], OmegaConf.to_container(config.mcts_config)))
         build_node_evaluator("value_function")
         build_node_evaluator("reward_function")
         build_node_evaluator("policy")
@@ -245,14 +245,16 @@ def run_from_config(config: SearchConfig) -> None:
                 with open(results_dir / f"route_{route_idx}.pkl", "wb") as f_route:
                     pickle.dump(route, f_route)
 
-                if config.search_algorithm == "retro_star":
-                    visualize_fn = visualize_andor
-                else:
-                    visualize_fn = visualize_molset
-
-                visualize_fn(
-                    output_graph, filename=str(results_dir / f"route_{route_idx}.pdf"), nodes=route
+                visualize_kwargs: Dict[str, Any] = dict(
+                    graph=output_graph,
+                    filename=str(results_dir / f"route_{route_idx}.pdf"),
+                    nodes=route,
                 )
+
+                if config.search_algorithm == "retro_star":
+                    visualize_andor(**visualize_kwargs)
+                else:
+                    visualize_molset(**visualize_kwargs)
 
 
 def main(argv: Optional[List[str]]) -> None:
