@@ -9,7 +9,7 @@ from pathlib import Path
 from pprint import pformat
 from typing import Any, Dict, Iterator, List, Literal, Optional, cast
 
-from omegaconf import MISSING, OmegaConf
+from omegaconf import MISSING, DictConfig, OmegaConf
 from tqdm import tqdm
 
 from syntheseus.interface.models import BackwardReactionModel
@@ -99,8 +99,9 @@ def run_from_config(config: SearchConfig) -> None:
     print("Running search with the following config:")
     print(config)
 
-    search_target = config.get("search_target")
-    search_targets_file = config.get("search_targets_file")
+    search_target, search_targets_file = [
+        cast(DictConfig, config).get(key) for key in ["search_target", "search_targets_file"]
+    ]
 
     if not ((search_target is None) ^ (search_targets_file is None)):
         raise ValueError(
@@ -140,7 +141,7 @@ def run_from_config(config: SearchConfig) -> None:
     alg_kwargs: Dict[str, Any] = dict(reaction_model=search_rxn_model, mol_inventory=mol_inventory)
     alg_kwargs.update(
         **{
-            key: config.get(key)
+            key: cast(DictConfig, config).get(key)
             for key in [
                 "time_limit_s",
                 "limit_reaction_model_calls",
