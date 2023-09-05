@@ -203,12 +203,13 @@ def run_from_config(config: SearchConfig) -> None:
     results_dir_current_run = results_dir_top_level / f"{config.model_class.name}_{str(timestamp)}"
 
     logger.info("Setup completed")
+    num_targets = len(search_targets)
 
     all_stats: List[Dict[str, Any]] = []
     for idx, smiles in enumerate(tqdm(search_targets)):
         logger.info(f"Running search for target {smiles}")
 
-        if len(search_targets) == 1:
+        if num_targets == 1:
             results_dir = results_dir_current_run
         else:
             results_dir = results_dir_current_run / str(idx)
@@ -277,10 +278,11 @@ def run_from_config(config: SearchConfig) -> None:
 
         del results_dir
 
-    if len(search_targets) > 1:
-        logger.info(f"Writing summary statistics across all {len(search_targets)} targets")
+    if num_targets > 1:
+        logger.info(f"Writing summary statistics across all {num_targets} targets")
         combined_stats: Dict[str, float] = dict(
-            num_solved_targets=sum(stats["soln_time_wallclock"] != math.inf for stats in all_stats)
+            num_targets=num_targets,
+            num_solved_targets=sum(stats["soln_time_wallclock"] != math.inf for stats in all_stats),
         )
 
         for key in [
