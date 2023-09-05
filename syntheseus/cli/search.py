@@ -3,7 +3,9 @@ from __future__ import annotations
 import datetime
 import json
 import logging
+import math
 import pickle
+import statistics
 from dataclasses import dataclass, field
 from pathlib import Path
 from pprint import pformat
@@ -187,6 +189,8 @@ def run_from_config(config: SearchConfig) -> None:
     results_dir_current_run = results_dir_top_level / f"{config.model_class.name}_{str(timestamp)}"
 
     logger.info("Setup completed")
+
+    all_stats: List[Dict[str, Any]] = []
     for idx, smiles in enumerate(tqdm(search_targets)):
         logger.info(f"Running search for target {smiles}")
 
@@ -223,6 +227,7 @@ def run_from_config(config: SearchConfig) -> None:
             "soln_time_wallclock": soln_time_wallclock,
         }
 
+        all_stats.append(stats)
         logger.info(pformat(stats))
 
         with open(results_dir / "stats.json", "wt") as f_stats:
@@ -255,6 +260,29 @@ def run_from_config(config: SearchConfig) -> None:
                     visualize_andor(**visualize_kwargs)
                 else:
                     visualize_molset(**visualize_kwargs)
+
+        del results_dir
+
+    if len(search_targets) > 1:
+        logger.info(f"Writing summary statistics across all {len(search_targets)} targets")
+        combined_stats: Dict[str, float] = dict(
+            num_solved_targets=sum(stats["soln_time_wallclock"] != math.inf for stats in all_stats)
+        )
+
+        for key in [
+            "rxn_model_calls_used",
+            "num_nodes_in_final_tree",
+            "soln_time_rxn_model_calls",
+            "soln_time_wallclock",
+        ]:
+            values = [stats[key] for stats in all_stats]
+            combined_stats[f"average_{key}"] = statistics.mean(values)
+            combined_stats[f"median_{key}"] = statistics.median(values)
+
+        logger.info(pformat(combined_stats))
+
+        with open(results_dir_current_run / "stats.json", "wt") as f_combined_stats:
+            f_combined_stats.write(json.dumps(combined_stats, indent=2))
 
 
 def main(argv: Optional[List[str]]) -> None:
