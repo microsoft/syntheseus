@@ -112,8 +112,8 @@ def run_from_config(config: SearchConfig) -> None:
     if search_target is not None:
         search_targets = [search_target]
     else:
-        with open(config.search_targets_file) as f:
-            search_targets = [line.strip() for line in f]
+        with open(config.search_targets_file, "rt") as f_targets:
+            search_targets = [line.strip() for line in f_targets]
 
     if not config.save_graph and config.num_routes_to_plot == 0:
         logger.warning(
@@ -131,8 +131,8 @@ def run_from_config(config: SearchConfig) -> None:
     )
 
     # Set up the inventory
-    with open(config.inventory_smiles_file) as f:
-        inventory_smiles = [line.strip() for line in f]
+    with open(config.inventory_smiles_file, "rt") as f_inventory:
+        inventory_smiles = [line.strip() for line in f_inventory]
     mol_inventory = SmilesListInventory(
         inventory_smiles, canonicalize=config.canonicalize_inventory
     )
@@ -224,12 +224,12 @@ def run_from_config(config: SearchConfig) -> None:
 
         logger.info(pformat(stats))
 
-        with open(results_dir / "stats.json", "wt") as f:
-            f.write(json.dumps(stats, indent=2))
+        with open(results_dir / "stats.json", "wt") as f_stats:
+            f_stats.write(json.dumps(stats, indent=2))
 
         if config.save_graph:
-            with open(results_dir / "graph.pkl", "wb") as f:
-                pickle.dump(output_graph, f)
+            with open(results_dir / "graph.pkl", "wb") as f_graph:
+                pickle.dump(output_graph, f_graph)
 
         if config.num_routes_to_plot > 0:
             # Extract some synthesis routes in the order they were found
@@ -241,8 +241,8 @@ def run_from_config(config: SearchConfig) -> None:
             )
 
             for route_idx, route in enumerate(routes):
-                with open(results_dir / f"route_{route_idx}.pkl", "wb") as f:
-                    pickle.dump(route, f)
+                with open(results_dir / f"route_{route_idx}.pkl", "wb") as f_route:
+                    pickle.dump(route, f_route)
 
                 if config.search_algorithm == "retro_star":
                     visualize_fn = visualize_andor
