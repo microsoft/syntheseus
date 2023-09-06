@@ -14,6 +14,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ### Added
 
+- Add a top-level CLI for running end-to-end search ([#26](https://github.com/microsoft/syntheseus/pull/26)) ([@kmaziarz])
 - Release single-step evaluation framework and wrappers for several model types ([#14](https://github.com/microsoft/syntheseus/pull/14), [#15](https://github.com/microsoft/syntheseus/pull/15), [#20](https://github.com/microsoft/syntheseus/pull/20)) ([@kmaziarz])
 - Release checkpoints for all supported single-step model types ([#21](https://github.com/microsoft/syntheseus/pull/21)) ([@kmaziarz])
 - Implement node evaluators commonly used in MCTS and Retro* ([#23](https://github.com/microsoft/syntheseus/pull/23)) ([@kmaziarz])
