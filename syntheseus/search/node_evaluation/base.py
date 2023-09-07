@@ -138,6 +138,9 @@ class ReactionModelBasedEvaluator(NoCacheNodeEvaluator[NodeType]):
         return metadata["probability"]  # type: ignore
 
     def _evaluate_nodes(self, nodes, graph=None) -> Sequence[float]:
+        if not nodes:  # handle the case when there are no nodes to score
+            return []
+
         probs = np.asarray([self._get_probability(n, graph) for n in nodes])
         probs = np.clip(probs, a_min=self._clip_probability_min, a_max=self._clip_probability_max)
 
