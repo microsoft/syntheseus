@@ -197,12 +197,13 @@ def _jaccard_distance(
     set1: set,
     set2: set,
 ) -> float:
-    intersection = set1 & set2
-    union = set1 | set2
-    if len(union) == 0:
+    intersection_size = len(set1 & set2)
+    union_size = len(set1) + len(set2) - intersection_size
+
+    if union_size == 0:
         return 0.0  # both sets are empty so distance is 0
     else:
-        return 1.0 - len(intersection) / len(union)
+        return 1.0 - intersection_size / union_size
 
 
 def _get_reactions(route: SynthesisGraph) -> set[BackwardReaction]:
