@@ -39,6 +39,8 @@ from syntheseus.search.algorithms.mcts.molset import MolSetMCTS
 from syntheseus.search.analysis.route_extraction import iter_routes_time_order
 from syntheseus.search.analysis.solution_time import get_first_solution_time
 from syntheseus.search.chem import Molecule
+from syntheseus.search.graph.and_or import AndOrGraph
+from syntheseus.search.graph.molset import MolSetGraph
 from syntheseus.search.mol_inventory import SmilesListInventory
 from syntheseus.search.node_evaluation import common as node_evaluation_common
 from syntheseus.search.utils.misc import lookup_by_name
@@ -271,10 +273,12 @@ def run_from_config(config: SearchConfig) -> None:
                     nodes=route,
                 )
 
-                if config.search_algorithm == "retro_star":
+                if isinstance(output_graph, AndOrGraph):
                     visualize_andor(**visualize_kwargs)
-                else:
+                elif isinstance(output_graph, MolSetGraph):
                     visualize_molset(**visualize_kwargs)
+                else:
+                    assert False
 
         del results_dir
 
