@@ -76,6 +76,8 @@ def estimate_packing_number(
 
         # Construct a packing set and check whether it is better than the previous one
         packing_set = _recursive_construct_packing_set(
+            0,
+            len(route_list),
             route_list,
             radius,
             distance_metric,
@@ -94,6 +96,8 @@ def estimate_packing_number(
 
 
 def _recursive_construct_packing_set(
+    idx_start: int,
+    idx_end: int,
     routes: list[SynthesisGraph],
     radius: float,
     distance_metric: ROUTE_DISTANCE_METRIC,
@@ -131,15 +135,17 @@ def _recursive_construct_packing_set(
     ), "Max packing number must be positive."
 
     # Base cases:
-    if len(routes) <= 1:
-        return list(routes)
+    if idx_end - idx_start <= 1:
+        return routes[idx_start:idx_end]
 
     # Recursive case:
     # First calculate packing set for both halves
-    cutoff_idx = len(routes) // 2
+    cutoff_idx = (idx_start + idx_end) // 2
 
     route_set1 = _recursive_construct_packing_set(
-        routes[:cutoff_idx],
+        idx_start,
+        cutoff_idx,
+        routes,
         radius,
         distance_metric,
         max_packing_number,
@@ -148,7 +154,9 @@ def _recursive_construct_packing_set(
         return route_set1
 
     route_set2 = _recursive_construct_packing_set(
-        routes[cutoff_idx:],
+        cutoff_idx,
+        idx_end,
+        routes,
         radius,
         distance_metric,
         max_packing_number,
