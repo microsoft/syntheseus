@@ -75,6 +75,9 @@ class NoCacheNodeEvaluator(BaseNodeEvaluator[NodeType]):
     def __call__(
         self, nodes: Sequence[NodeType], graph: Optional[RetrosynthesisSearchGraph] = None
     ) -> Sequence[float]:
+        if not nodes:  # handle the case when there are no nodes to score
+            return []
+
         self._num_calls += len(nodes)
         return self._evaluate_nodes(nodes, graph)
 
