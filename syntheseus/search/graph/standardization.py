@@ -106,7 +106,7 @@ def _unique_node_andor_from_molset(
     # Get all mols and reactions
     all_nodes: set[MolSetNode] = set(graph._graph.nodes())
     mols = set(mol for node in all_nodes for mol in node.mols)
-    rxns = set(edge["reaction"] for edge in graph._graph.edges())
+    rxns = set(graph._graph.edges[n1, n2]["reaction"] for n1, n2 in graph._graph.edges())
 
     # Make initial nodes
     mol_to_node = {mol: OrNode(mol) for mol in mols}

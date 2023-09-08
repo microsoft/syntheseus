@@ -30,6 +30,7 @@ class BaseAlgorithmTest(abc.ABC):
 
     # Some tolerances for tests
     time_limit_upper_bound_s = 0.05
+    time_limit_multiplier = 1.0  # can be overridden by subclasses for slower algorithms
 
     @abc.abstractmethod
     def setup_algorithm(self, **kwargs) -> SearchAlgorithm:
@@ -63,7 +64,7 @@ class BaseAlgorithmTest(abc.ABC):
         alg = self.setup_algorithm(
             reaction_model=retrosynthesis_task1.reaction_model,
             mol_inventory=retrosynthesis_task1.inventory,
-            time_limit_s=0.1,
+            time_limit_s=0.1 * self.time_limit_multiplier,
             limit_iterations=1_000,
             limit_reaction_model_calls=10,
         )
@@ -86,7 +87,7 @@ class BaseAlgorithmTest(abc.ABC):
             reaction_model=retrosynthesis_task4.reaction_model,
             mol_inventory=retrosynthesis_task4.inventory,
             limit_iterations=10_000,
-            time_limit_s=0.1,
+            time_limit_s=0.1 * self.time_limit_multiplier,
         )
         output_graph, _ = alg.run_from_mol(retrosynthesis_task4.target_mol)
         assert output_graph.root_node.has_solution
@@ -139,7 +140,8 @@ class BaseAlgorithmTest(abc.ABC):
         alg = self.setup_algorithm(
             reaction_model=retrosynthesis_task1.reaction_model,
             mol_inventory=retrosynthesis_task1.inventory,
-            time_limit_s=1e3,  # set a finite but extremely large limit to avoid warnings
+            time_limit_s=1e3
+            * self.time_limit_multiplier,  # set a finite but extremely large limit to avoid warnings
             limit_iterations=INT_INF,
             limit_reaction_model_calls=limit,
         )
@@ -214,7 +216,7 @@ class BaseAlgorithmTest(abc.ABC):
         alg = self.setup_algorithm(
             reaction_model=retrosynthesis_task1.reaction_model,
             mol_inventory=retrosynthesis_task1.inventory,
-            time_limit_s=0.2,
+            time_limit_s=0.2 * self.time_limit_multiplier,
             limit_iterations=10_000,
             limit_reaction_model_calls=1_000,
             max_expansion_depth=depth,
@@ -242,7 +244,7 @@ class BaseAlgorithmTest(abc.ABC):
         alg = self.setup_algorithm(
             reaction_model=retrosynthesis_task1.reaction_model,
             mol_inventory=retrosynthesis_task1.inventory,
-            time_limit_s=0.1,
+            time_limit_s=0.1 * self.time_limit_multiplier,
             limit_iterations=10_000,
             limit_reaction_model_calls=1_000,
             max_expansion_depth=4,
@@ -292,7 +294,7 @@ class BaseAlgorithmTest(abc.ABC):
             alg = self.setup_algorithm(
                 reaction_model=retrosynthesis_task5.reaction_model,
                 mol_inventory=retrosynthesis_task5.inventory,
-                time_limit_s=0.1,
+                time_limit_s=0.1 * self.time_limit_multiplier,
                 limit_iterations=10_000,
                 limit_reaction_model_calls=100,
                 max_expansion_depth=10,
@@ -344,7 +346,7 @@ class BaseAlgorithmTest(abc.ABC):
             reaction_model=retrosynthesis_task4.reaction_model,
             mol_inventory=retrosynthesis_task4.inventory,
             limit_iterations=10_000,
-            time_limit_s=0.1,
+            time_limit_s=0.1 * self.time_limit_multiplier,
             set_has_solution=set_has_solution,
         )
         output_graph, _ = alg.run_from_mol(retrosynthesis_task4.target_mol)
@@ -376,7 +378,7 @@ class BaseAlgorithmTest(abc.ABC):
             reaction_model=retrosynthesis_task4.reaction_model,
             mol_inventory=retrosynthesis_task4.inventory,
             limit_iterations=10_000,
-            time_limit_s=0.1,
+            time_limit_s=0.1 * self.time_limit_multiplier,
             set_depth=set_depth,
         )
         output_graph, _ = alg.run_from_mol(retrosynthesis_task4.target_mol)
@@ -422,7 +424,7 @@ class BaseAlgorithmTest(abc.ABC):
         alg = self.setup_algorithm(
             reaction_model=retrosynthesis_task5.reaction_model,
             mol_inventory=SmilesListInventory([]),
-            time_limit_s=10.0,
+            time_limit_s=10.0 * self.time_limit_multiplier,
             limit_iterations=1_000,
             limit_reaction_model_calls=100,
             prevent_repeat_mol_in_trees=prevent,
@@ -478,7 +480,9 @@ class BaseAlgorithmTest(abc.ABC):
         """Test that the correct routes are found for a simple example."""
 
         route_objs = self._run_alg_and_extract_routes(
-            retrosynthesis_task1, time_limit_s=0.1, limit_iterations=10_000
+            retrosynthesis_task1,
+            time_limit_s=0.1 * self.time_limit_multiplier,
+            limit_iterations=10_000,
         )
         assert len(route_objs) > 2  # should find AT LEAST this many routes
 
@@ -491,7 +495,9 @@ class BaseAlgorithmTest(abc.ABC):
         """Test that correct routes are found for a more complex example."""
 
         route_objs = self._run_alg_and_extract_routes(
-            retrosynthesis_task2, time_limit_s=0.2, limit_iterations=10_000
+            retrosynthesis_task2,
+            time_limit_s=0.2 * self.time_limit_multiplier,
+            limit_iterations=10_000,
         )
         assert len(route_objs) > 5  # should find AT LEAST this many routes
 
@@ -519,7 +525,7 @@ class BaseAlgorithmTest(abc.ABC):
 
         route_objs = self._run_alg_and_extract_routes(
             retrosynthesis_task1,
-            time_limit_s=0.1,
+            time_limit_s=0.1 * self.time_limit_multiplier,
             limit_iterations=10_000,
             stop_on_first_solution=True,
         )
