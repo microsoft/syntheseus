@@ -15,6 +15,7 @@ class ReactionMetaData(TypedDict, total=False):
     cost: float
     template: str
     source: str  # any explanation of the source of this reaction
+    probability: str  # used for multi-step search
     score: float  # any kind of score for this reaction (e.g. softmax value, probability)
     confidence: float  # confidence (probability) that this reaction is possible
     template_id: int  # template id for template-based models
