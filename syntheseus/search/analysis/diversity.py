@@ -5,6 +5,8 @@ import random
 from collections.abc import Collection
 from typing import Callable, Optional
 
+import networkx as nx
+
 from syntheseus.search.chem import BackwardReaction, Molecule
 from syntheseus.search.graph.route import SynthesisGraph
 
@@ -18,7 +20,7 @@ def estimate_packing_number(
     radius: float,
     distance_metric: ROUTE_DISTANCE_METRIC,
     max_packing_number: Optional[int] = None,
-    num_tries: int = 100,
+    num_tries: int = 10,
     random_state: Optional[random.Random] = None,
 ) -> list[SynthesisGraph]:
     """
@@ -40,8 +42,8 @@ def estimate_packing_number(
         distance_metric: distance between two routes.
         max_packing_number: to avoid expensive computations,
             the algorithm is stopped if a packing number
-            larger than this value is found.
-            If None, the algorithm will run until completion.
+            larger or equal to this value is found.
+            If `None`, the algorithm will run until completion.
         num_tries: the number of random restarts to perform.
         random_state: random state to use for shuffling routes.
 
@@ -100,10 +102,28 @@ def _recursive_construct_packing_set(
     """
     Recursive helper function for estimate_packing_number which finds a packing set.
 
-    If <= 1 route is provided, the packing set is just the set of routes.
-    If >= 2 routes are provided, then the list is divided into two subsets
-    and the second subset is merged into the first,
-    which requires at most (N/2)^2 distance computations.
+    The base case is when <= 1 route is provided: here the packing set is just the set of routes.
+    If >= 2 routes are provided, then the list is divided into two subsets,
+    and a recursive call is made to find a packing set for each subset.
+    These packing sets are then optimally merged, requiring at most (N/2)^2 distance computations.
+
+    The details of the optimal merging are as follows:
+
+    1. A graph is constructed between all routes in both packing sets A and B,
+       with an edge between two nodes if they correspond to routes with distance at most `radius`.
+       Because A and B are individually packing sets, this graph is *bipartite*,
+       i.e. edges will only exist between nodes in A and nodes in B.
+    2. A *minimum vertex cover* (a set of vertices where each edge in the graph
+        links to at least one vertex in the set) is found by first finding a *maximum
+        matching* (a set of edges in a graph such that no two edges share a vertex),
+        then applying Konig's theorem which guarantees a correspondence between
+        a maximum matching and a minimum vertex cover for bipartite graphs.
+        This is all implemented in `networkx`, which provides efficient algorithms.
+    3. The nodes from the minimum vertex cover are removed from the graph.
+        From the definition of vertex cover, this means that no edges will remain in the
+        graph, and because a *minimum* vertex cover was found,
+        this means that the smallest possible number of nodes was deleted.
+        The remaining nodes now form a packing set.
     """
 
     assert (
@@ -115,50 +135,54 @@ def _recursive_construct_packing_set(
         return list(routes)
 
     # Recursive case:
-    # first calculate packing set for both halves
+    # First calculate packing set for both halves
     cutoff_idx = len(routes) // 2
+
     route_set1 = _recursive_construct_packing_set(
         routes[:cutoff_idx],
         radius,
         distance_metric,
         max_packing_number,
     )
+    if len(route_set1) == max_packing_number:  # return directly if max packing number is reached
+        return route_set1
+
     route_set2 = _recursive_construct_packing_set(
         routes[cutoff_idx:],
         radius,
         distance_metric,
         max_packing_number,
     )
+    if len(route_set2) == max_packing_number:  # return directly if max packing number is reached
+        return route_set2
+
     assert (
-        max_packing_number is None or len(route_set1) <= max_packing_number
+        max_packing_number is None or max(len(route_set1), len(route_set2)) <= max_packing_number
     ), "Max packing number exceeded in recursive call."
 
-    # If route set 1 is smaller than route set 2, switch them.
-    # This is done because we will merge route set 2 into route set 1 below,
-    # and this guarantees that the packing set is at least as large as the
-    # largest packing set for the two halves here
-    if len(route_set1) < len(route_set2):
-        route_set1, route_set2 = route_set2, route_set1
+    compatibility_graph = nx.Graph()
 
-    # Which routes from set 2 can be merged into set 1?
-    routes_to_merge: list[SynthesisGraph] = list()
-    for route2 in route_set2:
-        # Optionally break early if there are too many routes
-        if (
-            max_packing_number is not None
-            and len(route_set1) + len(routes_to_merge) >= max_packing_number
-        ):
-            break
+    top_nodes = [(0, idx) for idx in range(len(route_set1))]
+    bottom_nodes = [(1, idx) for idx in range(len(route_set2))]
+    compatibility_graph.add_nodes_from(top_nodes + bottom_nodes)
 
-        for route1 in route_set1:
+    for idx1, route1 in enumerate(route_set1):
+        for idx2, route2 in enumerate(route_set2):
             if distance_metric(route1, route2) <= radius:
-                # If route2 is too close to ANY route in route_set1,
-                # then it cannot be merged
-                break
-        else:
-            routes_to_merge.append(route2)
+                compatibility_graph.add_edge((0, idx1), (1, idx2))
 
-    return route_set1 + routes_to_merge
+    # Compute the minimum vertex cover in `compatibility_graph`.
+    matching = nx.bipartite.maximum_matching(compatibility_graph, top_nodes=top_nodes)
+    vertex_cover = nx.bipartite.to_vertex_cover(compatibility_graph, matching, top_nodes=top_nodes)
+
+    # The maximum independent set is the complement of the vertex cover.
+    independent_set = list(set(compatibility_graph) - vertex_cover)
+
+    if max_packing_number is not None:
+        # Truncate the solution if it is too big (avoids asserts failing downstream).
+        independent_set = independent_set[:max_packing_number]
+
+    return [[route_set1, route_set2][side][idx] for side, idx in independent_set]
 
 
 def _jaccard_distance(
@@ -232,10 +256,10 @@ def molecule_symmetric_difference_distance(
     route2: SynthesisGraph,
 ) -> float:
     """
-    Calculate the symmetric difference distance between the sets of reactions in 2 routes.
+    Calculate the symmetric difference distance between the sets of molecules in 2 routes.
     """
 
-    # Get sets of reactions
+    # Get sets of molecules
     molecules1 = _get_molecules(route1)
     molecules2 = _get_molecules(route2)
     return len(molecules1 ^ molecules2)
