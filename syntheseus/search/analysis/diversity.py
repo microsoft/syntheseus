@@ -134,9 +134,16 @@ def _recursive_construct_packing_set(
         max_packing_number is None or max_packing_number > 0
     ), "Max packing number must be positive."
 
-    # Base cases:
-    if idx_end - idx_start <= 1:
-        return routes[idx_start:idx_end]
+    # Base cases: simple greedy algorithm is optimal if there are no more than two routes
+    if idx_end - idx_start <= 2:
+        best_set = []
+        for idx in range(idx_start, idx_end):
+            if all(distance_metric(routes[idx], route) > radius for route in best_set):
+                best_set.append(routes[idx])
+                if len(best_set) == max_packing_number:
+                    break
+
+        return best_set
 
     # Recursive case:
     # First calculate packing set for both halves
