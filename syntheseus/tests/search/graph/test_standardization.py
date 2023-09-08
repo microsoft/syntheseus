@@ -11,17 +11,13 @@ from syntheseus.search.graph.molset import MolSetGraph
 from syntheseus.search.graph.standardization import get_unique_node_andor_graph
 
 
-def test_smoke_andor(
-    andor_graph_non_minimal: AndOrGraph,
-):
+def test_smoke_andor(andor_graph_non_minimal: AndOrGraph):
     with pytest.warns(UserWarning):
         output = get_unique_node_andor_graph(andor_graph_non_minimal)
 
     assert len(output) == len(andor_graph_non_minimal)  # no nodes deleted here
 
 
-def test_smoke_molset(
-    molset_tree_non_minimal: MolSetGraph,
-):
+def test_smoke_molset(molset_tree_non_minimal: MolSetGraph):
     with pytest.warns(UserWarning):
         get_unique_node_andor_graph(molset_tree_non_minimal)
