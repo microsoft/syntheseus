@@ -9,7 +9,7 @@ The original MEGAN code is released under the MIT license.
 import os
 import sys
 from pathlib import Path
-from typing import List, Union
+from typing import Any, Dict, List, Optional, Union
 
 from rdkit import Chem
 
@@ -89,7 +89,7 @@ class MEGANModel(BackwardReactionModel):
     def get_parameters(self):
         return self.model.parameters()
 
-    def _mols_to_batch(self, inputs: List[Molecule]) -> List[Chem.Mol]:
+    def _mols_to_batch(self, inputs: List[Molecule]) -> List[Optional[Chem.Mol]]:
         from src.feat.utils import fix_explicit_hs
 
         # Inputs to the model are list of `rdkit` molecules.
@@ -102,14 +102,12 @@ class MEGANModel(BackwardReactionModel):
                 a.SetAtomMapNum(i + 1)
 
             try:
-                mol = fix_explicit_hs(mol)
+                input_batch.append(fix_explicit_hs(mol))
             except Exception:
-                # Sometimes `fix_explicit_hs` may fail with an `rdkit` error. In such cases we give
-                # up and use the molecule as-is.
-                # TODO(kmaziarz): Investigate these cases in more detail.
-                pass
-
-            input_batch.append(mol)
+                # MEGAN sometimes produces broken molecules containing C+ atoms which pass `rdkit`
+                # sanitization but fail in `fix_explicit_hs`. We block these here to avoid making
+                # predictions for them.
+                input_batch.append(None)
 
         return input_batch
 
@@ -119,20 +117,31 @@ class MEGANModel(BackwardReactionModel):
 
         # Get the inputs into the right form to call the underlying model.
         batch = self._mols_to_batch(inputs)
+        batch_valid = [mol for mol in batch if mol is not None]
+        batch_valid_idxs = [idx for idx, mol in enumerate(batch) if mol is not None]
 
-        with torch.no_grad():
-            beam_search_results = beam_search(
-                [self.model],
-                batch,
-                rdkit_cache=self.rdkit_cache,
-                max_steps=self.max_gen_steps,
-                beam_size=num_results,
-                batch_size=self.beam_batch_size,
-                base_action_masks=self.base_action_masks,
-                max_atoms=self.n_max_atoms,
-                reaction_types=None,
-                action_vocab=self.action_vocab,
-            )  # returns a list of `beam_size` results for each input molecule.
+        if batch_valid:
+            with torch.no_grad():
+                beam_search_results = beam_search(
+                    [self.model],
+                    batch_valid,
+                    rdkit_cache=self.rdkit_cache,
+                    max_steps=self.max_gen_steps,
+                    beam_size=num_results,
+                    batch_size=self.beam_batch_size,
+                    base_action_masks=self.base_action_masks,
+                    max_atoms=self.n_max_atoms,
+                    reaction_types=None,
+                    action_vocab=self.action_vocab,
+                )  # returns a list of `beam_size` results for each input molecule
+        else:
+            beam_search_results = []
+
+        assert len(batch_valid_idxs) == len(beam_search_results)
+
+        all_outputs: List[List[Dict[str, Any]]] = [[] for _ in batch]
+        for idx, raw_outputs in zip(batch_valid_idxs, beam_search_results):
+            all_outputs[idx] = raw_outputs
 
         return [
             process_raw_smiles_outputs(
@@ -140,5 +149,5 @@ class MEGANModel(BackwardReactionModel):
                 output_list=[prediction["final_smi_unmapped"] for prediction in raw_outputs],
                 kwargs_list=[{"probability": prediction["prob"]} for prediction in raw_outputs],
             )
-            for input, raw_outputs in zip(inputs, beam_search_results)
+            for input, raw_outputs in zip(inputs, all_outputs)
         ]
