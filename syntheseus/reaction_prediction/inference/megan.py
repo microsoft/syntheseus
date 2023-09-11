@@ -20,6 +20,7 @@ from syntheseus.reaction_prediction.utils.inference import (
     get_unique_file_in_dir,
     process_raw_smiles_outputs,
 )
+from syntheseus.reaction_prediction.utils.misc import suppress_outputs
 
 
 class MEGANModel(BackwardReactionModel):
@@ -121,7 +122,7 @@ class MEGANModel(BackwardReactionModel):
         batch_valid_idxs = [idx for idx, mol in enumerate(batch) if mol is not None]
 
         if batch_valid:
-            with torch.no_grad():
+            with torch.no_grad(), suppress_outputs():
                 beam_search_results = beam_search(
                     [self.model],
                     batch_valid,
