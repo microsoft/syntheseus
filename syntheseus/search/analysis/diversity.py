@@ -76,6 +76,8 @@ def estimate_packing_number(
 
         # Construct a packing set and check whether it is better than the previous one
         packing_set = _recursive_construct_packing_set(
+            0,
+            len(route_list),
             route_list,
             radius,
             distance_metric,
@@ -94,6 +96,8 @@ def estimate_packing_number(
 
 
 def _recursive_construct_packing_set(
+    idx_start: int,
+    idx_end: int,
     routes: list[SynthesisGraph],
     radius: float,
     distance_metric: ROUTE_DISTANCE_METRIC,
@@ -130,16 +134,25 @@ def _recursive_construct_packing_set(
         max_packing_number is None or max_packing_number > 0
     ), "Max packing number must be positive."
 
-    # Base cases:
-    if len(routes) <= 1:
-        return list(routes)
+    # Base cases: simple greedy algorithm is optimal if there are no more than two routes
+    if idx_end - idx_start <= 2:
+        best_set: list[SynthesisGraph] = []
+        for idx in range(idx_start, idx_end):
+            if all(distance_metric(routes[idx], route) > radius for route in best_set):
+                best_set.append(routes[idx])
+                if len(best_set) == max_packing_number:
+                    break
+
+        return best_set
 
     # Recursive case:
     # First calculate packing set for both halves
-    cutoff_idx = len(routes) // 2
+    cutoff_idx = (idx_start + idx_end) // 2
 
     route_set1 = _recursive_construct_packing_set(
-        routes[:cutoff_idx],
+        idx_start,
+        cutoff_idx,
+        routes,
         radius,
         distance_metric,
         max_packing_number,
@@ -148,7 +161,9 @@ def _recursive_construct_packing_set(
         return route_set1
 
     route_set2 = _recursive_construct_packing_set(
-        routes[cutoff_idx:],
+        cutoff_idx,
+        idx_end,
+        routes,
         radius,
         distance_metric,
         max_packing_number,
@@ -189,12 +204,13 @@ def _jaccard_distance(
     set1: set,
     set2: set,
 ) -> float:
-    intersection = set1 & set2
-    union = set1 | set2
-    if len(union) == 0:
+    intersection_size = len(set1 & set2)
+    union_size = len(set1) + len(set2) - intersection_size
+
+    if union_size == 0:
         return 0.0  # both sets are empty so distance is 0
     else:
-        return 1.0 - len(intersection) / len(union)
+        return 1.0 - intersection_size / union_size
 
 
 def _get_reactions(route: SynthesisGraph) -> set[BackwardReaction]:
