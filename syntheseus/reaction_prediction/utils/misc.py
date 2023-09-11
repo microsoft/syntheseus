@@ -1,3 +1,4 @@
+import logging
 import multiprocessing
 import os
 import random
@@ -33,7 +34,9 @@ def suppress_outputs():
     """Suppress messages written to both stdout and stderr."""
     with open(devnull, "w") as fnull:
         with redirect_stderr(fnull), redirect_stdout(fnull):
+            logging.disable(logging.CRITICAL)
             yield
+            logging.disable(logging.NOTSET)
 
 
 def dictify(data: Any) -> Any:
