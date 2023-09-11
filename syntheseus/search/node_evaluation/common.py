@@ -49,3 +49,14 @@ class ReactionModelProbPolicy(ReactionModelBasedEvaluator[MolSetNode]):
         assert len(parents) == 1, "Graph must be a tree"
 
         return graph._graph.edges[parents[0], node]["reaction"]
+
+
+class ReactionModelProbPolicy2(ReactionModelBasedEvaluator[AndNode]):
+    """Evaluator that uses the reactions' probability to form a policy (useful for AND-OR-MCTS)."""
+
+    def __init__(self, **kwargs) -> None:
+        kwargs["normalize"] = kwargs.get("normalize", True)  # set `normalize = True` by default
+        super().__init__(return_log=False, **kwargs)
+
+    def _get_reaction(self, node: AndNode, graph) -> BackwardReaction:
+        return node.reaction
