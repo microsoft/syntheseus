@@ -136,7 +136,7 @@ def _recursive_construct_packing_set(
 
     # Base cases: simple greedy algorithm is optimal if there are no more than two routes
     if idx_end - idx_start <= 2:
-        best_set = []
+        best_set: list[SynthesisGraph] = []
         for idx in range(idx_start, idx_end):
             if all(distance_metric(routes[idx], route) > radius for route in best_set):
                 best_set.append(routes[idx])
