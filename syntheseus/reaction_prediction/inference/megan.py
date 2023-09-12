@@ -6,10 +6,12 @@ Code: https://github.com/molecule-one/megan
 The original MEGAN code is released under the MIT license.
 """
 
+from __future__ import annotations
+
 import os
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 from rdkit import Chem
 
@@ -90,7 +92,7 @@ class MEGANModel(BackwardReactionModel):
     def get_parameters(self):
         return self.model.parameters()
 
-    def _mols_to_batch(self, inputs: List[Molecule]) -> List[Optional[Chem.Mol]]:
+    def _mols_to_batch(self, inputs: list[Molecule]) -> list[Optional[Chem.Mol]]:
         from src.feat.utils import fix_explicit_hs
 
         # Inputs to the model are list of `rdkit` molecules.
@@ -112,7 +114,7 @@ class MEGANModel(BackwardReactionModel):
 
         return input_batch
 
-    def __call__(self, inputs: List[Molecule], num_results: int) -> List[BackwardPredictionList]:
+    def __call__(self, inputs: list[Molecule], num_results: int) -> list[BackwardPredictionList]:
         import torch
         from src.model.beam_search import beam_search
 
@@ -140,7 +142,7 @@ class MEGANModel(BackwardReactionModel):
 
         assert len(batch_valid_idxs) == len(beam_search_results)
 
-        all_outputs: List[List[Dict[str, Any]]] = [[] for _ in batch]
+        all_outputs: list[list[dict[str, Any]]] = [[] for _ in batch]
         for idx, raw_outputs in zip(batch_valid_idxs, beam_search_results):
             all_outputs[idx] = raw_outputs
 
