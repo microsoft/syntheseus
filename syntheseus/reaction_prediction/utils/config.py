@@ -1,13 +1,17 @@
 import argparse
 import sys
-from typing import Callable, List, Optional, TypeVar, cast
+from typing import Any, Callable, Dict, List, Optional, TypeVar, Union, cast
 
-from omegaconf import OmegaConf
+from omegaconf import DictConfig, ListConfig, OmegaConf
 
 R = TypeVar("R")
 
 
-def get_config(argv: Optional[List[str]], config_cls: Callable[..., R]) -> R:
+def get_config(
+    argv: Optional[List[str]],
+    config_cls: Callable[..., R],
+    defaults: Optional[Dict[str, Any]] = None,
+) -> R:
     """
     Utility function to get `OmegaConf` config options.
 
@@ -37,8 +41,12 @@ def get_config(argv: Optional[List[str]], config_cls: Callable[..., R]) -> R:
     )
     args, config_changes = parser.parse_known_args(argv)
 
-    # Read configs from file and command line
-    conf_yamls = [OmegaConf.load(c) for c in args.config]
+    # Read configs from defaults, file and command line
+    conf_yamls: List[Union[DictConfig, ListConfig]] = []
+    if defaults:
+        conf_yamls = [OmegaConf.create(defaults)]
+
+    conf_yamls += [OmegaConf.load(c) for c in args.config]
     conf_cli = OmegaConf.from_cli(config_changes)
 
     # Make merged config options
