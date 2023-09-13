@@ -112,7 +112,7 @@ class SearchConfig(BackwardModelConfig):
     num_routes_to_plot: int = 5  # Number of routes to extract and plot for a quick check
 
 
-def run_from_config(config: SearchConfig) -> None:
+def run_from_config(config: SearchConfig) -> Path:
     set_random_seed(0)
 
     print("Running search with the following config:")
@@ -305,8 +305,10 @@ def run_from_config(config: SearchConfig) -> None:
         with open(results_dir_current_run / "stats.json", "wt") as f_combined_stats:
             f_combined_stats.write(json.dumps(combined_stats, indent=2))
 
+    return results_dir_current_run
 
-def main(argv: Optional[List[str]]) -> None:
+
+def main(argv: Optional[List[str]]) -> Path:
     config: SearchConfig = cli_get_config(argv=argv, config_cls=SearchConfig)
 
     def _warn_will_not_use_defaults(message: str) -> None:
@@ -345,7 +347,7 @@ def main(argv: Optional[List[str]]) -> None:
                     defaults={f"{config.search_algorithm}_config": relevant_defaults},
                 )
 
-    run_from_config(config)
+    return run_from_config(config)
 
 
 if __name__ == "__main__":
