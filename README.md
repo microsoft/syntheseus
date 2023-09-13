@@ -1,45 +1,56 @@
-# Syntheseus
+<div align="center">
+    <img src="images/logo.png" height="50px">
+    <h3><i>Navigating the labyrinth of synthesis planning</i></h3>
+</div>
+
+---
 
 [![CI](https://github.com/microsoft/syntheseus/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/microsoft/syntheseus/actions/workflows/ci.yml)
 [![Python Version](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
 [![code style](https://img.shields.io/badge/code%20style-black-202020.svg)](https://github.com/ambv/black)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-Syntheseus is a package for retrosynthetic planning.
-It contains implementations of common search algorithms
-and a simple API to wrap custom reaction models and write
-custom algorithms.
-It is meant to allow for simple benchmarking of the components
-of retrosynthesis algorithms.
+Syntheseus is a package for end-to-end retrosynthetic planning.
+- ⚒️ Combines search algorithms and reaction models in a standardized way
+- 🧭 Includes implementations of common search algorithms
+- 🧪 Includes wrappers for state-of-the-art reaction models
+- ⚙️ Exposes a simple API to plug in custom models and algorithms
+- 📈 Can be used to benchmark components of a retrosynthesis pipeline
 
-## Installation
+## Setup
 
-Syntheseus is designed to have very few dependencies to allow it to
-be run in a wide range of environments.
-At the moment the only hard dependencies are `numpy`, `rdkit`, and `networkx`.
-It should be easy to install syntheseus into any environment which has these packages.
+We support two installation modes:
+- *core installation* not tied to a specific reaction model allows you to build and benchmark your own models or search algorithms
+- *full installation* backed by one of the supported models allows you to perform end-to-end retrosynthetic search
 
-Currently `syntheseus` is not hosted on `pypi`
-(although this will likely change in the future).
-To install, please run:
+For full installation we currently support the following reaction models: Chemformer, LocalRetro, MEGAN, MHNreact, RetroKNN and RootAligned SMILES; see [here](syntheseus/reaction_prediction/environments/README.md) for detailed setup instructions.
+
+For core installation simply run
 
 ```bash
-# Clone and cd into repo
+# Clone and cd into the repository.
 git clone https://github.com/microsoft/syntheseus.git
 cd syntheseus
 
-# Option 1: minimal install into current environment.
-# Assumes dependencies are already present in your environment.
-pip install .  --no-dependencies
-
-# Option 2: pip install with dependencies into current environment.
-pip install .
-
-# Option 3: create new conda environment and then install.
-conda env create -f environment.yml  # creates env named syntheseus
+# Create and activate a new conda environment (or use your own).
+conda env create -f environment.yml
 conda activate syntheseus
-pip install .
+
+# Install into the current environment.
+pip install -e .
 ```
+
+Syntheseus contains two subpackages: `reaction_prediction`, which deals with benchmarking single-step reaction models, and `search`, which can use any single-step model to perform multi-step search.
+Each is designed to have minimal dependencies, allowing it to run in a wide range of environments.
+While specific components (single-step models, policies, or value functions) can make use of Deep Learning libraries, the core of `syntheseus` does not depend on any.
+
+If you only want to use either of the two subpackages, you can limit the dependencies further by installing the dependencies separately and then running
+
+```bash
+pip install -e .  --no-dependencies
+```
+
+See `pyproject.toml` for a list of dependencies tied to each subpackage.
 
 ## Development
 

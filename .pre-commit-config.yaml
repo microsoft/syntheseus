@@ -1,3 +1,8 @@
+# This should not be necessary, except that `conda<4.11` has a bug dealing with `python>=3.10`
+# (see https://github.com/conda/conda/issues/10969), and the below makes that go away.
+default_language_version:
+  python: python3
+
 repos:
   # Generally useful pre-commit hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -37,6 +42,7 @@ repos:
       - id: mypy
         name: "mypy"
         files: "syntheseus/"
+        args: ["--install-types", "--non-interactive"]
 
   # Latest ruff (does linting + more)
   - repo: https://github.com/charliermarsh/ruff-pre-commit

@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import abc
 import datetime
+import math
 import warnings
 
 import pytest
 
 from syntheseus.search import INT_INF
 from syntheseus.search.algorithms.base import SearchAlgorithm
-from syntheseus.search.analysis.route_extraction import min_cost_routes
+from syntheseus.search.analysis.route_extraction import iter_routes_cost_order
 from syntheseus.search.analysis.solution_time import get_first_solution_time
 from syntheseus.search.chem import Molecule
 from syntheseus.search.graph.and_or import AndNode, AndOrGraph, OrNode
@@ -29,6 +30,7 @@ class BaseAlgorithmTest(abc.ABC):
 
     # Some tolerances for tests
     time_limit_upper_bound_s = 0.05
+    time_limit_multiplier = 1.0  # can be overridden by subclasses for slower algorithms
 
     @abc.abstractmethod
     def setup_algorithm(self, **kwargs) -> SearchAlgorithm:
@@ -62,7 +64,7 @@ class BaseAlgorithmTest(abc.ABC):
         alg = self.setup_algorithm(
             reaction_model=retrosynthesis_task1.reaction_model,
             mol_inventory=retrosynthesis_task1.inventory,
-            time_limit_s=0.1,
+            time_limit_s=0.1 * self.time_limit_multiplier,
             limit_iterations=1_000,
             limit_reaction_model_calls=10,
         )
@@ -85,7 +87,7 @@ class BaseAlgorithmTest(abc.ABC):
             reaction_model=retrosynthesis_task4.reaction_model,
             mol_inventory=retrosynthesis_task4.inventory,
             limit_iterations=10_000,
-            time_limit_s=0.1,
+            time_limit_s=0.1 * self.time_limit_multiplier,
         )
         output_graph, _ = alg.run_from_mol(retrosynthesis_task4.target_mol)
         assert output_graph.root_node.has_solution
@@ -138,7 +140,8 @@ class BaseAlgorithmTest(abc.ABC):
         alg = self.setup_algorithm(
             reaction_model=retrosynthesis_task1.reaction_model,
             mol_inventory=retrosynthesis_task1.inventory,
-            time_limit_s=1e3,  # set a finite but extremely large limit to avoid warnings
+            time_limit_s=1e3
+            * self.time_limit_multiplier,  # set a finite but extremely large limit to avoid warnings
             limit_iterations=INT_INF,
             limit_reaction_model_calls=limit,
         )
@@ -213,7 +216,7 @@ class BaseAlgorithmTest(abc.ABC):
         alg = self.setup_algorithm(
             reaction_model=retrosynthesis_task1.reaction_model,
             mol_inventory=retrosynthesis_task1.inventory,
-            time_limit_s=0.2,
+            time_limit_s=0.2 * self.time_limit_multiplier,
             limit_iterations=10_000,
             limit_reaction_model_calls=1_000,
             max_expansion_depth=depth,
@@ -241,7 +244,7 @@ class BaseAlgorithmTest(abc.ABC):
         alg = self.setup_algorithm(
             reaction_model=retrosynthesis_task1.reaction_model,
             mol_inventory=retrosynthesis_task1.inventory,
-            time_limit_s=0.1,
+            time_limit_s=0.1 * self.time_limit_multiplier,
             limit_iterations=10_000,
             limit_reaction_model_calls=1_000,
             max_expansion_depth=4,
@@ -291,7 +294,7 @@ class BaseAlgorithmTest(abc.ABC):
             alg = self.setup_algorithm(
                 reaction_model=retrosynthesis_task5.reaction_model,
                 mol_inventory=retrosynthesis_task5.inventory,
-                time_limit_s=0.1,
+                time_limit_s=0.1 * self.time_limit_multiplier,
                 limit_iterations=10_000,
                 limit_reaction_model_calls=100,
                 max_expansion_depth=10,
@@ -343,7 +346,7 @@ class BaseAlgorithmTest(abc.ABC):
             reaction_model=retrosynthesis_task4.reaction_model,
             mol_inventory=retrosynthesis_task4.inventory,
             limit_iterations=10_000,
-            time_limit_s=0.1,
+            time_limit_s=0.1 * self.time_limit_multiplier,
             set_has_solution=set_has_solution,
         )
         output_graph, _ = alg.run_from_mol(retrosynthesis_task4.target_mol)
@@ -375,7 +378,7 @@ class BaseAlgorithmTest(abc.ABC):
             reaction_model=retrosynthesis_task4.reaction_model,
             mol_inventory=retrosynthesis_task4.inventory,
             limit_iterations=10_000,
-            time_limit_s=0.1,
+            time_limit_s=0.1 * self.time_limit_multiplier,
             set_depth=set_depth,
         )
         output_graph, _ = alg.run_from_mol(retrosynthesis_task4.target_mol)
@@ -383,11 +386,13 @@ class BaseAlgorithmTest(abc.ABC):
         # Test on depths
         node_depths = [node.depth for node in output_graph.nodes()]
         if set_depth:
-            assert -1 not in node_depths  # this is the default value which should be overridden
+            assert (
+                math.inf not in node_depths
+            )  # this is the default value which should be overridden
             assert 0 in node_depths  # value for root node
             assert 1 in node_depths
         else:
-            assert -1 in node_depths  # default value should be present
+            assert math.inf in node_depths  # default value should be present
             assert 1 not in node_depths
 
     @pytest.mark.parametrize("prevent", [False, True])
@@ -419,7 +424,7 @@ class BaseAlgorithmTest(abc.ABC):
         alg = self.setup_algorithm(
             reaction_model=retrosynthesis_task5.reaction_model,
             mol_inventory=SmilesListInventory([]),
-            time_limit_s=10.0,
+            time_limit_s=10.0 * self.time_limit_multiplier,
             limit_iterations=1_000,
             limit_reaction_model_calls=100,
             prevent_repeat_mol_in_trees=prevent,
@@ -447,6 +452,7 @@ class BaseAlgorithmTest(abc.ABC):
         time_limit_s: float,
         limit_iterations: int = 10_000,
         max_routes: int = 100,
+        **kwargs,
     ) -> list[SynthesisGraph]:
         """Utility function to run an algorithm and extract routes."""
 
@@ -456,6 +462,7 @@ class BaseAlgorithmTest(abc.ABC):
             mol_inventory=task.inventory,
             limit_iterations=limit_iterations,
             time_limit_s=time_limit_s,
+            **kwargs,
         )
         output_graph, _ = alg.run_from_mol(task.target_mol)
 
@@ -465,7 +472,7 @@ class BaseAlgorithmTest(abc.ABC):
                 node.data["route_cost"] = 1.0
             else:
                 node.data["route_cost"] = 0.0
-        routes = list(min_cost_routes(output_graph, max_routes=max_routes))
+        routes = list(iter_routes_cost_order(output_graph, max_routes=max_routes))
         route_objs = [output_graph.to_synthesis_graph(route) for route in routes]
         return route_objs
 
@@ -473,7 +480,9 @@ class BaseAlgorithmTest(abc.ABC):
         """Test that the correct routes are found for a simple example."""
 
         route_objs = self._run_alg_and_extract_routes(
-            retrosynthesis_task1, time_limit_s=0.1, limit_iterations=10_000
+            retrosynthesis_task1,
+            time_limit_s=0.1 * self.time_limit_multiplier,
+            limit_iterations=10_000,
         )
         assert len(route_objs) > 2  # should find AT LEAST this many routes
 
@@ -486,7 +495,9 @@ class BaseAlgorithmTest(abc.ABC):
         """Test that correct routes are found for a more complex example."""
 
         route_objs = self._run_alg_and_extract_routes(
-            retrosynthesis_task2, time_limit_s=0.2, limit_iterations=10_000
+            retrosynthesis_task2,
+            time_limit_s=0.2 * self.time_limit_multiplier,
+            limit_iterations=10_000,
         )
         assert len(route_objs) > 5  # should find AT LEAST this many routes
 
@@ -499,3 +510,23 @@ class BaseAlgorithmTest(abc.ABC):
         for incorrect_route in retrosynthesis_task2.incorrect_routes.values():
             route_matches = [incorrect_route == r for r in route_objs]
             assert not any(route_matches)
+
+    def test_stop_on_first_solution(self, retrosynthesis_task1: RetrosynthesisTask) -> None:
+        """
+        Test that `stop_on_first_solution` really does stop the algorithm once a solution is found.
+
+        The test for this is to run the same search as in `test_found_routes1` but with
+        `stop_on_first_solution=True`. This should find exactly one route for this problem.
+
+        Note however that `stop_on_first_solution=True` does not guarantee finding at most one route
+        because several routes could possibly be found at the same time. The test works for this specific
+        problem because there is only one route found in the first iteration.
+        """
+
+        route_objs = self._run_alg_and_extract_routes(
+            retrosynthesis_task1,
+            time_limit_s=0.1 * self.time_limit_multiplier,
+            limit_iterations=10_000,
+            stop_on_first_solution=True,
+        )
+        assert len(route_objs) == 1

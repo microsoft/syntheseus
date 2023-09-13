@@ -1,0 +1,12 @@
+name: syntheseus-single-step
+channels:
+  - defaults
+  - conda-forge
+  - pytorch
+dependencies:
+  - numpy
+  - pandas
+  - pip
+  - python==3.9.7
+  - pytorch=1.10.2=py3.9_cuda11.3_cudnn8.2.0_0
+  - rdkit=2021.09.4

@@ -159,17 +159,17 @@ def _min_route_partial_cost(
         return math.inf
 
 
-def min_cost_routes(
+def iter_routes_cost_order(
     graph: RetrosynthesisSearchGraph,
     max_routes: int,
     stop_cost: Optional[float] = None,
 ) -> Iterator[Collection[BaseGraphNode]]:
     """
-    Return solved routes from "graph" with the lowest possible cost.
-    Graph can be AND/OR or MolSet graph.
-    The cost of each route is the sum of node.data["route_cost"] for each
+    Iterate over all solved routes from `graph` in order of increasing cost.
+    `graph` can be an AND/OR or MolSet graph.
+    The cost of each route is the sum of `node.data["route_cost"]` for each
     node in the route. It is assumed that this is set beforehand.
-    It is also assumed that "node.has_solution" is set beforehand.
+    It is also assumed that `node.has_solution` is set beforehand.
 
     Args:
         graph: graph whose routes to extract
@@ -189,3 +189,47 @@ def min_cost_routes(
             break
         else:
             yield route
+
+
+def _route_time_cost(nodes, graph) -> float:
+    """
+    Cost function for routes that is the maximum timestamp of any node in the route
+    (or inf if it is not solved).
+    """
+    if _route_has_solution(nodes, graph):
+        return max(n.creation_time.timestamp() for n in nodes)
+    else:
+        return math.inf
+
+
+def _route_time_partial_cost(nodes, _) -> float:
+    """Partial cost version of above. It is a lower bound to the true cost."""
+    if all(n.has_solution for n in nodes):
+        return max(n.creation_time.timestamp() for n in nodes)
+    else:
+        return math.inf
+
+
+def iter_routes_time_order(
+    graph: RetrosynthesisSearchGraph, max_routes: int
+) -> Iterator[Collection[BaseGraphNode]]:
+    """
+    Iterate over all solved routes from `graph` in the order they were created
+    (a route is considered created when the last node in the route is created).
+
+    `graph` can be an AND/OR or MolSet graph.
+    Creation time is measured by `node.creation_time`.
+
+    Args:
+        graph: graph whose routes to extract
+        max_routes: maximum number of routes to yield.
+    """
+
+    for _, r in _iter_top_routes(
+        graph=graph,
+        cost_fn=_route_time_cost,
+        cost_lower_bound=_route_time_partial_cost,
+        max_routes=max_routes,
+        yield_partial_routes=False,
+    ):
+        yield r

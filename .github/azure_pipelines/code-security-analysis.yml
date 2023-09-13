@@ -5,6 +5,9 @@ schedules:
     include:
     - main
 
+pr: none
+trigger: none
+
 pool:
  vmImage: 'windows-latest'
 

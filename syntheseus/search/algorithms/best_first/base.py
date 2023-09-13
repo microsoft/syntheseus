@@ -69,7 +69,7 @@ class GeneralBestFirstSearch(SearchAlgorithm[GraphType, int], Generic[GraphType]
         # Run search until time limit or queue is empty
         step = 0
         for step in range(self.limit_iterations):
-            if self.time_limit_reached() or len(queue) == 0:
+            if self.should_stop_search(graph) or len(queue) == 0:
                 break
 
             # Pop node and potentially expand it

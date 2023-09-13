@@ -10,13 +10,18 @@ dependencies:
   - numpy  # required for some array computing
   - rdkit  # required for molecule objects
   - networkx
-  # Optional dependencies for visuzalization
+  # Optional dependencies for visualization
   - pillow
   - python-graphviz
   # For development
   - pytest
   - pytest-cov
   - pre-commit
+  # Temporary pin to avoid the 3.16.0 release, which drops support for Python 3.7
+  - zipp<3.16
   - pip:
-    # Optional dependency for the single-step model interface
-    - pydantic>=1.10.5  # earlier versions had a bug involving `default_factory` (see https://github.com/pydantic/pydantic/issues/5065)
+    # Additional dependencies of `syntheseus/reaction_prediction`
+    - more_itertools
+    - omegaconf
+    - pydantic>=1.10.5,<2  # earlier versions had a bug involving `default_factory` (see https://github.com/pydantic/pydantic/issues/5065), later are backward incompatible
+    - tqdm
