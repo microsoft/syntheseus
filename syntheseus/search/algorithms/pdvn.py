@@ -109,7 +109,7 @@ class PDVN_MCTS(BaseMCTS[AndOrGraph, OrNode, AndNode], AndOrSearchAlgorithm[int]
         return updated_nodes
 
     def _set_and_node_costs(self, and_nodes: Sequence[AndNode], graph: AndOrGraph) -> None:
-        """Helper function to compute set the cost of each AndNode using the `and_node_cost_fn`."""
+        """Helper function to compute the cost of each AndNode using the `and_node_cost_fn`."""
         costs = self.and_node_cost_fn(and_nodes, graph=graph)
         assert len(costs) == len(and_nodes)
         for node, cost in zip(and_nodes, costs):
@@ -174,7 +174,7 @@ class PDVN_MCTS(BaseMCTS[AndOrGraph, OrNode, AndNode], AndOrSearchAlgorithm[int]
         """
         assert len(list(graph.successors(node))) == 0, "This is not a leaf node."
 
-        if node.is_expanded or not self.can_expand_node(node, graph):
+        if not self.can_expand_node(node, graph):
             purchasable = node.mol.metadata["is_purchasable"]
             reward_syn = float(purchasable)
             reward_cost = 0.0 if purchasable else self.c_dead
