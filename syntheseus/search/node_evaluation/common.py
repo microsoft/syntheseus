@@ -50,5 +50,7 @@ class ReactionModelProbPolicy(ReactionModelBasedEvaluator[Union[MolSetNode, AndN
             parents = list(graph.predecessors(node))
             assert len(parents) == 1, "Graph must be a tree"
             return graph._graph.edges[parents[0], node]["reaction"]
-        else:
+        elif isinstance(node, AndNode):
             return node.reaction
+        else:
+            raise ValueError(f"ReactionModelProbPolicy does not support nodes of type {type(node)}")
