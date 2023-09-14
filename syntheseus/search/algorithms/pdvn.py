@@ -3,7 +3,7 @@ Contains code related to the "Retrosynthetic Planning with Dual Value Networks" 
 
 See: https://arxiv.org/abs/2301.13755
 
-In particular, this file contains code for the And/OR-MCTS algorithm used to make training data for PDVN,
+In particular, this file contains code for the AND/OR-MCTS algorithm used to make training data for PDVN,
 and the code to extract training data from a completed search graph.
 """
 
