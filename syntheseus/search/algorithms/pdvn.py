@@ -268,7 +268,7 @@ class PDVN_MCTS(BaseMCTS[AndOrGraph, OrNode, AndNode], AndOrSearchAlgorithm[int]
 def pdvn_min_cost_update(node: ANDOR_NODE, graph: AndOrGraph):
     """
     Update function to compute "pdvn_min_syn_cost" for a given node.
-    the pdvn_min_syn_cost is the cost of the minimum synthesis route to synthesize
+    The pdvn_min_syn_cost is the cost of the minimum synthesis route to synthesize
     a molecule, where the cost of a synthesis route is the sum
     of "pdvn_reaction_cost" for each reaction in the route.
     """
