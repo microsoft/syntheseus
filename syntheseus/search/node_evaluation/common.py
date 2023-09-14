@@ -39,7 +39,7 @@ class ReactionModelLogProbCost(ReactionModelBasedEvaluator[AndNode]):
 
 
 class ReactionModelProbPolicy(ReactionModelBasedEvaluator[Union[MolSetNode, AndNode]]):
-    """Evaluator that uses the reactions' probability to form a policy (useful for OR-MCTS and And/OR-MCTS)."""
+    """Evaluator that uses the reactions' probability to form a policy (useful for MCTS)."""
 
     def __init__(self, **kwargs) -> None:
         kwargs["normalize"] = kwargs.get("normalize", True)  # set `normalize = True` by default
