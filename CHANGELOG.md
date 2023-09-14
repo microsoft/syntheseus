@@ -14,7 +14,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 - Improve the aesthetics of `README.md` ([#19](https://github.com/microsoft/syntheseus/pull/19)) ([@kmaziarz])
 
 ### Added
-
+- Add code for PDVN MCTS and extracting training data for policies and value functions ([#8](https://github.com/microsoft/syntheseus/pull/8)) ([@austint], [@fiberleif])
 - Add a top-level CLI for running end-to-end search ([#26](https://github.com/microsoft/syntheseus/pull/26)) ([@kmaziarz])
 - Release single-step evaluation framework and wrappers for several model types ([#14](https://github.com/microsoft/syntheseus/pull/14), [#15](https://github.com/microsoft/syntheseus/pull/15), [#20](https://github.com/microsoft/syntheseus/pull/20)) ([@kmaziarz])
 - Release checkpoints for all supported single-step model types ([#21](https://github.com/microsoft/syntheseus/pull/21)) ([@kmaziarz])
@@ -43,3 +43,4 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 [@austint]: https://github.com/AustinT
 [@kmaziarz]: https://github.com/kmaziarz
 [@jagarridotorres]: https://github.com/jagarridotorres
+[@fiberleif]: https://github.com/fiberleif
