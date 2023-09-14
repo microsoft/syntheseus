@@ -133,7 +133,7 @@ class PDVN_MCTS(BaseMCTS[AndOrGraph, OrNode, AndNode], AndOrSearchAlgorithm[int]
             either all expanded or all solved, we randomly select one of them.
 
         The logic below follows the paragraph above, disregarding that the final clause
-        will only be reached if the childre are all expanded *and* all solved, rather than *or*
+        will only be reached if the children are all expanded *and* all solved, rather than *or*
         as it says in the text.
         """
         if isinstance(node, OrNode):
