@@ -180,7 +180,7 @@ class TestPDVN_MCTS(BaseAlgorithmTest):
         assert math.isclose(
             output_graph.root_node.data["pdvn_mcts_v_cost"],
             10 / 4,
-        ), "v_cost should be 1.5 average(0, 3, 3, 3, 1)"
+        ), "v_cost should be 2.5 average(0, 3, 3, 4)"
 
         # Training data
         training_data = pdvn_extract_training_data(output_graph)  # type: ignore[arg-type]  # doesn't understand it is AND/OR graph
