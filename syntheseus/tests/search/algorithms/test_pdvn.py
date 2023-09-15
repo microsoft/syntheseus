@@ -176,7 +176,7 @@ class TestPDVN_MCTS(BaseAlgorithmTest):
         assert math.isclose(
             output_graph.root_node.data["pdvn_mcts_v_syn"],
             2.6 / 4,
-        ), "v_syn should be 0.4 average(0, 0.8, 0.8, 1.0)"
+        ), "v_syn should be 0.65 average(0, 0.8, 0.8, 1.0)"
         assert math.isclose(
             output_graph.root_node.data["pdvn_mcts_v_cost"],
             10 / 4,
