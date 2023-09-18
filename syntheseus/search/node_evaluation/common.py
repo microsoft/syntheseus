@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import Union
 
 from syntheseus.search.chem import BackwardReaction
 from syntheseus.search.graph.and_or import AndNode
@@ -37,15 +38,19 @@ class ReactionModelLogProbCost(ReactionModelBasedEvaluator[AndNode]):
         return [-v for v in super()._evaluate_nodes(nodes, graph)]
 
 
-class ReactionModelProbPolicy(ReactionModelBasedEvaluator[MolSetNode]):
-    """Evaluator that uses the reactions' probability to form a policy (useful for OR-MCTS)."""
+class ReactionModelProbPolicy(ReactionModelBasedEvaluator[Union[MolSetNode, AndNode]]):
+    """Evaluator that uses the reactions' probability to form a policy (useful for MCTS)."""
 
     def __init__(self, **kwargs) -> None:
         kwargs["normalize"] = kwargs.get("normalize", True)  # set `normalize = True` by default
         super().__init__(return_log=False, **kwargs)
 
-    def _get_reaction(self, node: MolSetNode, graph) -> BackwardReaction:
-        parents = list(graph.predecessors(node))
-        assert len(parents) == 1, "Graph must be a tree"
-
-        return graph._graph.edges[parents[0], node]["reaction"]
+    def _get_reaction(self, node: Union[MolSetNode, AndNode], graph) -> BackwardReaction:
+        if isinstance(node, MolSetNode):
+            parents = list(graph.predecessors(node))
+            assert len(parents) == 1, "Graph must be a tree"
+            return graph._graph.edges[parents[0], node]["reaction"]
+        elif isinstance(node, AndNode):
+            return node.reaction
+        else:
+            raise ValueError(f"ReactionModelProbPolicy does not support nodes of type {type(node)}")
