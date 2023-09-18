@@ -25,6 +25,7 @@ from pathlib import Path
 from pprint import pformat
 from typing import Any, Dict, Iterator, List, Optional, cast
 
+import yaml
 from omegaconf import MISSING, DictConfig, OmegaConf
 from tqdm import tqdm
 
@@ -73,7 +74,7 @@ class MCTSConfig:
     policy_class: str = "ReactionModelProbPolicy"
     policy_kwargs: Dict[str, Any] = field(default_factory=dict)
 
-    bound_constant: float = 1e2
+    bound_constant: float = 1.0
     bound_function_class: str = "pucb_bound"
 
 
@@ -111,7 +112,7 @@ class SearchConfig(BackwardModelConfig):
     num_routes_to_plot: int = 5  # Number of routes to extract and plot for a quick check
 
 
-def run_from_config(config: SearchConfig) -> None:
+def run_from_config(config: SearchConfig) -> Path:
     set_random_seed(0)
 
     print("Running search with the following config:")
@@ -304,10 +305,49 @@ def run_from_config(config: SearchConfig) -> None:
         with open(results_dir_current_run / "stats.json", "wt") as f_combined_stats:
             f_combined_stats.write(json.dumps(combined_stats, indent=2))
 
+    return results_dir_current_run
 
-def main(argv: Optional[List[str]]) -> None:
+
+def main(argv: Optional[List[str]]) -> Path:
     config: SearchConfig = cli_get_config(argv=argv, config_cls=SearchConfig)
-    run_from_config(config)
+
+    def _warn_will_not_use_defaults(message: str) -> None:
+        logger.warning(f"{message}; no model-specific search hyperparameters will be used")
+
+    defaults_file_path = Path(__file__).parent / "search_config.yml"
+    if not defaults_file_path.exists():
+        _warn_will_not_use_defaults(f"File {defaults_file_path} does not exist")
+    else:
+        with open(defaults_file_path, "rt") as f_defaults:
+            defaults = yaml.safe_load(f_defaults)
+
+        if config.search_algorithm not in defaults:
+            _warn_will_not_use_defaults(
+                f"Hyperparameter defaults file has no entry for {config.search_algorithm}"
+            )
+        else:
+            search_algorithm_defaults = defaults[config.search_algorithm]
+
+            model_name = config.model_class.name
+            if model_name not in search_algorithm_defaults:
+                _warn_will_not_use_defaults(
+                    f"Hyperparameter defaults file has no entry for {model_name}"
+                )
+            else:
+                relevant_defaults = search_algorithm_defaults[model_name]
+                logger.info(
+                    f"Using hyperparameter defaults from {defaults_file_path}: {relevant_defaults}"
+                )
+
+                # We now parse the config again (we could not have included the defaults earlier as
+                # we did not know the search algorithm and model class before the first parsing).
+                config = cli_get_config(
+                    argv=argv,
+                    config_cls=SearchConfig,
+                    defaults={f"{config.search_algorithm}_config": relevant_defaults},
+                )
+
+    return run_from_config(config)
 
 
 if __name__ == "__main__":

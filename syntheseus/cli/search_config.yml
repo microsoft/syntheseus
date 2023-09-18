@@ -1,0 +1,56 @@
+mcts:
+  Chemformer:
+    bound_constant: 1
+    policy_kwargs:
+      temperature: 8.0
+    value_function_kwargs:
+      constant: 0.75
+  GLN:
+    bound_constant: 100
+    policy_kwargs:
+      temperature: 4.0
+    value_function_kwargs:
+      constant: 0.5
+  LocalRetro:
+    bound_constant: 1
+    policy_kwargs:
+      temperature: 4.0
+    value_function_kwargs:
+      constant: 0.5
+  MEGAN:
+    bound_constant: 1
+    policy_kwargs:
+      clip_probability_max: 0.9999
+      clip_probability_min: 1.0e-05
+      temperature: 2.0
+    value_function_kwargs:
+      constant: 0.75
+  MHNreact:
+    bound_constant: 1
+    policy_kwargs:
+      temperature: 8.0
+    value_function_kwargs:
+      constant: 0.5
+  RetroKNN:
+    bound_constant: 1
+    policy_kwargs:
+      temperature: 8.0
+    value_function_kwargs:
+      constant: 0.75
+  RootAligned:
+    bound_constant: 10
+    policy_kwargs:
+      clip_probability_max: 0.999
+      clip_probability_min: 1.0e-05
+      temperature: 8.0
+    value_function_kwargs:
+      constant: 0.5
+retro_star:
+  MEGAN:
+    and_node_cost_fn_kwargs:
+      clip_probability_max: 0.99
+      clip_probability_min: 1.0e-05
+  RootAligned:
+    and_node_cost_fn_kwargs:
+      clip_probability_max: 0.9999
+      clip_probability_min: 1.0e-08
