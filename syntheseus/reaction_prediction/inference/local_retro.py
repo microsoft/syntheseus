@@ -113,10 +113,16 @@ class LocalRetroModel(BackwardReactionModel):
 
         batch_predictions = []
         for idx, input in enumerate(inputs):
+            try:
+                raw_str_results = get_k_predictions(test_id=idx, args=self.args)[1][0]
+            except RuntimeError:
+                # In very rare cases we may get `rdkit` errors.
+                raw_str_results = []
+
             # We have to `eval` the predictions as they come rendered into strings. Second tuple
             # component is empirically (on USPTO-50K test set) in [0, 1], resembling a probability,
             # but does not sum up to 1.0 (usually to something in [0.5, 2.0]).
-            raw_results = list(map(eval, get_k_predictions(test_id=idx, args=self.args)[1][0]))
+            raw_results = [eval(str_result) for str_result in raw_str_results]
 
             if raw_results:
                 raw_outputs, probabilities = zip(*raw_results)
