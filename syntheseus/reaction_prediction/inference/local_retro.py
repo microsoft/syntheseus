@@ -83,8 +83,8 @@ class LocalRetroModel(BackwardReactionModel):
         return collate_molgraphs_test([(None, graph, None) for graph in graphs])[1]
 
     def _build_batch_predictions(
-        self, batch, num_results, inputs, batch_atom_logits, batch_bond_logits
-    ):
+        self, batch, num_results: int, inputs: List[Molecule], batch_atom_logits, batch_bond_logits
+    ) -> List[BackwardPredictionList]:
         from local_retro.scripts.Decode_predictions import get_k_predictions
         from local_retro.scripts.get_edit import combined_edit, get_bg_partition
 
