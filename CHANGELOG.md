@@ -27,6 +27,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ### Fixed
 
 - Fix bug where standardizing MolSetGraphs crashed ([#24](https://github.com/microsoft/syntheseus/pull/24)) ([@austint])
+- Guard against rare issues in LocalRetro ([#31](https://github.com/microsoft/syntheseus/pull/31)) ([@kmaziarz])
 - Change default node depth to infinity ([#16](https://github.com/microsoft/syntheseus/pull/16)) ([@austint])
 - Adapt tutorials to the renaming from PR #9 ([#17](https://github.com/microsoft/syntheseus/pull/17)) ([@jagarridotorres])
 - Fix error handling in MEGAN ([#29](https://github.com/microsoft/syntheseus/pull/29)) ([@kmaziarz])
