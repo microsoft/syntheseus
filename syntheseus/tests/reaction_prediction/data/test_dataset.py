@@ -1,10 +1,6 @@
 import pytest
 
-from syntheseus.reaction_prediction.data.dataset import (
-    DataFold,
-    DiskReactionDataset,
-    ReactionDataset,
-)
+from syntheseus.reaction_prediction.data.dataset import DataFold, DiskReactionDataset
 from syntheseus.reaction_prediction.data.reaction_sample import ReactionSample
 
 
@@ -22,7 +18,7 @@ def test_save_and_load(tmp_path, mapped):
     ]
 
     for fold in DataFold:
-        ReactionDataset.save_samples_to_file(data_dir=tmp_path, fold=fold, samples=samples)
+        DiskReactionDataset.save_samples_to_file(data_dir=tmp_path, fold=fold, samples=samples)
 
     # Now try to load the data we just saved.
     dataset = DiskReactionDataset(tmp_path, sample_cls=sample_cls)

@@ -30,22 +30,6 @@ class ReactionDataset(Generic[SampleType]):
     def get_num_samples(self, fold: DataFold) -> int:
         pass
 
-    @classmethod
-    def get_data_path(cls, data_dir: Union[str, Path], fold: DataFold) -> Path:
-        return Path(data_dir) / f"{fold.value}.jsonl"
-
-    @classmethod
-    def sample_from_json(cls, data: str, sample_cls: Type[SampleType]) -> SampleType:
-        return sample_cls.from_dict(json.loads(data))
-
-    @classmethod
-    def save_samples_to_file(
-        cls, data_dir: Union[str, Path], fold: DataFold, samples: Iterable[SampleType]
-    ) -> None:
-        with open(ReactionDataset.get_data_path(data_dir=data_dir, fold=fold), "wt") as f:
-            for sample in samples:
-                f.write(json.dumps(asdict_extended(sample)) + "\n")
-
 
 class DiskReactionDataset(ReactionDataset[SampleType]):
     def __init__(
@@ -61,7 +45,7 @@ class DiskReactionDataset(ReactionDataset[SampleType]):
         self._num_samples: Dict[DataFold, int] = {}
 
     def _get_lines(self, fold: DataFold) -> Iterable[str]:
-        data_path = ReactionDataset.get_data_path(data_dir=self._data_dir, fold=fold)
+        data_path = DiskReactionDataset.get_data_path(data_dir=self._data_dir, fold=fold)
 
         if not data_path.exists():
             return []
@@ -71,7 +55,7 @@ class DiskReactionDataset(ReactionDataset[SampleType]):
 
     def __getitem__(self, fold: DataFold) -> Iterable[SampleType]:
         yield from parallelize(
-            partial(ReactionDataset.sample_from_json, sample_cls=self._sample_cls),
+            partial(DiskReactionDataset.sample_from_json, sample_cls=self._sample_cls),
             self._get_lines(fold),
             num_processes=self._num_processes,
         )
@@ -81,3 +65,19 @@ class DiskReactionDataset(ReactionDataset[SampleType]):
             self._num_samples[fold] = ilen(self._get_lines(fold))
 
         return self._num_samples[fold]
+
+    @classmethod
+    def get_data_path(cls, data_dir: Union[str, Path], fold: DataFold) -> Path:
+        return Path(data_dir) / f"{fold.value}.jsonl"
+
+    @classmethod
+    def sample_from_json(cls, data: str, sample_cls: Type[SampleType]) -> SampleType:
+        return sample_cls.from_dict(json.loads(data))
+
+    @classmethod
+    def save_samples_to_file(
+        cls, data_dir: Union[str, Path], fold: DataFold, samples: Iterable[SampleType]
+    ) -> None:
+        with open(DiskReactionDataset.get_data_path(data_dir=data_dir, fold=fold), "wt") as f:
+            for sample in samples:
+                f.write(json.dumps(asdict_extended(sample)) + "\n")
