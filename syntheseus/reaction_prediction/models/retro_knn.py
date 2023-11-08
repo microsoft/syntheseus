@@ -3,37 +3,6 @@ import torch.nn.functional as F
 from torch import nn
 
 
-def reorder_efeat(g, efeat):
-    sg = g.remove_self_loop()  # in case g includes self-loop
-    atom_pair_list = torch.transpose(sg.adjacency_matrix().coalesce().indices(), 0, 1).cpu()
-    atom_pair_idx1 = atom_pair_list[:, 0].tolist()
-    atom_pair_idx2 = atom_pair_list[:, 1].tolist()
-
-    num_edges = len(atom_pair_idx1)
-
-    start_idx, end_idx = sg.edges()
-    start_idx = start_idx.cpu().tolist()
-    end_idx = end_idx.cpu().tolist()
-
-    assert num_edges == len(start_idx)
-
-    idx_map = [-1] * num_edges
-
-    for i in range(num_edges):
-        s = start_idx[i]
-        t = end_idx[i]
-
-        for j in range(num_edges):
-            if atom_pair_idx1[j] == s and atom_pair_idx2[j] == t:
-                idx_map[i] = j
-                break
-        else:
-            raise Exception("Not found")
-
-    idx_map = torch.LongTensor(idx_map).cuda()
-    return efeat[idx_map, ...]
-
-
 class Adapter(nn.Module):
     def __init__(self, dim, k=32):
         from dgl.nn import GINEConv
@@ -61,7 +30,6 @@ class Adapter(nn.Module):
     def forward(self, g, nfeat, efeat, ndist, edist):
         from local_retro.scripts.model_utils import pair_atom_feats
 
-        efeat = reorder_efeat(g, efeat)
         x = self.gnn(g, nfeat, efeat)
         x = F.relu(x)
 
