@@ -66,17 +66,17 @@ class DiskReactionDataset(ReactionDataset[SampleType]):
 
         return self._num_samples[fold]
 
-    @classmethod
-    def get_data_path(cls, data_dir: Union[str, Path], fold: DataFold) -> Path:
+    @staticmethod
+    def get_data_path(data_dir: Union[str, Path], fold: DataFold) -> Path:
         return Path(data_dir) / f"{fold.value}.jsonl"
 
-    @classmethod
-    def sample_from_json(cls, data: str, sample_cls: Type[SampleType]) -> SampleType:
+    @staticmethod
+    def sample_from_json(data: str, sample_cls: Type[SampleType]) -> SampleType:
         return sample_cls.from_dict(json.loads(data))
 
-    @classmethod
+    @staticmethod
     def save_samples_to_file(
-        cls, data_dir: Union[str, Path], fold: DataFold, samples: Iterable[SampleType]
+        data_dir: Union[str, Path], fold: DataFold, samples: Iterable[SampleType]
     ) -> None:
         with open(DiskReactionDataset.get_data_path(data_dir=data_dir, fold=fold), "wt") as f:
             for sample in samples:
