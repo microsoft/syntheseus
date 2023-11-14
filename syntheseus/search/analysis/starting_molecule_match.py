@@ -28,31 +28,30 @@ def is_route_with_starting_mols(
     )
 
 
-def partition_set(A: list[T], k: int) -> Iterable[list[list[T]]]:
+def split_into_subsets(A: list[T], k: int) -> Iterable[list[list[T]]]:
     """
-    Enumerates all possible ways to partition a list A into k disjoint subsets which are non-empty
-    (in all possible orders).
+    Enumerate all possible ways to create k subsets from a list A such that none of the k subsets are empty,
+    the union of the sets is A, and the order of the subsets *does* matter.
 
     This function is easiest to explain by example:
 
     A single partition is just the list A itself.
 
-    >>> list(partition_set([1, 2, 3], 1))
-    >>> [[[1, 2, 3]]]
+    >>> list(split_into_subsets([1, 2], 1))
+    >>> [[[1, 2]]]
 
-    For k=2, there are 3 possible partitions each with two possible orders.
+    For k=2, there are 4 possible subsets meaning 16 pairs of subsets,
+    but only 8 of them have non-empty subsets which include every element once.
 
-    >>> list(partition_set([1, 2, 3], 2))
-    >>> [[[1], [2, 3]], [[2], [1, 3]], [[3], [1, 2]], [[1, 2], [3]], [[1, 3], [2]], [[2, 3], [1]]]
+    >>> list(split_into_subsets([1, 2,], 2))
+    >>> [[[1], [2]], [[1], [1,2]], [[2], [1]], [[2], [1,2]], [[1,2], [1]], [[1,2], [2]]]
+    >>> [[[1], [2]], [[1], [1, 2]], [[2], [1]], [[2], [1, 2]], [[1, 2], [1]], [[1, 2], [2]], [[1, 2], [1, 2]]]
 
-    For k=3, there is only 1 possible partition but 6 possible orders.
+    The implementation just uses itertools.combinations and itertools.products to enumerate all possible partions,
+    and simply rejects those which do not sum up to the entire set.
+    It is not very efficient for large A or large k, so use with caution.
 
-    >>> list(partition_set([1, 2, 3], 3))
-    >>> [[[1], [2], [3]], [[1], [3], [2]], [[2], [1], [3]], [[2], [3], [1]], [[3], [1], [2]], [[3], [2], [1]]]
-
-    This function uses a recursive implementation.
-    First it partitions A into 2 (where the second partition has at least k-1 elements),
-    then it recursively partitions the second partition into (k-1) partitions.
+    NOTE: the efficiency of this method could definitely be improved later.
     """
 
     # Check 1: elements of list are unique
@@ -61,24 +60,17 @@ def partition_set(A: list[T], k: int) -> Iterable[list[list[T]]]:
     # Check 2: k is valid
     assert k >= 1
 
-    # Base case 1: list is empty
+    # Base case: list is empty
     if len(A) == 0:
         return
 
-    # Base case 2: just a single partition
-    if k == 1:
-        yield [A]
-        return
-
-    # Main case: partition A into two parts, then recursively partition the second part
-    max_size_of_first_partition = len(A) - k + 1
-    for first_partition_size in range(1, max_size_of_first_partition + 1):
-        for first_partition in itertools.combinations(A, first_partition_size):
-            # Find the remaining elements to partition.
-            # NOTE: this assumes that the elements of A are unique.
-            remaining_elements = [x for x in A if x not in first_partition]
-            for subsequent_partitions in partition_set(remaining_elements, k - 1):
-                yield [list(first_partition)] + subsequent_partitions
+    # Iterate through all subsets
+    power_set_non_empty = itertools.chain.from_iterable(
+        itertools.combinations(A, r) for r in range(1, len(A) + 1)
+    )
+    for subsets in itertools.product(power_set_non_empty, repeat=k):
+        if set(itertools.chain.from_iterable(subsets)) == set(A):
+            yield [list(s) for s in subsets]
 
 
 def _starting_mols_under_each_node(graph: AndOrGraph) -> dict[ANDOR_NODE, set[Molecule]]:
@@ -148,7 +140,9 @@ def _is_route_with_starting_mols(
             grandchildren = list(graph.successors(rxn_child))
             if not any(gc in forbidden_nodes for gc in grandchildren):
                 # Main recurisve call: we partition K molecules among N children and check whether
-                for start_mol_partition in partition_set(list(starting_mols), len(grandchildren)):
+                for start_mol_partition in split_into_subsets(
+                    list(starting_mols), len(grandchildren)
+                ):
                     for gc, allocated_start_mols in zip(grandchildren, start_mol_partition):
                         assert isinstance(gc, OrNode)
                         if not _is_route_with_starting_mols(
