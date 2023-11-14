@@ -248,7 +248,7 @@ def retrosynthesis_task6() -> RetrosynthesisTask:
     CCCOC -> CC + COC
 
     There are 2 routes of length 2:
-    CCCO -> CCCO + C
+    CCCOC -> CCCO + C
     C -> O
 
     CCCOC -> CCCOO
