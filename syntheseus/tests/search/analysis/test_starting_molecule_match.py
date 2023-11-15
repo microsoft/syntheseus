@@ -65,12 +65,10 @@ class TestStartingMoleculeMatch:
         self, andor_graph_non_minimal: AndOrGraph, starting_smiles: str, expected_ans: bool
     ):
         starting_mols = {Molecule(s) for s in starting_smiles.split(".")}
-        assert (
-            starting_molecule_match.is_route_with_starting_mols(
-                andor_graph_non_minimal, starting_mols
-            )
-            == expected_ans
+        match = starting_molecule_match.is_route_with_starting_mols(
+            andor_graph_non_minimal, starting_mols
         )
+        assert match == expected_ans
 
     @pytest.mark.parametrize(
         "starting_smiles,expected_ans",
@@ -88,9 +86,7 @@ class TestStartingMoleculeMatch:
         self, andor_graph_with_many_routes: AndOrGraph, starting_smiles: str, expected_ans: bool
     ):
         starting_mols = {Molecule(s) for s in starting_smiles.split(".")}
-        assert (
-            starting_molecule_match.is_route_with_starting_mols(
-                andor_graph_with_many_routes, starting_mols
-            )
-            == expected_ans
+        match = starting_molecule_match.is_route_with_starting_mols(
+            andor_graph_with_many_routes, starting_mols
         )
+        assert match == expected_ans

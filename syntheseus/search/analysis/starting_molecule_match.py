@@ -5,9 +5,10 @@ from __future__ import annotations
 import itertools
 import typing
 from collections.abc import Iterable
+from typing import Optional
 
 from syntheseus.search.chem import Molecule
-from syntheseus.search.graph.and_or import ANDOR_NODE, AndOrGraph, OrNode
+from syntheseus.search.graph.and_or import ANDOR_NODE, AndNode, AndOrGraph, OrNode
 
 T = typing.TypeVar("T")
 
@@ -24,7 +25,6 @@ def is_route_with_starting_mols(
         graph.root_node,
         starting_mols,
         forbidden_nodes,
-        _starting_mols_under_each_node(graph),
     )
 
 
@@ -73,6 +73,42 @@ def split_into_subsets(A: list[T], k: int) -> Iterable[list[list[T]]]:
             yield [list(s) for s in subsets]
 
 
+def _is_solvable_from_starting_mols(
+    graph: AndOrGraph,
+    starting_mols: set[Molecule],
+    forbidden_nodes: Optional[set[ANDOR_NODE]] = None,
+) -> dict[ANDOR_NODE, bool]:
+    """Get whether each node is solvable only from a specified set of starting molecules."""
+    forbidden_nodes = forbidden_nodes or set()
+
+    # Which nodes are solvable because they contain a starting molecule?
+    node_to_contains_start_mol = {
+        n: (isinstance(n, OrNode) and n.mol in starting_mols) for n in graph.nodes()
+    }
+    node_to_solvable = {n: False for n in graph.nodes()}
+
+    # Do passes through all nodes
+    update_happened = True
+    while update_happened:
+        update_happened = False
+        for n in graph.nodes():
+            successors_are_solvable = [node_to_solvable[c] for c in graph.successors(n)]
+            if n in forbidden_nodes:
+                new_solvable = False  # regardless of successors, forbidden nodes are not solvable
+            elif isinstance(n, OrNode):
+                new_solvable = any(successors_are_solvable) or node_to_contains_start_mol[n]
+            elif isinstance(n, AndNode):
+                new_solvable = all(successors_are_solvable)
+            else:
+                raise ValueError
+
+            if new_solvable != node_to_solvable[n]:
+                node_to_solvable[n] = new_solvable
+                update_happened = True
+
+    return node_to_solvable
+
+
 def _starting_mols_under_each_node(graph: AndOrGraph) -> dict[ANDOR_NODE, set[Molecule]]:
     """Get set of molecules reachable under each node in the graph."""
 
@@ -100,19 +136,24 @@ def _is_route_with_starting_mols(
     start_node: OrNode,
     starting_mols: set[Molecule],
     forbidden_nodes: set[ANDOR_NODE],
-    node_to_all_reachable_starting_mols: dict[ANDOR_NODE, set[Molecule]],
+    node_to_solvable: Optional[dict[ANDOR_NODE, bool]] = None,
+    node_to_reachable_starting_mols: Optional[dict[ANDOR_NODE, set[Molecule]]] = None,
 ) -> bool:
     """
     Recursive method to check whether there is a route in the graph,
     starting from `start_node` and excluding `forbidden_nodes`,
     whose leaves and exactly `starting_mols`.
 
-    To prune the search, we use the `node_to_all_reachable_starting_mols` dictionary,
-    which contains the set of all purchasable molecules reachable under each node (not necessarily part of a single route though).
-    We use this to prune the search early: if some molecules cannot be reached at all, there is no point checking whether
-    they might be reachable from a single route.
+    To prune the search early, we use the `node_to_solvable` dictionary,
+    which contains True if a node *might* be solvable from only the starting molecules.
     """
     assert start_node in graph
+
+    # Compute node to solvable if not provided
+    if node_to_solvable is None:
+        node_to_solvable = _is_solvable_from_starting_mols(graph, starting_mols, forbidden_nodes)
+    if node_to_reachable_starting_mols is None:
+        node_to_reachable_starting_mols = _starting_mols_under_each_node(graph)
 
     # Base case 1: starting mols is empty
     if len(starting_mols) == 0:
@@ -122,8 +163,11 @@ def _is_route_with_starting_mols(
     if start_node in forbidden_nodes:
         return False
 
-    # Base case 3: starting are not reachable at all from the start node
-    if not (starting_mols <= node_to_all_reachable_starting_mols[start_node]):
+    # Base case 3: start node not solvable
+    if (
+        not node_to_solvable[start_node]
+        or not node_to_reachable_starting_mols[start_node] >= starting_mols
+    ):
         return False
 
     # Base case 4: there is just one starting molecule and this OrNode contains it.
@@ -135,22 +179,27 @@ def _is_route_with_starting_mols(
     # We do this by explicitly trying to find this synthesis route.
     for rxn_child in graph.successors(start_node):
         # If the starting molecules are not reachable from this reaction child, abort the search
-        if node_to_all_reachable_starting_mols[rxn_child] >= starting_mols:
+        if (
+            node_to_solvable[rxn_child]
+            and node_to_reachable_starting_mols[rxn_child] >= starting_mols
+        ):
             # Also abort search if any grandchildren are forbidden
             grandchildren = list(graph.successors(rxn_child))
             if not any(gc in forbidden_nodes for gc in grandchildren):
                 # Main recurisve call: we partition K molecules among N children and check whether
+                # each child is solvable with its allocated molecules.
                 for start_mol_partition in split_into_subsets(
                     list(starting_mols), len(grandchildren)
                 ):
                     for gc, allocated_start_mols in zip(grandchildren, start_mol_partition):
                         assert isinstance(gc, OrNode)
                         if not _is_route_with_starting_mols(
-                            graph,
-                            gc,
-                            set(allocated_start_mols),
-                            forbidden_nodes | {start_node, rxn_child},
-                            node_to_all_reachable_starting_mols,
+                            graph=graph,
+                            start_node=gc,
+                            starting_mols=set(allocated_start_mols),
+                            forbidden_nodes=forbidden_nodes | {start_node, rxn_child},
+                            node_to_solvable=node_to_solvable,
+                            node_to_reachable_starting_mols=node_to_reachable_starting_mols,
                         ):
                             break
                     else:  # i.e. loop finished without breaking
