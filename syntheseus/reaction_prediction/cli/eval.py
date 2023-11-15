@@ -339,6 +339,11 @@ def compute_metrics(
             ]
             ground_truth_match_metrics.add(ground_truth_matches)
 
+            for prediction, ground_truth_match in zip(
+                prediction_list.predictions, ground_truth_matches
+            ):
+                prediction.metadata["ground_truth_match"] = ground_truth_match
+
             if back_translation_model is not None:
                 assert back_translation_metrics is not None
                 assert back_translation_combined_metrics is not None
