@@ -426,8 +426,8 @@ def compute_metrics(
         mrr=ground_truth_match_metrics.mrr,
         min_num_predictions=min(num_predictions),
         max_num_predictions=max(num_predictions),
-        mean_num_predictions=mean(num_predictions),
-        median_num_predictions=median(num_predictions),
+        mean_num_predictions=float(mean(num_predictions)),
+        median_num_predictions=float(median(num_predictions)),
         model_time_total=compute_total_time(model_timing_results),
         **extra_args,
     )
