@@ -91,6 +91,10 @@ def test_print_and_save():
         num_samples=1,
         top_k=[0.0] * 50,
         mrr=0.0,
+        min_num_predictions=1,
+        max_num_predictions=50,
+        mean_num_predictions=25.0,
+        median_num_predictions=10.0,
         model_time_total=ModelTimingResults(time_model_call=1.0, time_post_processing=0.1),
         predictions=[
             BackwardPredictionList(
