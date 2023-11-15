@@ -31,7 +31,7 @@ class Prediction(GenericModel, Generic[InputType, OutputType]):
     score: Optional[float] = None  # Any other score.
     reaction: Optional[str] = None  # Reaction smiles.
     rxnid: Optional[int] = None  # Template id, if applicable.
-    metadata: Optional[Dict[str, Any]] = {}  # Additional metadata.
+    metadata: Dict[str, Any] = {}  # Additional metadata.
 
     def get_prob(self) -> float:
         if self.probability is not None:
@@ -67,7 +67,7 @@ class PredictionList(GenericModel, Generic[InputType, OutputType]):
 
     input: InputType
     predictions: List[Prediction[InputType, OutputType]]
-    metadata: Optional[Dict[str, Any]] = {}
+    metadata: Dict[str, Any] = {}
 
     def truncated(self, num_results: int) -> PredictionList[InputType, OutputType]:
         fields = self.dict()
