@@ -22,6 +22,7 @@ from dataclasses import dataclass, field, fields
 from enum import Enum
 from functools import partial
 from itertools import islice
+from statistics import mean, median
 from typing import Any, Callable, Dict, Generic, Iterable, List, Optional, Set, Union, cast
 
 import numpy as np
@@ -148,6 +149,10 @@ class EvalResults:
     num_samples: int
     top_k: List[float]
     mrr: float
+    min_num_predictions: int
+    max_num_predictions: int
+    mean_num_predictions: float
+    median_num_predictions: float
     model_time_total: ModelTimingResults
     back_translation_top_k: Optional[List[float]] = None
     back_translation_mrr: Optional[float] = None
@@ -290,6 +295,8 @@ def compute_metrics(
     test_dataset: Iterable[ReactionSample] = dataset[fold]
     test_dataset_size = dataset.get_num_samples(fold)
 
+    num_predictions: List[int] = []
+
     if num_dataset_truncation is not None and num_dataset_truncation < test_dataset_size:
         print(
             f"Truncating the dataset from {test_dataset_size} to {num_dataset_truncation} samples"
@@ -334,6 +341,8 @@ def compute_metrics(
 
         batch_back_translation_predictions: List[List[PredictionList]] = []
         for input, output, prediction_list in zip(inputs, outputs, batch_predictions):
+            num_predictions.append(len(prediction_list.predictions))
+
             ground_truth_matches = [
                 prediction.output == output for prediction in prediction_list.predictions
             ]
@@ -415,6 +424,10 @@ def compute_metrics(
         num_samples=ground_truth_match_metrics.num_samples,
         top_k=ground_truth_match_metrics.top_k,
         mrr=ground_truth_match_metrics.mrr,
+        min_num_predictions=min(num_predictions),
+        max_num_predictions=max(num_predictions),
+        mean_num_predictions=mean(num_predictions),
+        median_num_predictions=median(num_predictions),
         model_time_total=compute_total_time(model_timing_results),
         **extra_args,
     )
