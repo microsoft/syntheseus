@@ -61,5 +61,18 @@ class SynthesisGraph(BaseReactionGraph[BackwardReaction]):
     ) -> Sequence[BackwardReaction]:
         raise NotImplementedError
 
+    def get_starting_molecules(self) -> set[Molecule]:
+        """
+        Get the 'starting molecules' for this route,
+        i.e. reactant molecules which are not a product of a child reaction.
+        """
+        output: set[Molecule] = set()
+        for rxn in self._graph.nodes:
+            successor_products = {rxn.product for rxn in self.successors(rxn)}
+            for reactant in rxn.reactants:
+                if reactant not in successor_products:
+                    output.add(reactant)
+        return output
+
     def __str__(self) -> str:
         return str([rxn.reaction_smiles for rxn in self.nodes()])
