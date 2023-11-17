@@ -31,7 +31,10 @@ class Prediction(GenericModel, Generic[InputType, OutputType]):
     score: Optional[float] = None  # Any other score.
     reaction: Optional[str] = None  # Reaction smiles.
     rxnid: Optional[int] = None  # Template id, if applicable.
-    metadata: Dict[str, Any] = {}  # Additional metadata.
+
+    # Dictionary to hold additional metadata. Note that we use a mutable default value here, which
+    # could be a problem in plain Python, but is handled correctly by `pydantic`.
+    metadata: Dict[str, Any] = {}
 
     def get_prob(self) -> float:
         if self.probability is not None:
@@ -67,6 +70,8 @@ class PredictionList(GenericModel, Generic[InputType, OutputType]):
 
     input: InputType
     predictions: List[Prediction[InputType, OutputType]]
+
+    # Dictionary to hold additional metadata (see note above regarding the mutable default value).
     metadata: Dict[str, Any] = {}
 
     def truncated(self, num_results: int) -> PredictionList[InputType, OutputType]:
