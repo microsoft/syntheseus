@@ -203,7 +203,7 @@ class AndOrGraph(RetrosynthesisSearchGraph[ANDOR_NODE]):
         root_reactions = list(subgraph.successors(self.root_node))
         assert (
             len(root_reactions) == 1
-        ), "There appears to be more than 1 reaction for the root node."
+        ), f"There appears to be {len(root_reactions)} reactions for the root node (expected exactly 1)."
         new_graph = SynthesisGraph(root_node=root_reactions[0].reaction)
 
         # Add all nodes and edges
