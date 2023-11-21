@@ -34,6 +34,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 - Pin `pydantic` version to `1.*` ([#10](https://github.com/microsoft/syntheseus/pull/10)) ([@kmaziarz])
 - Fix compatibility with Python 3.7 ([#5](https://github.com/microsoft/syntheseus/pull/5)) ([@kmaziarz])
 - Pin `zipp` version to `<3.16` ([#11](https://github.com/microsoft/syntheseus/pull/11)) ([@kmaziarz])
+- Correct some typos and unclear error messages ([#39](https://github.com/microsoft/syntheseus/pull/39)) ([@austint])
 
 ## [0.1.0] - 2023-05-25
 
