@@ -17,7 +17,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ### Added
 - Add code for PDVN MCTS and extracting training data for policies and value functions ([#8](https://github.com/microsoft/syntheseus/pull/8)) ([@austint], [@fiberleif])
 - Add a top-level CLI for running end-to-end search ([#26](https://github.com/microsoft/syntheseus/pull/26)) ([@kmaziarz])
-- Release single-step evaluation framework and wrappers for several model types ([#14](https://github.com/microsoft/syntheseus/pull/14), [#15](https://github.com/microsoft/syntheseus/pull/15), [#20](https://github.com/microsoft/syntheseus/pull/20), [#32](https://github.com/microsoft/syntheseus/pull/32)) ([@kmaziarz])
+- Release single-step evaluation framework and wrappers for several model types ([#14](https://github.com/microsoft/syntheseus/pull/14), [#15](https://github.com/microsoft/syntheseus/pull/15), [#20](https://github.com/microsoft/syntheseus/pull/20), [#32](https://github.com/microsoft/syntheseus/pull/32), [#35](https://github.com/microsoft/syntheseus/pull/35)) ([@kmaziarz])
 - Release checkpoints for all supported single-step model types ([#21](https://github.com/microsoft/syntheseus/pull/21)) ([@kmaziarz])
 - Support `*.csv` and `*.smi` formats for the single-step evaluation data ([#33](https://github.com/microsoft/syntheseus/pull/33)) ([@kmaziarz])
 - Implement node evaluators commonly used in MCTS and Retro* ([#23](https://github.com/microsoft/syntheseus/pull/23), [#27](https://github.com/microsoft/syntheseus/pull/27)) ([@kmaziarz])
@@ -33,7 +33,6 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 - Adapt tutorials to the renaming from PR #9 ([#17](https://github.com/microsoft/syntheseus/pull/17)) ([@jagarridotorres])
 - Pin `pydantic` version to `1.*` ([#10](https://github.com/microsoft/syntheseus/pull/10)) ([@kmaziarz])
 - Fix compatibility with Python 3.7 ([#5](https://github.com/microsoft/syntheseus/pull/5)) ([@kmaziarz])
-- Pin `zipp` version to `<3.16` ([#11](https://github.com/microsoft/syntheseus/pull/11)) ([@kmaziarz])
 
 ## [0.1.0] - 2023-05-25
 

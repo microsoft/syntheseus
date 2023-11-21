@@ -15,14 +15,6 @@ steps:
 - task: CredScan@2
   inputs:
     toolMajorVersion: 'V2'
-- task: Semmle@1
-  inputs:
-    sourceCodeDirectory: '$(Build.SourcesDirectory)'
-    language: 'python'
-    querySuite: 'Recommended'
-    timeout: '1800'
-    ram: '16384'
-    addProjectDirToScanningExclusionList: true
 - task: ComponentGovernanceComponentDetection@0
   inputs:
     scanType: 'Register'
