@@ -68,7 +68,7 @@ class SynthesisGraph(BaseReactionGraph[BackwardReaction]):
         """
         output: set[Molecule] = set()
         for rxn in self._graph.nodes:
-            successor_products = {rxn.product for rxn in self.successors(rxn)}
+            successor_products = {child_rxn.product for child_rxn in self.successors(rxn)}
             for reactant in rxn.reactants:
                 if reactant not in successor_products:
                     output.add(reactant)
