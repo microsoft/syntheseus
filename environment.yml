@@ -17,8 +17,6 @@ dependencies:
   - pytest
   - pytest-cov
   - pre-commit
-  # Temporary pin to avoid the 3.16.0 release, which drops support for Python 3.7
-  - zipp<3.16
   - pip:
     # Additional dependencies of `syntheseus/reaction_prediction`
     - more_itertools
