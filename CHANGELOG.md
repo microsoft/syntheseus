@@ -24,6 +24,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 - Add option to terminate search when the first solution is found ([#13](https://github.com/microsoft/syntheseus/pull/13)) ([@austint])
 - Add code to extract routes in order found instead of by minimum cost ([#9](https://github.com/microsoft/syntheseus/pull/9)) ([@austint])
 - Declare support for type checking ([#4](https://github.com/microsoft/syntheseus/pull/4)) ([@kmaziarz])
+- Add method to extract precursors from `SynthesisGraph` objects ([#36](https://github.com/microsoft/syntheseus/pull/36)) ([@austint])
 
 ### Fixed
 
