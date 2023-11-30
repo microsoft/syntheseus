@@ -35,6 +35,31 @@ dev = [
   "pytest-cov",
   "pre-commit"
 ]
+chemformer = [
+  "chemformer @ git+https://github.com/kmaziarz/Chemformer.git"
+]
+local-retro = [
+  "local_retro @ git+https://github.com/kmaziarz/LocalRetro.git"
+]
+megan = [
+  "megan @ git+https://github.com/kmaziarz/megan.git"
+]
+mhn-react = [
+  "mhnreact @ git+https://github.com/kmaziarz/mhn-react.git"
+]
+retro-knn = [
+  "local_retro @ git+https://github.com/kmaziarz/LocalRetro.git",
+  "torch-scatter @ https://data.pyg.org/whl/torch-1.10.0%2Bcu113/torch_scatter-2.0.9-cp39-cp39-linux_x86_64.whl"
+]
+root-aligned = [
+  "root_aligned @ git+https://github.com/kmaziarz/RootAligned.git"
+]
+all-single-step = [
+  "syntheseus[chemformer,local-retro,megan,mhn-react,retro-knn,root-aligned]"
+]
+all = [
+  "syntheseus[vis,dev,all-single-step]"
+]
 
 [tool.setuptools.packages.find]
 # Guidance from: https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
