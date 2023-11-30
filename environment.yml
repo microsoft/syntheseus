@@ -1,25 +1,9 @@
-# Minimal environment for syntheseus
 name: syntheseus
 channels:
   - conda-forge
   - defaults
 dependencies:
-  # Core dependencies
-  - python>=3.7  # ideally 3.9+
+  - numpy
   - pip
-  - numpy  # required for some array computing
-  - rdkit  # required for molecule objects
-  - networkx
-  # Optional dependencies for visualization
-  - pillow
-  - python-graphviz
-  # For development
-  - pytest
-  - pytest-cov
-  - pre-commit
-  - pip:
-    # Additional dependencies of `syntheseus/reaction_prediction`
-    - more_itertools
-    - omegaconf
-    - pydantic>=1.10.5,<2  # earlier versions had a bug involving `default_factory` (see https://github.com/pydantic/pydantic/issues/5065), later are backward incompatible
-    - tqdm
+  - python>=3.7  # ideally 3.9+
+  - rdkit
