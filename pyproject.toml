@@ -58,7 +58,7 @@ all-single-step = [
   "syntheseus[chemformer,local-retro,megan,mhn-react,retro-knn,root-aligned]"
 ]
 all = [
-  "syntheseus[vis,dev,all-single-step]"
+  "syntheseus[viz,dev,all-single-step]"
 ]
 
 [tool.setuptools.packages.find]

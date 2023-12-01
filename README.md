@@ -56,7 +56,7 @@ Additionally, we also support GLN, but that requires a specialized environment a
 
 ### Reducing the number of dependencies
 
-To keep the environment smaller, you can replace the `all` option with a comma-separated subset of `{chemformer,local-retro,megan,mhn-react,retro-knn,root-aligned,vis,dev}` (`vis` and `dev` correspond to visuzalisation and development dependencies, respectively).
+To keep the environment smaller, you can replace the `all` option with a comma-separated subset of `{chemformer,local-retro,megan,mhn-react,retro-knn,root-aligned,viz,dev}` (`viz` and `dev` correspond to visuzalisation and development dependencies, respectively).
 For example, `pip install -e .[local-retro,root-aligned]` installs only LocalRetro and RootAligned.
 If installing a subset of models, you can also delete the lines in `environment_full.yml` marked with names of models you do not wish to use.
 
