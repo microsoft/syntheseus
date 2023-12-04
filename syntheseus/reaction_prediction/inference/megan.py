@@ -45,11 +45,11 @@ class MEGANModel(BackwardReactionModel):
         import gin
         import megan
 
-        # Extract the path containing the `megan` code.
-        project_root = Path(get_module_path(megan)).parent
+        # Extract the path to the `megan` module.
+        module_path = Path(get_module_path(megan))
 
-        os.environ["PROJECT_ROOT"] = str(project_root)
-        sys.path.insert(0, str(project_root / "megan"))
+        os.environ["PROJECT_ROOT"] = str(module_path.parent)
+        sys.path.insert(0, str(module_path))
 
         # The (seemingly unused) import below is needed for `gin` configurables to get registered.
         from bin.train import train_megan  # noqa: F401

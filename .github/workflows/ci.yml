@@ -27,6 +27,9 @@ jobs:
         channel-priority: true
         python-version: ${{ matrix.python-version }}
         environment-file: environment.yml
+    - name: Install syntheseus
+      run: |
+        pip install .[dev]
     - name: Run pre-commit
       run: |
         pre-commit run --verbose --all-files
