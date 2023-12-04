@@ -39,7 +39,7 @@ For full installation (including all supported models and dependencies for visua
 conda env create -f environment_full.yml
 conda activate syntheseus-full
 
-pip install -e .[all]
+pip install -e ".[all]"
 ```
 
 Both sets of instructions above assume you already cloned the repository via
@@ -57,7 +57,7 @@ Additionally, we also support GLN, but that requires a specialized environment a
 ### Reducing the number of dependencies
 
 To keep the environment smaller, you can replace the `all` option with a comma-separated subset of `{chemformer,local-retro,megan,mhn-react,retro-knn,root-aligned,viz,dev}` (`viz` and `dev` correspond to visuzalisation and development dependencies, respectively).
-For example, `pip install -e .[local-retro,root-aligned]` installs only LocalRetro and RootAligned.
+For example, `pip install -e ".[local-retro,root-aligned]"` installs only LocalRetro and RootAligned.
 If installing a subset of models, you can also delete the lines in `environment_full.yml` marked with names of models you do not wish to use.
 
 Syntheseus contains two subpackages: `reaction_prediction`, which deals with benchmarking single-step reaction models, and `search`, which can use any single-step model to perform multi-step search.
