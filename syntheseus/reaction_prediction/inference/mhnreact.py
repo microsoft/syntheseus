@@ -11,8 +11,6 @@ from collections import defaultdict
 from pathlib import Path
 from typing import List, Union
 
-import pandas as pd
-
 from syntheseus.interface.models import BackwardPredictionList, BackwardReactionModel
 from syntheseus.interface.molecule import Molecule
 from syntheseus.reaction_prediction.utils.inference import (
@@ -89,6 +87,7 @@ class MHNreactModel(BackwardReactionModel):
         return self.model.parameters()
 
     def __call__(self, inputs: List[Molecule], num_results: int) -> List[BackwardPredictionList]:
+        import pandas as pd
         import torch
 
         input_smiles_list = [inp.smiles for inp in inputs]
