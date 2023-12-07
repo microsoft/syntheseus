@@ -4,6 +4,12 @@ from typing import Iterable, List
 
 import pytest
 
+from syntheseus.cli.eval_single_step import (
+    EvalConfig,
+    EvalResults,
+    get_results,
+    print_and_save,
+)
 from syntheseus.interface.bag import Bag
 from syntheseus.interface.models import (
     BackwardPrediction,
@@ -11,12 +17,6 @@ from syntheseus.interface.models import (
     BackwardReactionModel,
 )
 from syntheseus.interface.molecule import Molecule
-from syntheseus.reaction_prediction.cli.eval import (
-    EvalConfig,
-    EvalResults,
-    get_results,
-    print_and_save,
-)
 from syntheseus.reaction_prediction.inference.config import BackwardModelClass
 from syntheseus.reaction_prediction.utils.metrics import ModelTimingResults
 

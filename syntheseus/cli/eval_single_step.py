@@ -4,7 +4,7 @@ Each of the model types can be loaded from a *single directory*, possibly contai
 (e.g. checkpoint, config, etc). See individual model wrappers for the model directory formats.
 
 Example invocation:
-    python ./retrosynthesis/reaction_prediction/cli/eval.py \
+    python ./cli/eval_single_step.py \
         data_dir=[DATA_DIR] \
         model_class=RetroKNN \
         model_dir=[MODEL_DIR]
