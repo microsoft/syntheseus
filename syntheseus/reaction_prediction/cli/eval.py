@@ -24,7 +24,6 @@ from itertools import islice
 from statistics import mean, median
 from typing import Any, Callable, Dict, Generic, Iterable, List, Optional, Set, cast
 
-import numpy as np
 from more_itertools import batched
 from omegaconf import MISSING, OmegaConf
 from tqdm import tqdm
@@ -112,8 +111,6 @@ class EvalResults:
     model_time_total: ModelTimingResults
     back_translation_top_k: Optional[List[float]] = None
     back_translation_mrr: Optional[float] = None
-    back_translation_combined_top_k: Optional[List[float]] = None
-    back_translation_combined_mrr: Optional[float] = None
     predictions: Optional[List[PredictionList]] = None
     back_translation_predictions: Optional[List[List[PredictionList]]] = None
     back_translation_time_total: Optional[ModelTimingResults] = None
@@ -238,7 +235,6 @@ def compute_metrics(
             raise ValueError("Back translation model should be a forward model")
 
         back_translation_metrics = TopKMetricsAccumulator(max_num_results=num_top_results)
-        back_translation_combined_metrics = TopKMetricsAccumulator(max_num_results=num_top_results)
 
     print(f"Testing model {model.__class__.__name__} with args {eval_args}")
 
@@ -311,7 +307,6 @@ def compute_metrics(
 
             if back_translation_model is not None:
                 assert back_translation_metrics is not None
-                assert back_translation_combined_metrics is not None
 
                 back_translation_results_with_timing = get_results(
                     back_translation_model,
@@ -342,12 +337,6 @@ def compute_metrics(
                 ]
 
                 back_translation_metrics.add(back_translation_matches)
-                if not back_translation_matches:
-                    back_translation_combined_metrics.add([])
-                else:
-                    back_translation_combined_metrics.add(
-                        list(np.array(ground_truth_matches) & np.array(back_translation_matches))
-                    )
 
         if include_predictions:
             all_predictions.extend(batch_predictions)
@@ -363,8 +352,6 @@ def compute_metrics(
         extra_args.update(
             back_translation_top_k=back_translation_metrics.top_k,
             back_translation_mrr=back_translation_metrics.mrr,
-            back_translation_combined_top_k=back_translation_combined_metrics.top_k,
-            back_translation_combined_mrr=back_translation_combined_metrics.mrr,
             back_translation_time_total=compute_total_time(back_translation_timing_results),
         )
 
