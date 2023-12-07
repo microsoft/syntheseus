@@ -10,6 +10,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ### Changed
 
 - Simplify single-step model setup ([#41](https://github.com/microsoft/syntheseus/pull/41)) ([@kmaziarz])
+- Refactor single-step evaluation script and move it to cli/ ([#43](https://github.com/microsoft/syntheseus/pull/43)) ([@kmaziarz])
 
 ## [0.2.0] - 2023-11-21
 
