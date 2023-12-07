@@ -5,7 +5,7 @@
 To run single-step model evaluation, run
 
 ```
-python ./retrosynthesis/reaction_prediction/cli/eval.py \
+python ./syntheseus/cli/eval.py \
     data_dir=[DATA_DIR] \
     model_class=[MODEL_CLASS] \
     model_dir=[MODEL_DIR]
