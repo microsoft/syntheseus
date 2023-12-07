@@ -12,12 +12,12 @@ from syntheseus.interface.models import (
 )
 from syntheseus.interface.molecule import Molecule
 from syntheseus.reaction_prediction.cli.eval import (
-    BackwardModelClass,
     EvalConfig,
     EvalResults,
     get_results,
     print_and_save,
 )
+from syntheseus.reaction_prediction.inference.config import BackwardModelClass
 from syntheseus.reaction_prediction.utils.metrics import ModelTimingResults
 
 

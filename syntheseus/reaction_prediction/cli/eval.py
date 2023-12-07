@@ -19,7 +19,6 @@ import math
 import os
 import time
 from dataclasses import dataclass, field, fields
-from enum import Enum
 from functools import partial
 from itertools import islice
 from statistics import mean, median
@@ -45,15 +44,7 @@ from syntheseus.reaction_prediction.data.dataset import (
     ReactionDataset,
 )
 from syntheseus.reaction_prediction.data.reaction_sample import ReactionSample
-from syntheseus.reaction_prediction.inference import (
-    ChemformerModel,
-    GLNModel,
-    LocalRetroModel,
-    MEGANModel,
-    MHNreactModel,
-    RetroKNNModel,
-    RootAlignedModel,
-)
+from syntheseus.reaction_prediction.inference.config import BackwardModelConfig, ForwardModelConfig
 from syntheseus.reaction_prediction.utils.config import get_config as cli_get_config
 from syntheseus.reaction_prediction.utils.metrics import (
     ModelTimingResults,
@@ -63,42 +54,6 @@ from syntheseus.reaction_prediction.utils.metrics import (
 from syntheseus.reaction_prediction.utils.misc import asdict_extended, set_random_seed
 
 logger = logging.getLogger(__file__)
-
-
-class ForwardModelClass(Enum):
-    Chemformer = ChemformerModel
-
-
-class BackwardModelClass(Enum):
-    Chemformer = ChemformerModel
-    GLN = GLNModel
-    LocalRetro = LocalRetroModel
-    MEGAN = MEGANModel
-    MHNreact = MHNreactModel
-    RetroKNN = RetroKNNModel
-    RootAligned = RootAlignedModel
-
-
-@dataclass
-class ModelConfig:
-    """Config for loading any reaction models, forward or backward."""
-
-    model_dir: str = MISSING
-    model_kwargs: Dict[str, Any] = field(default_factory=dict)
-
-
-@dataclass
-class ForwardModelConfig(ModelConfig):
-    """Config for loading one of the supported forward models."""
-
-    model_class: ForwardModelClass = MISSING
-
-
-@dataclass
-class BackwardModelConfig(ModelConfig):
-    """Config for loading one of the supported backward models."""
-
-    model_class: BackwardModelClass = MISSING
 
 
 @dataclass
