@@ -456,10 +456,10 @@ def run_from_config(
         extra_step(model, dataset, back_translation_model)
 
 
-def main(argv: Optional[List[str]]) -> None:
+def main(argv: Optional[List[str]] = None) -> None:
     config: EvalConfig = cli_get_config(argv=argv, config_cls=EvalConfig)
     run_from_config(config, extra_steps=[])
 
 
 if __name__ == "__main__":
-    main(argv=None)
+    main()

@@ -61,6 +61,9 @@ all = [
   "syntheseus[viz,dev,all-single-step]"
 ]
 
+[project.scripts]
+syntheseus = "syntheseus.cli.main:main"
+
 [tool.setuptools.packages.find]
 # Guidance from: https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 where = ["."]
