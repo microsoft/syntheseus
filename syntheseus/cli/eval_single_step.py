@@ -4,7 +4,7 @@ Each of the model types can be loaded from a *single directory*, possibly contai
 (e.g. checkpoint, config, etc). See individual model wrappers for the model directory formats.
 
 Example invocation:
-    python ./retrosynthesis/reaction_prediction/cli/eval.py \
+    python ./cli/eval_single_step.py \
         data_dir=[DATA_DIR] \
         model_class=RetroKNN \
         model_dir=[MODEL_DIR]
@@ -19,13 +19,11 @@ import math
 import os
 import time
 from dataclasses import dataclass, field, fields
-from enum import Enum
 from functools import partial
 from itertools import islice
 from statistics import mean, median
-from typing import Any, Callable, Dict, Generic, Iterable, List, Optional, Set, Union, cast
+from typing import Any, Callable, Dict, Generic, Iterable, List, Optional, Set, cast
 
-import numpy as np
 from more_itertools import batched
 from omegaconf import MISSING, OmegaConf
 from tqdm import tqdm
@@ -45,15 +43,7 @@ from syntheseus.reaction_prediction.data.dataset import (
     ReactionDataset,
 )
 from syntheseus.reaction_prediction.data.reaction_sample import ReactionSample
-from syntheseus.reaction_prediction.inference import (
-    ChemformerModel,
-    GLNModel,
-    LocalRetroModel,
-    MEGANModel,
-    MHNreactModel,
-    RetroKNNModel,
-    RootAlignedModel,
-)
+from syntheseus.reaction_prediction.inference.config import BackwardModelConfig, ForwardModelConfig
 from syntheseus.reaction_prediction.utils.config import get_config as cli_get_config
 from syntheseus.reaction_prediction.utils.metrics import (
     ModelTimingResults,
@@ -61,44 +51,9 @@ from syntheseus.reaction_prediction.utils.metrics import (
     compute_total_time,
 )
 from syntheseus.reaction_prediction.utils.misc import asdict_extended, set_random_seed
+from syntheseus.reaction_prediction.utils.model_loading import get_model
 
 logger = logging.getLogger(__file__)
-
-
-class ForwardModelClass(Enum):
-    Chemformer = ChemformerModel
-
-
-class BackwardModelClass(Enum):
-    Chemformer = ChemformerModel
-    GLN = GLNModel
-    LocalRetro = LocalRetroModel
-    MEGAN = MEGANModel
-    MHNreact = MHNreactModel
-    RetroKNN = RetroKNNModel
-    RootAligned = RootAlignedModel
-
-
-@dataclass
-class ModelConfig:
-    """Config for loading any reaction models, forward or backward."""
-
-    model_dir: str = MISSING
-    model_kwargs: Dict[str, Any] = field(default_factory=dict)
-
-
-@dataclass
-class ForwardModelConfig(ModelConfig):
-    """Config for loading one of the supported forward models."""
-
-    model_class: ForwardModelClass = MISSING
-
-
-@dataclass
-class BackwardModelConfig(ModelConfig):
-    """Config for loading one of the supported backward models."""
-
-    model_class: BackwardModelClass = MISSING
 
 
 @dataclass
@@ -156,8 +111,6 @@ class EvalResults:
     model_time_total: ModelTimingResults
     back_translation_top_k: Optional[List[float]] = None
     back_translation_mrr: Optional[float] = None
-    back_translation_combined_top_k: Optional[List[float]] = None
-    back_translation_combined_mrr: Optional[float] = None
     predictions: Optional[List[PredictionList]] = None
     back_translation_predictions: Optional[List[List[PredictionList]]] = None
     back_translation_time_total: Optional[ModelTimingResults] = None
@@ -282,7 +235,6 @@ def compute_metrics(
             raise ValueError("Back translation model should be a forward model")
 
         back_translation_metrics = TopKMetricsAccumulator(max_num_results=num_top_results)
-        back_translation_combined_metrics = TopKMetricsAccumulator(max_num_results=num_top_results)
 
     print(f"Testing model {model.__class__.__name__} with args {eval_args}")
 
@@ -355,7 +307,6 @@ def compute_metrics(
 
             if back_translation_model is not None:
                 assert back_translation_metrics is not None
-                assert back_translation_combined_metrics is not None
 
                 back_translation_results_with_timing = get_results(
                     back_translation_model,
@@ -386,12 +337,6 @@ def compute_metrics(
                 ]
 
                 back_translation_metrics.add(back_translation_matches)
-                if not back_translation_matches:
-                    back_translation_combined_metrics.add([])
-                else:
-                    back_translation_combined_metrics.add(
-                        list(np.array(ground_truth_matches) & np.array(back_translation_matches))
-                    )
 
         if include_predictions:
             all_predictions.extend(batch_predictions)
@@ -407,8 +352,6 @@ def compute_metrics(
         extra_args.update(
             back_translation_top_k=back_translation_metrics.top_k,
             back_translation_mrr=back_translation_metrics.mrr,
-            back_translation_combined_top_k=back_translation_combined_metrics.top_k,
-            back_translation_combined_mrr=back_translation_combined_metrics.mrr,
             back_translation_time_total=compute_total_time(back_translation_timing_results),
         )
 
@@ -484,35 +427,6 @@ def print_and_save(results: EvalResults, config: EvalConfig, suffix: str = "") -
 
         with open(outfile, "w") as outfile_stream:
             outfile_stream.write(json.dumps(results_dict))
-
-
-def get_model(
-    config: Union[BackwardModelConfig, ForwardModelConfig], batch_size: int, num_gpus: int
-) -> ReactionModel:
-    def model_fn(device):
-        return config.model_class.value(
-            model_dir=config.model_dir, device=device, **config.model_kwargs
-        )
-
-    if num_gpus == 0:
-        return model_fn("cpu")
-    elif num_gpus == 1:
-        return model_fn("cuda:0")
-    else:
-        if batch_size < num_gpus:
-            raise ValueError(f"Cannot split batch of size {batch_size} across {num_gpus} GPUs")
-
-        batch_size_per_gpu = batch_size // num_gpus
-
-        if batch_size_per_gpu < 16:
-            logger.warning(f"Batch size per GPU is very small: ~{batch_size_per_gpu}")
-
-        try:
-            from syntheseus.reaction_prediction.utils.parallel import ParallelReactionModel
-        except ModuleNotFoundError:
-            raise ValueError("Multi-GPU evaluation is only supported for torch-based models")
-
-        return ParallelReactionModel(model_fn, devices=[f"cuda:{idx}" for idx in range(num_gpus)])
 
 
 def run_from_config(

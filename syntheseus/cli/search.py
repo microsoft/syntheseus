@@ -30,9 +30,10 @@ from omegaconf import MISSING, DictConfig, OmegaConf
 from tqdm import tqdm
 
 from syntheseus.interface.models import BackwardReactionModel
-from syntheseus.reaction_prediction.cli.eval import BackwardModelConfig, get_model
+from syntheseus.reaction_prediction.inference.config import BackwardModelConfig
 from syntheseus.reaction_prediction.utils.config import get_config as cli_get_config
 from syntheseus.reaction_prediction.utils.misc import set_random_seed
+from syntheseus.reaction_prediction.utils.model_loading import get_model
 from syntheseus.reaction_prediction.utils.syntheseus_wrapper import SyntheseusBackwardReactionModel
 from syntheseus.search.algorithms.best_first.retro_star import RetroStarSearch
 from syntheseus.search.algorithms.mcts import base as mcts_base
