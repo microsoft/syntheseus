@@ -5,7 +5,7 @@
 To run single-step model evaluation, run
 
 ```
-python ./syntheseus/cli/eval.py \
+syntheseus eval-single-step \
     data_dir=[DATA_DIR] \
     model_class=[MODEL_CLASS] \
     model_dir=[MODEL_DIR]
