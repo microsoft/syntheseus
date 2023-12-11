@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="images/logo.png" height="50px">
+    <img src="docs/images/logo.png" height="50px">
     <h3><i>Navigating the labyrinth of synthesis planning</i></h3>
 </div>
 
