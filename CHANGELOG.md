@@ -9,11 +9,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Add PDVN search algorithm into cli/search ([#46](https://github.com/microsoft/syntheseus/pull/46)) ([@fiberleif])
-
-### Added
-
 - Add a general CLI endpoint ([#44](https://github.com/microsoft/syntheseus/pull/44)) ([@kmaziarz])
+- Add PDVN search algorithm into cli/search ([#46](https://github.com/microsoft/syntheseus/pull/46)) ([@fiberleif])
 
 ### Changed
 
