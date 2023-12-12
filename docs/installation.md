@@ -23,7 +23,7 @@ We support two installation modes:
 
 Core installation includes only minimal dependencies (no ML libraries), while full installation includes all supported models and also dependencies for visualization/development.
 
-Both sets of instructions above assume you already cloned the repository via
+Instructions above assume you already cloned the repository via
 
 ```bash
 git clone https://github.com/microsoft/syntheseus.git
