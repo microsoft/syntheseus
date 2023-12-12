@@ -343,7 +343,7 @@ def run_from_config(config: SearchConfig) -> Path:
     return results_dir_current_run
 
 
-def main(argv: Optional[List[str]]) -> Path:
+def main(argv: Optional[List[str]] = None) -> Path:
     config: SearchConfig = cli_get_config(argv=argv, config_cls=SearchConfig)
 
     def _warn_will_not_use_defaults(message: str) -> None:
@@ -386,4 +386,4 @@ def main(argv: Optional[List[str]]) -> Path:
 
 
 if __name__ == "__main__":
-    main(argv=None)
+    main()
