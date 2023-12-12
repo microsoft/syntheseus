@@ -1,7 +1,7 @@
 """Script for running end-to-end retrosynthetic search.
 
 The supported single-step model types are listed in `syntheseus/cli/eval_single_step.py`;
-each can be combined with either Retro*, MCTS, or PDVN to perform search.
+each can be combined with Retro*, MCTS, or PDVN to perform search.
 
 Example invocation:
     python ./syntheseus/cli/search.py \
@@ -88,7 +88,7 @@ class PDVNConfig:
     value_function_syn_kwargs: Dict[str, Any] = field(default_factory=lambda: {"constant": 0.5})
 
     value_function_cost_class: str = "ConstantNodeEvaluator"
-    value_function_cost_kwargs: Dict[str, Any] = field(default_factory=lambda: {"constant": 0.0})    
+    value_function_cost_kwargs: Dict[str, Any] = field(default_factory=lambda: {"constant": 0.0})
 
     and_node_cost_fn_class: str = "ConstantNodeEvaluator"
     and_node_cost_fn_kwargs: Dict[str, Any] = field(default_factory=lambda: {"constant": 0.1})
