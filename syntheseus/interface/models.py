@@ -2,10 +2,8 @@ from __future__ import annotations
 
 import math
 from abc import abstractmethod
+from dataclasses import dataclass, field
 from typing import Any, Dict, Generic, List, Optional, TypeVar
-
-from pydantic import root_validator
-from pydantic.generics import GenericModel
 
 from syntheseus.interface.bag import Bag
 from syntheseus.interface.molecule import Molecule
@@ -14,12 +12,9 @@ InputType = TypeVar("InputType")
 OutputType = TypeVar("OutputType")
 
 
-class Prediction(GenericModel, Generic[InputType, OutputType]):
+@dataclass(frozen=True, order=False)
+class Prediction(Generic[InputType, OutputType]):
     """Reaction prediction from a model, either a forward or a backward one."""
-
-    # Make `pydantic` accept custom types such as `Molecule` or `Bag`.
-    class Config:
-        arbitrary_types_allowed = True
 
     # The molecule that the prediction is for and the predicted output:
     input: InputType
@@ -32,9 +27,14 @@ class Prediction(GenericModel, Generic[InputType, OutputType]):
     reaction: Optional[str] = None  # Reaction smiles.
     rxnid: Optional[int] = None  # Template id, if applicable.
 
-    # Dictionary to hold additional metadata. Note that we use a mutable default value here, which
-    # could be a problem in plain Python, but is handled correctly by `pydantic`.
-    metadata: Dict[str, Any] = {}
+    # Dictionary to hold additional metadata.
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self):
+        if self.probability is not None and self.log_prob is not None:
+            raise ValueError(
+                "Probability can be stored as probability or log probability, not both"
+            )
 
     def get_prob(self) -> float:
         if self.probability is not None:
@@ -52,33 +52,21 @@ class Prediction(GenericModel, Generic[InputType, OutputType]):
         else:
             raise ValueError("Prediction does not have associated log prob or probability value.")
 
-    @root_validator()
-    def check_at_most_one_source_prob(cls, values):
-        if values.get("probability") is not None and values.get("log_prob") is not None:
-            raise ValueError(
-                "Probability can be stored as probability or log probability, not both"
-            )
-        return values
 
-
-class PredictionList(GenericModel, Generic[InputType, OutputType]):
+@dataclass(frozen=True, order=False)
+class PredictionList(Generic[InputType, OutputType]):
     """Several possible predictions."""
-
-    # Make `pydantic` accept custom types such as `Molecule` or `Bag`.
-    class Config:
-        arbitrary_types_allowed = True
 
     input: InputType
     predictions: List[Prediction[InputType, OutputType]]
 
-    # Dictionary to hold additional metadata (see note above regarding the mutable default value).
-    metadata: Dict[str, Any] = {}
+    # Dictionary to hold additional metadata.
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
     def truncated(self, num_results: int) -> PredictionList[InputType, OutputType]:
-        fields = self.dict()
-        fields["predictions"] = fields["predictions"][:num_results]
-
-        return PredictionList(**fields)
+        return PredictionList(
+            input=self.input, predictions=self.predictions[:num_results], metadata=self.metadata
+        )
 
 
 class ReactionModel(Generic[InputType, OutputType]):
