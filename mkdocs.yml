@@ -1,0 +1,43 @@
+site_name: Syntheseus
+
+repo_name: microsoft/syntheseus
+repo_url: https://github.com/microsoft/syntheseus
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+  - media: "(prefers-color-scheme: light)"
+    scheme: default
+    primary: black
+    accent: red
+    toggle:
+      icon: material/toggle-switch
+      name: "Switch to dark mode"
+  - media: "(prefers-color-scheme: dark)"
+    scheme: slate
+    primary: black
+    accent: red
+    toggle:
+      icon: material/toggle-switch-off-outline
+      name: "Switch to light mode"
+  features:
+    - content.code.copy
+    - navigation.tabs
+
+nav:
+- Get Started:
+  - Overview: index.md
+  - Installation: installation.md
+  - Single-Step Models: single_step.md
+- CLI:
+  - Single-Step Evaluation: cli/eval_single_step.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
