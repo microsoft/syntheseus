@@ -20,7 +20,8 @@ class MockBackwardReactionModel(BackwardReactionModel):
         self, inputs: List[Molecule], num_results: int
     ) -> List[PredictionList[Molecule, Bag[Molecule]]]:
         return [
-            PredictionList(predictions=[Prediction(input=mol, output=Bag([mol]))]) for mol in inputs
+            PredictionList(input=mol, predictions=[Prediction(input=mol, output=Bag([mol]))])
+            for mol in inputs
         ]
 
     def get_parameters(self):
