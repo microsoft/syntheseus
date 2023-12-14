@@ -34,7 +34,7 @@ pytestmark = pytest.mark.skipif(
 )
 def model(request) -> ExternalBackwardReactionModel:
     model_cls = request.param
-    return model_cls(device="cpu")
+    return model_cls()
 
 
 def test_call(model: ExternalBackwardReactionModel) -> None:

@@ -15,10 +15,12 @@ class ExternalReactionModel(ReactionModel[InputType, OutputType]):
     """Base class for the external reaction models, abstracting out common functinality."""
 
     def __init__(
-        self, model_dir: Optional[Union[str, Path]] = None, device: str = "cuda:0"
+        self, model_dir: Optional[Union[str, Path]] = None, device: Optional[str] = None
     ) -> None:
+        import torch
+
         self.model_dir = Path(model_dir or self.get_default_model_dir())
-        self.device = device
+        self.device = device or ("cuda:0" if torch.cuda.is_available() else "cpu")
 
     def get_default_model_dir(self) -> Path:
         model_dir = get_default_model_dir_from_cache(self.name, is_forward=self.is_forward())
