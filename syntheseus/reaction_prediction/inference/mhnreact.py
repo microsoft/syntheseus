@@ -8,11 +8,11 @@ The original MHNreact code is released under the BSD-2-Clause license.
 
 import json
 from collections import defaultdict
-from pathlib import Path
-from typing import List, Union
+from typing import List
 
-from syntheseus.interface.models import BackwardPredictionList, BackwardReactionModel
+from syntheseus.interface.models import BackwardPredictionList
 from syntheseus.interface.molecule import Molecule
+from syntheseus.reaction_prediction.inference.base import ExternalBackwardReactionModel
 from syntheseus.reaction_prediction.utils.inference import (
     get_unique_file_in_dir,
     process_raw_smiles_outputs,
@@ -20,15 +20,15 @@ from syntheseus.reaction_prediction.utils.inference import (
 from syntheseus.reaction_prediction.utils.misc import cpu_count, suppress_outputs
 
 
-class MHNreactModel(BackwardReactionModel):
+class MHNreactModel(ExternalBackwardReactionModel):
     def __init__(
         self,
-        model_dir: Union[str, Path],
-        device: str = "cuda:0",
+        *args,
         use_FPF: bool = True,
         num_processes: int = cpu_count(),
         chunksize: int = 64,
         num_additional_templates_to_run: int = 1000,
+        **kwargs,
     ) -> None:
         """Initializes the MHNreact model wrapper.
 
@@ -37,10 +37,12 @@ class MHNreactModel(BackwardReactionModel):
         - `model_dir` contains the config as the only `*.json` file
         - `model_dir` contains the data file as the only `*.csv.gz` file
         """
+        super().__init__(*args, **kwargs)
+
         import torch
         from mhnreact import data, model
 
-        with open(get_unique_file_in_dir(model_dir, pattern="*.json"), "r") as conf:
+        with open(get_unique_file_in_dir(self.model_dir, pattern="*.json"), "r") as conf:
             conf_dict = json.load(conf)
         conf = model.ModelConfig(**conf_dict)
         self.model = model.MHN(config=conf)
@@ -50,12 +52,14 @@ class MHNreactModel(BackwardReactionModel):
         self.chunksize = chunksize
         self.num_additional_templates_to_run = num_additional_templates_to_run
 
-        params = torch.load(get_unique_file_in_dir(model_dir, pattern="*.pt"), map_location=device)
+        params = torch.load(
+            get_unique_file_in_dir(self.model_dir, pattern="*.pt"), map_location=self.device
+        )
 
         with suppress_outputs():
             # Load templates.
             _, _, template_list, _ = data.load_dataset_from_csv(
-                get_unique_file_in_dir(model_dir, pattern="*.csv.gz"), ssretroeval=True
+                get_unique_file_in_dir(self.model_dir, pattern="*.csv.gz"), ssretroeval=True
             )
 
         self.model.template_list = list(template_list.values())

@@ -9,10 +9,11 @@ Parts of this file are based on code from the GitHub repository above.
 
 import sys
 from pathlib import Path
-from typing import Any, List, Union
+from typing import Any, List
 
-from syntheseus.interface.models import BackwardPredictionList, BackwardReactionModel
+from syntheseus.interface.models import BackwardPredictionList
 from syntheseus.interface.molecule import Molecule
+from syntheseus.reaction_prediction.inference.base import ExternalBackwardReactionModel
 from syntheseus.reaction_prediction.utils.inference import (
     get_module_path,
     get_unique_file_in_dir,
@@ -21,8 +22,8 @@ from syntheseus.reaction_prediction.utils.inference import (
 from syntheseus.reaction_prediction.utils.misc import suppress_outputs
 
 
-class LocalRetroModel(BackwardReactionModel):
-    def __init__(self, model_dir: Union[str, Path], device: str = "cuda:0") -> None:
+class LocalRetroModel(ExternalBackwardReactionModel):
+    def __init__(self, *args, **kwargs) -> None:
         """Initializes the LocalRetro model wrapper.
 
         Assumed format of the model directory:
@@ -30,6 +31,7 @@ class LocalRetroModel(BackwardReactionModel):
         - `model_dir` contains the config as the only `*.json` file
         - `model_dir/data` contains `*.csv` data files needed by LocalRetro
         """
+        super().__init__(*args, **kwargs)
 
         import local_retro
         from local_retro import scripts
@@ -41,13 +43,13 @@ class LocalRetroModel(BackwardReactionModel):
         from local_retro.Retrosynthesis import load_templates
         from local_retro.scripts.utils import init_featurizer, load_model
 
-        data_dir = Path(model_dir) / "data"
+        data_dir = Path(self.model_dir) / "data"
         self.args = init_featurizer(
             {
                 "mode": "test",
-                "device": device,
-                "model_path": get_unique_file_in_dir(model_dir, pattern="*.pth"),
-                "config_path": get_unique_file_in_dir(model_dir, pattern="*.json"),
+                "device": self.device,
+                "model_path": get_unique_file_in_dir(self.model_dir, pattern="*.pth"),
+                "config_path": get_unique_file_in_dir(self.model_dir, pattern="*.json"),
                 "data_dir": data_dir,
                 "rxn_class_given": False,
             }

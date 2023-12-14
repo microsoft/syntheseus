@@ -4,7 +4,7 @@ Paper: https://arxiv.org/abs/2306.04123
 """
 
 from pathlib import Path
-from typing import List, Union
+from typing import List, Optional, Union
 
 import numpy as np
 
@@ -17,7 +17,7 @@ from syntheseus.reaction_prediction.utils.inference import get_unique_file_in_di
 class RetroKNNModel(LocalRetroModel):
     """Warpper for RetroKNN model."""
 
-    def __init__(self, model_dir: Union[str, Path], device: str = "cuda:0") -> None:
+    def __init__(self, model_dir: Optional[Union[str, Path]] = None, *args, **kwargs) -> None:
         """Initializes the RetroKNN model wrapper.
 
         Assumed format of the model directory:
@@ -25,11 +25,12 @@ class RetroKNNModel(LocalRetroModel):
         - `model_dir/knn/` contains the adapter checkpoint as the only `*.pt` file
         - `model_dir/knn/datastore` contains the data store files
         """
+        model_dir = Path(model_dir or self.get_default_model_dir())
+        super().__init__(model_dir / "local_retro", *args, **kwargs)
+
         import torch
 
         from syntheseus.reaction_prediction.models.retro_knn import Adapter
-
-        super().__init__(model_dir=Path(model_dir) / "local_retro", device=device)
 
         adapter_chkpt_path = get_unique_file_in_dir(Path(model_dir) / "knn", pattern="*.pt")
         datastore_path = Path(model_dir) / "knn" / "datastore"
