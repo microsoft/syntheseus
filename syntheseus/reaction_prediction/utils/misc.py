@@ -11,7 +11,6 @@ from typing import Any, Dict, Iterable, Iterator, List, Optional
 import numpy as np
 
 from syntheseus.interface.bag import Bag
-from syntheseus.interface.models import Prediction, PredictionList
 from syntheseus.interface.molecule import Molecule
 
 
@@ -48,8 +47,6 @@ def dictify(data: Any) -> Any:
     elif isinstance(data, (List, tuple, Bag)):
         # Captures possible lists of `Prediction`s and lists of `PredictionList`s
         return [dictify(x) for x in data]
-    elif isinstance(data, (PredictionList, Prediction)):
-        return dictify(dict(data))
     elif isinstance(data, dict):
         return {k: dictify(v) for k, v in data.items()}
     elif is_dataclass(data):
