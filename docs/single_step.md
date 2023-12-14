@@ -4,10 +4,10 @@ Syntheseus currently supports 7 established single-step models. For convenience,
 |----------------------------------------------------------------|--------|
 | [Chemformer](https://figshare.com/ndownloader/files/42009888)  | finetuned by us starting from checkpoint released by authors |
 | [GLN](https://figshare.com/ndownloader/files/42012720)         | released by authors |
-| [LocalRetro](https://figshare.com/ndownloader/files/42012729)  | trained by us |
+| [LocalRetro](https://figshare.com/ndownloader/files/42287319)  | trained by us |
 | [MEGAN](https://figshare.com/ndownloader/files/42012732)       | trained by us |
 | [MHNreact](https://figshare.com/ndownloader/files/42012777)    | trained by us |
-| [RetroKNN](https://figshare.com/ndownloader/files/42012786)    | trained by us |
+| [RetroKNN](https://figshare.com/ndownloader/files/43636584)    | trained by us |
 | [RootAligned](https://figshare.com/ndownloader/files/42012792) | released by authors |
 
 ??? note "More advanced datasets"
