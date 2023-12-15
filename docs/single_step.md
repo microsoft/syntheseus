@@ -1,4 +1,9 @@
-Syntheseus currently supports 7 established single-step models. For convenience, for each model we also include a checkpoint trained on USPTO-50K.
+Syntheseus currently supports 7 established single-step models.
+
+For convenience, for each model we include a default checkpoint trained on USPTO-50K.
+If no checkpoint directory is provided during model loading, `syntheseus` will automatically download a default checkpoint and cache it on disk for future use.
+The default path for the cache is `$HOME/.cache/torch/syntheseus`, but it can be overriden by setting the `SYNTHESEUS_CACHE_DIR` environment variable.
+See table below for the links to the default checkpoints.
 
 | Model checkpoint link                                          | Source |
 |----------------------------------------------------------------|--------|
