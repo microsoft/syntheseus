@@ -1,5 +1,5 @@
 <figure markdown>
-  ![Image title](images/logo.png){width="450"}
+  ![Image title](https://github.com/microsoft/syntheseus/assets/61470923/f01a9939-61fa-4461-a124-c13eddcdd75a){width="450"}
   <figcaption><h3>Navigating the labyrinth of synthesis planning</h3></figcaption>
 </figure>
 
