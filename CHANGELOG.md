@@ -11,10 +11,11 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 - Add a general CLI endpoint ([#44](https://github.com/microsoft/syntheseus/pull/44)) ([@kmaziarz])
 - Add support for PDVN to the search CLI ([#46](https://github.com/microsoft/syntheseus/pull/46)) ([@fiberleif])
+- Add initial static documentation ([#45](https://github.com/microsoft/syntheseus/pull/45)) ([@kmaziarz])
 
 ### Changed
 
-- Simplify single-step model setup ([#41](https://github.com/microsoft/syntheseus/pull/41)) ([@kmaziarz])
+- Simplify single-step model setup ([#41](https://github.com/microsoft/syntheseus/pull/41), [#48](https://github.com/microsoft/syntheseus/pull/48)) ([@kmaziarz])
 - Refactor single-step evaluation script and move it to cli/ ([#43](https://github.com/microsoft/syntheseus/pull/43)) ([@kmaziarz])
 - Return model predictions as dataclasses instead of pydantic models ([#47](https://github.com/microsoft/syntheseus/pull/47)) ([@kmaziarz])
 
@@ -23,9 +24,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ### Changed
 
 - Select search hyperparameters depending on which algorithm and single-step model are used ([#30](https://github.com/microsoft/syntheseus/pull/30)) ([@kmaziarz])
-- Add option to override time tolerance in algorithm tests ([#25](https://github.com/microsoft/syntheseus/pull/25)) ([@austint])
 - Improve the heuristic used for estimating diversity ([#22](https://github.com/microsoft/syntheseus/pull/22), [#28](https://github.com/microsoft/syntheseus/pull/28)) ([@kmaziarz])
-- Improve the aesthetics of `README.md` ([#19](https://github.com/microsoft/syntheseus/pull/19)) ([@kmaziarz])
 
 ### Added
 

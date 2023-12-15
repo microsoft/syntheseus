@@ -11,12 +11,13 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 from rdkit import Chem
 
-from syntheseus.interface.models import BackwardPredictionList, BackwardReactionModel
+from syntheseus.interface.models import BackwardPredictionList
 from syntheseus.interface.molecule import Molecule
+from syntheseus.reaction_prediction.inference.base import ExternalBackwardReactionModel
 from syntheseus.reaction_prediction.utils.inference import (
     get_module_path,
     get_unique_file_in_dir,
@@ -25,14 +26,14 @@ from syntheseus.reaction_prediction.utils.inference import (
 from syntheseus.reaction_prediction.utils.misc import suppress_outputs
 
 
-class MEGANModel(BackwardReactionModel):
+class MEGANModel(ExternalBackwardReactionModel):
     def __init__(
         self,
-        model_dir: Union[str, Path],
-        device: str = "cuda:0",
+        *args,
         n_max_atoms: int = 200,
         max_gen_steps: int = 16,
         beam_batch_size: int = 10,
+        **kwargs,
     ) -> None:
         """Initializes the MEGAN model wrapper.
 
@@ -41,6 +42,7 @@ class MEGANModel(BackwardReactionModel):
         - `model_dir/model_best.pt` is the model checkpoint
         - `model_dir/{featurizer_key}` contains files needed to build MEGAN's featurizer
         """
+        super().__init__(*args, **kwargs)
 
         import gin
         import megan
@@ -64,7 +66,7 @@ class MEGANModel(BackwardReactionModel):
         self.beam_batch_size = beam_batch_size
 
         # Get the model config using `gin`.
-        gin.parse_config_file(get_unique_file_in_dir(model_dir, pattern="*.gin"))
+        gin.parse_config_file(get_unique_file_in_dir(self.model_dir, pattern="*.gin"))
 
         # Set up the data featurizer.
         featurizer_key = gin.query_parameter("train_megan.featurizer_key")
@@ -72,15 +74,14 @@ class MEGANModel(BackwardReactionModel):
 
         # Get the action vocab and masks.
         assert isinstance(featurizer, MeganTrainingSamplesFeaturizer)
-        self.action_vocab = featurizer.get_actions_vocabulary(model_dir)
+        self.action_vocab = featurizer.get_actions_vocabulary(self.model_dir)
         self.base_action_masks = get_base_action_masks(
             n_max_atoms + 1, action_vocab=self.action_vocab
         )
         self.rdkit_cache = RdkitCache(props=self.action_vocab["props"])
-        self.device = device
 
         # Load the MEGAN model.
-        checkpoint = load_state_dict(Path(model_dir) / "model_best.pt")
+        checkpoint = load_state_dict(Path(self.model_dir) / "model_best.pt")
         self.model = MeganModel(
             n_atom_actions=self.action_vocab["n_atom_actions"],
             n_bond_actions=self.action_vocab["n_bond_actions"],

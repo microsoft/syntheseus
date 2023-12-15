@@ -8,11 +8,12 @@ The original Chemformer code is released under the Apache 2.0 license.
 
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union, cast
+from typing import Any, Dict, List, Tuple, cast
 
 from syntheseus.interface.bag import Bag
-from syntheseus.interface.models import InputType, OutputType, PredictionList, ReactionModel
+from syntheseus.interface.models import InputType, OutputType, PredictionList
 from syntheseus.interface.molecule import Molecule
+from syntheseus.reaction_prediction.inference.base import ExternalReactionModel
 from syntheseus.reaction_prediction.utils.inference import (
     get_module_path,
     get_unique_file_in_dir,
@@ -21,18 +22,18 @@ from syntheseus.reaction_prediction.utils.inference import (
 from syntheseus.reaction_prediction.utils.misc import suppress_outputs
 
 
-class ChemformerModel(ReactionModel[InputType, OutputType]):
-    def __init__(
-        self, model_dir: Union[str, Path], device: str = "cuda:0", is_forward: bool = False
-    ) -> None:
+class ChemformerModel(ExternalReactionModel[InputType, OutputType]):
+    def __init__(self, *args, is_forward: bool = False, **kwargs) -> None:
         """Initializes the Chemformer model wrapper.
 
         Assumed format of the model directory:
         - `model_dir` contains the model checkpoint as the only `*.ckpt` file
         """
+        self._is_forward = is_forward
+        super().__init__(*args, **kwargs)
 
         # There should be exaclty one `*.ckpt` file under `model_dir`.
-        chkpt_path = get_unique_file_in_dir(model_dir, pattern="*.ckpt")
+        chkpt_path = get_unique_file_in_dir(self.model_dir, pattern="*.ckpt")
 
         import chemformer
 
@@ -43,9 +44,6 @@ class ChemformerModel(ReactionModel[InputType, OutputType]):
         import chemformer.molbart.util as util
         from chemformer.molbart.decoder import DecodeSampler
         from chemformer.molbart.models.pre_train import BARTModel
-
-        self._is_forward = is_forward
-        self.device = device
 
         # Vocab path for the tokenizer is relative from Chemformer dir.
         self.tokenizer = util.load_tokeniser(

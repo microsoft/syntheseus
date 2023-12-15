@@ -25,3 +25,6 @@ jobs:
     - name: Install syntheseus with all single-step models
       run: |
         pip install .[all]
+    - name: Run single-step model tests
+      run: |
+        python -m pytest ./syntheseus/tests/reaction_prediction/inference/test_models.py

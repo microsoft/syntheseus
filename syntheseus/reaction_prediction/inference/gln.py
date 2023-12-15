@@ -8,21 +8,17 @@ The original GLN code is released under the MIT license.
 
 import sys
 from pathlib import Path
-from typing import List, Union
+from typing import List
 
-from syntheseus.interface.models import BackwardPredictionList, BackwardReactionModel
+from syntheseus.interface.models import BackwardPredictionList
 from syntheseus.interface.molecule import Molecule
+from syntheseus.reaction_prediction.inference.base import ExternalBackwardReactionModel
 from syntheseus.reaction_prediction.utils.inference import process_raw_smiles_outputs
 from syntheseus.reaction_prediction.utils.misc import suppress_outputs
 
 
-class GLNModel(BackwardReactionModel):
-    def __init__(
-        self,
-        model_dir: Union[str, Path],
-        device: str = "cuda:0",
-        dataset_name: str = "schneider50k",
-    ) -> None:
+class GLNModel(ExternalBackwardReactionModel):
+    def __init__(self, *args, dataset_name: str = "schneider50k", **kwargs) -> None:
         """Initializes the GLN model wrapper.
 
         Assumed format of the model directory:
@@ -30,16 +26,18 @@ class GLNModel(BackwardReactionModel):
         - `model_dir/{dataset_name}.ckpt` is the model checkpoint
         - `model_dir/cooked_{dataset_name}/atom_list.txt` is the atom type list
         """
+        super().__init__(*args, **kwargs)
+
         import torch
 
-        chkpt_path = Path(model_dir) / f"{dataset_name}.ckpt"
-        args = {
-            "dropbox": model_dir,
+        chkpt_path = Path(self.model_dir) / f"{dataset_name}.ckpt"
+        gln_args = {
+            "dropbox": self.model_dir,
             "data_name": dataset_name,
             "model_for_test": chkpt_path,
             "tpl_name": "default",
-            "f_atoms": Path(model_dir) / f"cooked_{dataset_name}" / "atom_list.txt",
-            "gpu": torch.device(device).index,
+            "f_atoms": Path(self.model_dir) / f"cooked_{dataset_name}" / "atom_list.txt",
+            "gpu": torch.device(self.device).index,
         }
 
         # Suppress most of the prints from GLN's internals. This only works on messages that
@@ -50,14 +48,14 @@ class GLNModel(BackwardReactionModel):
             from gln.common.cmd_args import cmd_args
 
             sys.argv = []
-            for name, value in args.items():
+            for name, value in gln_args.items():
                 setattr(cmd_args, name, value)
                 sys.argv += [f"-{name}", str(value)]
 
             # The global state hackery has to happen before this.
             from gln.test.model_inference import RetroGLN
 
-            self.model = RetroGLN(model_dir, chkpt_path)
+            self.model = RetroGLN(self.model_dir, chkpt_path)
 
     def get_parameters(self):
         return self.model.gln.parameters()

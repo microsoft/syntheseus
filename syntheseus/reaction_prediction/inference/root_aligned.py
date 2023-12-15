@@ -12,14 +12,14 @@ import math
 import multiprocessing
 import random
 from collections import defaultdict
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 import yaml
 from rdkit import Chem
 
-from syntheseus.interface.models import InputType, OutputType, PredictionList, ReactionModel
+from syntheseus.interface.models import PredictionList
 from syntheseus.interface.molecule import Molecule
+from syntheseus.reaction_prediction.inference.base import ExternalBackwardReactionModel
 from syntheseus.reaction_prediction.utils.inference import (
     get_unique_file_in_dir,
     process_raw_smiles_outputs,
@@ -27,13 +27,13 @@ from syntheseus.reaction_prediction.utils.inference import (
 from syntheseus.reaction_prediction.utils.misc import suppress_outputs
 
 
-class RootAlignedModel(ReactionModel[InputType, OutputType]):
+class RootAlignedModel(ExternalBackwardReactionModel):
     def __init__(
         self,
-        model_dir: Union[str, Path],
-        device: str = "cuda:0",
+        *args,
         num_augmentations: int = 20,
         probability_from_score_temperature: Optional[float] = 2.0,
+        **kwargs,
     ) -> None:
         """Initializes the RootAligned model wrapper.
 
@@ -41,15 +41,16 @@ class RootAlignedModel(ReactionModel[InputType, OutputType]):
         - `model_dir` contains the model checkpoint as the only `*.pt` file
         - `model_dir` contains the config as the only `*.yml` file
         """
+        super().__init__(*args, **kwargs)
 
         # Parse arguments for calling external functions from `root_aligned/OpenNMT.py`.
-        with open(get_unique_file_in_dir(model_dir, pattern="*.yml"), "r") as f:
+        with open(get_unique_file_in_dir(self.model_dir, pattern="*.yml"), "r") as f:
             opt_from_config = yaml.safe_load(f)
 
         opt = argparse.Namespace()
         for key, value in opt_from_config.items():
             setattr(opt, key, value)
-        opt.models = [get_unique_file_in_dir(model_dir, pattern="*.pt")]
+        opt.models = [get_unique_file_in_dir(self.model_dir, pattern="*.pt")]
         opt.output = "/dev/null"
         setattr(opt, "synthon", False)
 
@@ -68,8 +69,6 @@ class RootAlignedModel(ReactionModel[InputType, OutputType]):
             logger = init_logger(opt.log_file)
 
         self.translator = build_translator(opt, logger=logger, report_score=True)
-
-        self.device = device
         self.num_augmentations = num_augmentations
         self.probability_from_score_temperature = probability_from_score_temperature
         self.beam_size = opt.beam_size

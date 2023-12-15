@@ -1,0 +1,10 @@
+backward:
+  Chemformer: https://figshare.com/ndownloader/files/42009888
+  GLN: https://figshare.com/ndownloader/files/42012720
+  LocalRetro: https://figshare.com/ndownloader/files/42287319
+  MEGAN: https://figshare.com/ndownloader/files/42012732
+  MHNreact: https://figshare.com/ndownloader/files/42012777
+  RetroKNN: https://figshare.com/ndownloader/files/43636584
+  RootAligned: https://figshare.com/ndownloader/files/42012792
+forward:
+  Chemformer: https://figshare.com/ndownloader/files/42012708

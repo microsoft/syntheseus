@@ -1,13 +1,18 @@
-Syntheseus currently supports 7 established single-step models. For convenience, for each model we also include a checkpoint trained on USPTO-50K.
+Syntheseus currently supports 7 established single-step models.
+
+For convenience, for each model we include a default checkpoint trained on USPTO-50K.
+If no checkpoint directory is provided during model loading, `syntheseus` will automatically download a default checkpoint and cache it on disk for future use.
+The default path for the cache is `$HOME/.cache/torch/syntheseus`, but it can be overriden by setting the `SYNTHESEUS_CACHE_DIR` environment variable.
+See table below for the links to the default checkpoints.
 
 | Model checkpoint link                                          | Source |
 |----------------------------------------------------------------|--------|
 | [Chemformer](https://figshare.com/ndownloader/files/42009888)  | finetuned by us starting from checkpoint released by authors |
 | [GLN](https://figshare.com/ndownloader/files/42012720)         | released by authors |
-| [LocalRetro](https://figshare.com/ndownloader/files/42012729)  | trained by us |
+| [LocalRetro](https://figshare.com/ndownloader/files/42287319)  | trained by us |
 | [MEGAN](https://figshare.com/ndownloader/files/42012732)       | trained by us |
 | [MHNreact](https://figshare.com/ndownloader/files/42012777)    | trained by us |
-| [RetroKNN](https://figshare.com/ndownloader/files/42012786)    | trained by us |
+| [RetroKNN](https://figshare.com/ndownloader/files/43636584)    | trained by us |
 | [RootAligned](https://figshare.com/ndownloader/files/42012792) | released by authors |
 
 ??? note "More advanced datasets"
