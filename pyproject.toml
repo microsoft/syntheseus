@@ -60,6 +60,10 @@ all = [
   "syntheseus[viz,dev,all-single-step]"
 ]
 
+[project.urls]
+Documentation = "https://microsoft.github.io/syntheseus"
+Repository = "https://github.com/microsoft/syntheseus"
+
 [project.scripts]
 syntheseus = "syntheseus.cli.main:main"
 
