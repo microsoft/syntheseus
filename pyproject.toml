@@ -4,11 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "syntheseus"
-authors = [
-    {name = "Austin Tripp", email = "ajt212@cam.ac.uk"},
-    {name = "Krzysztof Maziarz", email = "krzysztof.maziarz@microsoft.com"},
-    {name = "Megan Stanley", email = "meganstanley@microsoft.com"},
-    {name = "Marwin Segler", email = "marwinsegler@microsoft.com"},
+authors = [  # Note: PyPI does not support multiple authors with email addresses included.
+    {name = "Austin Tripp"},       # ajt212@cam.ac.uk
+    {name = "Krzysztof Maziarz"},  # krzysztof.maziarz@microsoft.com
+    {name = "Guoqing Liu"},        # guoqingliu@microsoft.com
+    {name = "Megan Stanley"},      # meganstanley@microsoft.com
+    {name = "Marwin Segler"},      # marwinsegler@microsoft.com
 ]
 description = "A package for retrosynthetic planning."
 readme = "README.md"
