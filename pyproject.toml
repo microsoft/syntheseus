@@ -34,25 +34,12 @@ dev = [
   "pytest-cov",
   "pre-commit"
 ]
-chemformer = [
-  "chemformer @ git+https://github.com/kmaziarz/Chemformer.git"
-]
-local-retro = [
-  "local_retro @ git+https://github.com/kmaziarz/LocalRetro.git"
-]
-megan = [
-  "megan @ git+https://github.com/kmaziarz/megan.git"
-]
-mhn-react = [
-  "mhnreact @ git+https://github.com/kmaziarz/mhn-react.git"
-]
-retro-knn = [
-  "local_retro @ git+https://github.com/kmaziarz/LocalRetro.git",
-  "torch-scatter"
-]
-root-aligned = [
-  "root_aligned @ git+https://github.com/kmaziarz/RootAligned.git"
-]
+chemformer = ["syntheseus-chemformer"]
+local-retro = ["syntheseus-local-retro"]
+megan = ["syntheseus-megan"]
+mhn-react = ["syntheseus-mhnreact"]
+retro-knn = ["syntheseus-local-retro", "torch-scatter"]
+root-aligned = ["syntheseus-root-aligned"]
 all-single-step = [
   "syntheseus[chemformer,local-retro,megan,mhn-react,retro-knn,root-aligned]"
 ]
