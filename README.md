@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="docs/images/logo.png" height="50px">
+    <img src="https://github.com/microsoft/syntheseus/assets/61470923/f01a9939-61fa-4461-a124-c13eddcdd75a" height="50px">
     <h3><i>Navigating the labyrinth of synthesis planning</i></h3>
 </div>
 

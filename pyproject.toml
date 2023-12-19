@@ -4,11 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "syntheseus"
-authors = [
-    {name = "Austin Tripp", email = "ajt212@cam.ac.uk"},
-    {name = "Krzysztof Maziarz", email = "krzysztof.maziarz@microsoft.com"},
-    {name = "Megan Stanley", email = "meganstanley@microsoft.com"},
-    {name = "Marwin Segler", email = "marwinsegler@microsoft.com"},
+authors = [  # Note: PyPI does not support multiple authors with email addresses included.
+    {name = "Austin Tripp"},       # ajt212@cam.ac.uk
+    {name = "Krzysztof Maziarz"},  # krzysztof.maziarz@microsoft.com
+    {name = "Guoqing Liu"},        # guoqingliu@microsoft.com
+    {name = "Megan Stanley"},      # meganstanley@microsoft.com
+    {name = "Marwin Segler"},      # marwinsegler@microsoft.com
 ]
 description = "A package for retrosynthetic planning."
 readme = "README.md"
@@ -34,31 +35,22 @@ dev = [
   "pytest-cov",
   "pre-commit"
 ]
-chemformer = [
-  "chemformer @ git+https://github.com/kmaziarz/Chemformer.git"
-]
-local-retro = [
-  "local_retro @ git+https://github.com/kmaziarz/LocalRetro.git"
-]
-megan = [
-  "megan @ git+https://github.com/kmaziarz/megan.git"
-]
-mhn-react = [
-  "mhnreact @ git+https://github.com/kmaziarz/mhn-react.git"
-]
-retro-knn = [
-  "local_retro @ git+https://github.com/kmaziarz/LocalRetro.git",
-  "torch-scatter"
-]
-root-aligned = [
-  "root_aligned @ git+https://github.com/kmaziarz/RootAligned.git"
-]
+chemformer = ["syntheseus-chemformer"]
+local-retro = ["syntheseus-local-retro"]
+megan = ["syntheseus-megan"]
+mhn-react = ["syntheseus-mhnreact"]
+retro-knn = ["syntheseus-local-retro", "torch-scatter"]
+root-aligned = ["syntheseus-root-aligned"]
 all-single-step = [
   "syntheseus[chemformer,local-retro,megan,mhn-react,retro-knn,root-aligned]"
 ]
 all = [
   "syntheseus[viz,dev,all-single-step]"
 ]
+
+[project.urls]
+Documentation = "https://microsoft.github.io/syntheseus"
+Repository = "https://github.com/microsoft/syntheseus"
 
 [project.scripts]
 syntheseus = "syntheseus.cli.main:main"
