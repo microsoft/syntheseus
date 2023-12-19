@@ -7,6 +7,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.3.0] - 2023-12-19
+
 ### Added
 
 - Add a general CLI endpoint ([#44](https://github.com/microsoft/syntheseus/pull/44)) ([@kmaziarz])
@@ -54,9 +56,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 :seedling: Initial public release, containing several multi-step search algorithms and a minimal interface for single-step models.
 
-[Unreleased]: https://github.com/microsoft/syntheseus/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/microsoft/syntheseus/compare/v0.3.0...HEAD
 [0.1.0]: https://github.com/microsoft/syntheseus/releases/tag/v0.1.0
 [0.2.0]: https://github.com/microsoft/syntheseus/releases/tag/v0.2.0
+[0.3.0]: https://github.com/microsoft/syntheseus/releases/tag/v0.3.0
 
 [@austint]: https://github.com/AustinT
 [@kmaziarz]: https://github.com/kmaziarz
