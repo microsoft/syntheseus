@@ -11,6 +11,7 @@ import argparse
 import math
 import multiprocessing
 import random
+import warnings
 from collections import defaultdict
 from typing import Any, Dict, List, Optional
 
@@ -187,15 +188,18 @@ class RootAlignedModel(ExternalBackwardReactionModel):
         augmented_batch = self._mols_to_batch(augmented_inputs)
 
         # Step 3: Translate.
-        _, augmented_predictions = self.translator.translate(
-            src=augmented_batch,
-            src_feats=defaultdict(list),
-            tgt=None,
-            batch_size=2048,
-            batch_type="tokens",
-            attn_debug=False,
-            align_debug=False,
-        )  # shape: `[data_size x augmentation_size, beam_size]`
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message="__floordiv__ is deprecated")
+
+            _, augmented_predictions = self.translator.translate(
+                src=augmented_batch,
+                src_feats=defaultdict(list),
+                tgt=None,
+                batch_size=2048,
+                batch_type="tokens",
+                attn_debug=False,
+                align_debug=False,
+            )  # shape: `[data_size x augmentation_size, beam_size]`
 
         # Step 4: Unravel and canonicalize.
         lines = []  # shape: `[data_size x augmentation_size x beam_size]`

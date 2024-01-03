@@ -7,6 +7,7 @@ The original Chemformer code is released under the Apache 2.0 license.
 """
 
 import sys
+import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Tuple, cast
 
@@ -117,7 +118,10 @@ class ChemformerModel(ExternalReactionModel[InputType, OutputType]):
 
         # We have to set `num_beams` as an attribute of the model.
         self.model.num_beams = num_results
-        with torch.no_grad():
+
+        with torch.no_grad(), warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message="__floordiv__ is deprecated")
+
             smiles_batch, batch_log_likelihoods = self.model.sample_molecules(
                 device_batch, sampling_alg="beam"
             )
