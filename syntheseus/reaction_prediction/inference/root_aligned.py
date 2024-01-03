@@ -25,7 +25,6 @@ from syntheseus.reaction_prediction.utils.inference import (
     get_unique_file_in_dir,
     process_raw_smiles_outputs,
 )
-from syntheseus.reaction_prediction.utils.misc import suppress_outputs
 
 
 class RootAlignedModel(ExternalBackwardReactionModel):
@@ -61,15 +60,11 @@ class RootAlignedModel(ExternalBackwardReactionModel):
 
         # Import external functions from `root_aligned/OpenNMT.py`.
         from onmt.translate.translator import build_translator
-        from onmt.utils.logging import init_logger
         from onmt.utils.parse import ArgumentParser
 
         ArgumentParser.validate_translate_opts(opt)
 
-        with suppress_outputs():
-            logger = init_logger(opt.log_file)
-
-        self.translator = build_translator(opt, logger=logger, report_score=True)
+        self.translator = build_translator(opt, report_score=False)
         self.num_augmentations = num_augmentations
         self.probability_from_score_temperature = probability_from_score_temperature
         self.beam_size = opt.beam_size
