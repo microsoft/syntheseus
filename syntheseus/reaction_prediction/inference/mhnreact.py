@@ -8,7 +8,10 @@ The original MHNreact code is released under the BSD-2-Clause license.
 
 import json
 from collections import defaultdict
+from functools import partial
 from typing import List
+
+from tqdm.contrib import concurrent
 
 from syntheseus.interface.models import BackwardPredictionList
 from syntheseus.interface.molecule import Molecule
@@ -131,14 +134,19 @@ class MHNreactModel(ExternalBackwardReactionModel):
                     batch_idxs.append(batch_idx)
                     templates_to_apply.append(template)
 
-        with suppress_outputs():
-            prod_idx_reactants, _ = run_templates(
-                input_smiles_list,
-                templates=self.model.template_list,
-                appl=[batch_idxs, templates_to_apply],
-                njobs=self.num_processes,
-                chunksize=self.chunksize,
-            )
+        # Temporarily disable tqdm (just the particular function used in MHNreact).
+        process_map_orig = concurrent.process_map
+        concurrent.process_map = partial(concurrent.process_map, disable=True)
+
+        prod_idx_reactants, _ = run_templates(
+            input_smiles_list,
+            templates=self.model.template_list,
+            appl=[batch_idxs, templates_to_apply],
+            njobs=self.num_processes,
+            chunksize=self.chunksize,
+        )
+
+        concurrent.process_map = process_map_orig
 
         # Now aggregate over same outcome (parts copied from `utils.sort_by_template_and_flatten`,
         # which does not expose the summed probabilities) and build the prediction objects.
