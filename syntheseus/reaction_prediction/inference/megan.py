@@ -44,6 +44,9 @@ class MEGANModel(ExternalBackwardReactionModel):
         """
         super().__init__(*args, **kwargs)
 
+        # Silence tensorflow's warnings.
+        os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+
         import gin
         import megan
 
