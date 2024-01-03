@@ -8,8 +8,10 @@ The original MEGAN code is released under the MIT license.
 
 from __future__ import annotations
 
+import logging
 import os
 import sys
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Any, Optional
 
@@ -56,13 +58,33 @@ class MEGANModel(ExternalBackwardReactionModel):
         os.environ["PROJECT_ROOT"] = str(module_path.parent)
         sys.path.insert(0, str(module_path))
 
+        def _get_root_logger_log_file_paths() -> set[Path]:
+            return set(
+                Path(handler.baseFilename)
+                for handler in logging.root.handlers
+                if isinstance(handler, RotatingFileHandler)
+            )
+
         # The (seemingly unused) import below is needed for `gin` configurables to get registered.
-        from bin.train import train_megan  # noqa: F401
-        from src.config import get_featurizer
-        from src.feat.megan_graph import MeganTrainingSamplesFeaturizer
-        from src.model.megan import Megan as MeganModel
-        from src.model.megan_utils import RdkitCache, get_base_action_masks
-        from src.utils import load_state_dict
+        with suppress_outputs():
+            preexisting_paths = _get_root_logger_log_file_paths()
+
+            from bin.train import train_megan  # noqa: F401
+            from src.config import get_featurizer
+            from src.feat.megan_graph import MeganTrainingSamplesFeaturizer
+            from src.model.megan import Megan as MeganModel
+            from src.model.megan_utils import RdkitCache, get_base_action_masks
+            from src.utils import load_state_dict
+
+            # Delete logging files created by MEGAN.
+            new_paths = _get_root_logger_log_file_paths() - preexisting_paths
+
+            for path in new_paths:
+                path.unlink()
+
+            for path in new_paths:
+                if path.parent.exists():
+                    path.parent.rmdir()
 
         self.n_max_atoms = n_max_atoms
         self.max_gen_steps = max_gen_steps
@@ -128,7 +150,7 @@ class MEGANModel(ExternalBackwardReactionModel):
         batch_valid_idxs = [idx for idx, mol in enumerate(batch) if mol is not None]
 
         if batch_valid:
-            with torch.no_grad(), suppress_outputs():
+            with torch.no_grad():
                 beam_search_results = beam_search(
                     [self.model],
                     batch_valid,
