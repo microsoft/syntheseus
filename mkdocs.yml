@@ -32,6 +32,11 @@ nav:
   - Single-Step Models: single_step.md
 - CLI:
   - Single-Step Evaluation: cli/eval_single_step.md
+- Tutorials:
+  - Quick Start: tutorials/quick_start.ipynb
+
+plugins:
+  - mkdocs-jupyter
 
 markdown_extensions:
   - admonition
