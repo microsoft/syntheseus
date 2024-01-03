@@ -33,8 +33,13 @@ def suppress_outputs():
     """Suppress messages written to both stdout and stderr."""
     with open(devnull, "w") as fnull:
         with redirect_stderr(fnull), redirect_stdout(fnull):
+            # Save the root logger handlers in order to restore them afterwards.
+            root_handlers = list(logging.root.handlers)
             logging.disable(logging.CRITICAL)
+
             yield
+
+            logging.root.handlers = root_handlers
             logging.disable(logging.NOTSET)
 
 
