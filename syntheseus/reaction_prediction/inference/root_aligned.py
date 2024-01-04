@@ -11,6 +11,7 @@ import argparse
 import math
 import multiprocessing
 import random
+import warnings
 from collections import defaultdict
 from typing import Any, Dict, List, Optional
 
@@ -24,7 +25,6 @@ from syntheseus.reaction_prediction.utils.inference import (
     get_unique_file_in_dir,
     process_raw_smiles_outputs,
 )
-from syntheseus.reaction_prediction.utils.misc import suppress_outputs
 
 
 class RootAlignedModel(ExternalBackwardReactionModel):
@@ -60,15 +60,11 @@ class RootAlignedModel(ExternalBackwardReactionModel):
 
         # Import external functions from `root_aligned/OpenNMT.py`.
         from onmt.translate.translator import build_translator
-        from onmt.utils.logging import init_logger
         from onmt.utils.parse import ArgumentParser
 
         ArgumentParser.validate_translate_opts(opt)
 
-        with suppress_outputs():
-            logger = init_logger(opt.log_file)
-
-        self.translator = build_translator(opt, logger=logger, report_score=True)
+        self.translator = build_translator(opt, report_score=False)
         self.num_augmentations = num_augmentations
         self.probability_from_score_temperature = probability_from_score_temperature
         self.beam_size = opt.beam_size
@@ -187,15 +183,18 @@ class RootAlignedModel(ExternalBackwardReactionModel):
         augmented_batch = self._mols_to_batch(augmented_inputs)
 
         # Step 3: Translate.
-        _, augmented_predictions = self.translator.translate(
-            src=augmented_batch,
-            src_feats=defaultdict(list),
-            tgt=None,
-            batch_size=2048,
-            batch_type="tokens",
-            attn_debug=False,
-            align_debug=False,
-        )  # shape: `[data_size x augmentation_size, beam_size]`
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message="__floordiv__ is deprecated")
+
+            _, augmented_predictions = self.translator.translate(
+                src=augmented_batch,
+                src_feats=defaultdict(list),
+                tgt=None,
+                batch_size=2048,
+                batch_type="tokens",
+                attn_debug=False,
+                align_debug=False,
+            )  # shape: `[data_size x augmentation_size, beam_size]`
 
         # Step 4: Unravel and canonicalize.
         lines = []  # shape: `[data_size x augmentation_size x beam_size]`
