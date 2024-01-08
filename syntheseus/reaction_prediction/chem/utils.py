@@ -29,13 +29,23 @@ def remove_atom_mapping(smiles: str) -> str:
     return Chem.MolToSmiles(mol)
 
 
-def molecule_bag_from_smiles_strict(smiles: str) -> Bag[Molecule]:
-    return Bag([Molecule(component) for component in smiles.split(SMILES_SEPARATOR)])
+def molecule_bag_from_smiles_strict(
+    smiles: str, canonicalize: bool = True, ordered: bool = False
+) -> Bag[Molecule]:
+    return Bag(
+        [
+            Molecule(component, canonicalize=canonicalize)
+            for component in smiles.split(SMILES_SEPARATOR)
+        ],
+        ordered=ordered,
+    )
 
 
-def molecule_bag_from_smiles(smiles: str) -> Optional[Bag[Molecule]]:
+def molecule_bag_from_smiles(
+    smiles: str, canonicalize: bool = True, ordered: bool = False
+) -> Optional[Bag[Molecule]]:
     try:
-        return molecule_bag_from_smiles_strict(smiles)
+        return molecule_bag_from_smiles_strict(smiles, canonicalize=canonicalize, ordered=ordered)
     except ValueError:
         # If any of the components ends up invalid we return `None` instead.
         return None

@@ -53,10 +53,14 @@ class DiskReactionDataset(ReactionDataset[SampleType]):
         sample_cls: Type[SampleType],
         num_processes: int = 0,
         data_format: Optional[DataFormat] = None,
+        canonicalize: bool = True,
+        ordered: bool = False,
     ):
         self._data_dir = Path(data_dir)
         self._sample_cls = sample_cls
         self._num_processes = num_processes
+        self._canonicalize = canonicalize
+        self._ordered = ordered
 
         filenames = [str(filename) for filename in self._data_dir.iterdir()]
 
@@ -112,9 +116,19 @@ class DiskReactionDataset(ReactionDataset[SampleType]):
 
     def __getitem__(self, fold: DataFold) -> Iterable[SampleType]:
         if self._data_format == DataFormat.JSONL:
-            parse_fn = partial(DiskReactionDataset.sample_from_json, sample_cls=self._sample_cls)
+            parse_fn = partial(
+                DiskReactionDataset.sample_from_json,
+                sample_cls=self._sample_cls,
+                canonicalize=self._canonicalize,
+                ordered=self._ordered,
+            )
         else:
-            parse_fn = partial(self._sample_cls.from_reaction_smiles_strict, mapped=True)
+            parse_fn = partial(
+                self._sample_cls.from_reaction_smiles_strict,
+                mapped=True,
+                canonicalize=self._canonicalize,
+                ordered=self._ordered,
+            )
 
         yield from parallelize(parse_fn, self._get_lines(fold), num_processes=self._num_processes)
 
@@ -147,8 +161,10 @@ class DiskReactionDataset(ReactionDataset[SampleType]):
         return f"{fold.value}.{format.value}"
 
     @staticmethod
-    def sample_from_json(data: str, sample_cls: Type[SampleType]) -> SampleType:
-        return sample_cls.from_dict(json.loads(data))
+    def sample_from_json(
+        data: str, sample_cls: Type[SampleType], canonicalize: bool = True, ordered: bool = False
+    ) -> SampleType:
+        return sample_cls.from_dict(json.loads(data), canonicalize, ordered)
 
     @staticmethod
     def save_samples_to_file(

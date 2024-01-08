@@ -19,8 +19,11 @@ class Bag(Collection, Generic[ElementT]):
     linear in terms of the size of the bag.
     """
 
-    def __init__(self, values: Iterable[ElementT]) -> None:
-        self._values = tuple(sorted(values))
+    def __init__(self, values: Iterable[ElementT], ordered: bool = False) -> None:
+        if ordered:
+            self._values = tuple(values)
+        else:
+            self._values = tuple(sorted(values))
 
     def __iter__(self) -> Iterator:
         return iter(self._values)

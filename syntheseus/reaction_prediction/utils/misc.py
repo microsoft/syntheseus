@@ -72,9 +72,11 @@ def asdict_extended(data) -> Dict[str, Any]:
     return dictify(data)
 
 
-def undictify_bag_of_molecules(data: List[Dict[str, str]]) -> Bag[Molecule]:
+def undictify_bag_of_molecules(
+    data: List[Dict[str, str]], canonicalize: bool = True, ordered: bool = False
+) -> Bag[Molecule]:
     """Recovers a bag of molecules serialized with `dictify`."""
-    return Bag(Molecule(d["smiles"]) for d in data)
+    return Bag([Molecule(d["smiles"], canonicalize=canonicalize) for d in data], ordered=ordered)
 
 
 def parallelize(

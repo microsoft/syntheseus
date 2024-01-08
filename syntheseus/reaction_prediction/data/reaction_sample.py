@@ -59,10 +59,17 @@ class ReactionSample:
         )
 
     @classmethod
-    def from_dict(cls: Type[ReactionType], data: Dict[str, Any]) -> ReactionType:
+    def from_dict(
+        cls: Type[ReactionType],
+        data: Dict[str, Any],
+        canonicalize: bool = True,
+        ordered: bool = False,
+    ) -> ReactionType:
         """Creates a sample from the given arguments ignoring superfluous ones."""
         for key in ["reactants", "products"]:
-            data[key] = undictify_bag_of_molecules(data[key])
+            data[key] = undictify_bag_of_molecules(
+                data[key], canonicalize=canonicalize, ordered=ordered
+            )
 
         return cls(
             **{
@@ -74,7 +81,12 @@ class ReactionSample:
 
     @classmethod
     def from_reaction_smiles_strict(
-        cls: Type[ReactionType], reaction_smiles: str, mapped: bool, **kwargs
+        cls: Type[ReactionType],
+        reaction_smiles: str,
+        mapped: bool,
+        canonicalize: bool = True,
+        ordered: bool = False,
+        **kwargs,
     ) -> ReactionType:
         # Split the reaction SMILES and discard the reagents.
         [reactants_smiles, reagents_smiles, products_smiles] = [
@@ -90,8 +102,14 @@ class ReactionSample:
             products_smiles = [remove_atom_mapping(smiles) for smiles in products_smiles]
 
         return cls(
-            reactants=Bag(Molecule(smiles=smiles) for smiles in reactants_smiles),
-            products=Bag(Molecule(smiles=smiles) for smiles in products_smiles),
+            reactants=Bag(
+                [Molecule(smiles=smiles, canonicalize=canonicalize) for smiles in reactants_smiles],
+                ordered=ordered,
+            ),
+            products=Bag(
+                [Molecule(smiles=smiles, canonicalize=canonicalize) for smiles in products_smiles],
+                ordered=ordered,
+            ),
             reagents=SMILES_SEPARATOR.join(sorted(reagents_smiles)),
             **kwargs,
         )
