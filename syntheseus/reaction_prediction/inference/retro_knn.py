@@ -38,19 +38,23 @@ class RetroKNNModel(LocalRetroModel):
         import faiss
         import faiss.contrib.torch_utils  # make faiss available for torch tensors
 
-        def load_data_store(path: Path):
+        def load_data_store(path: Path, device: str):
             index = faiss.read_index(str(path), faiss.IO_FLAG_ONDISK_SAME_DIR)
-            res = faiss.StandardGpuResources()
-            co = faiss.GpuClonerOptions()
-            co.useFloat16 = True
-            return faiss.index_cpu_to_gpu(res, 0, index, co)
 
-        self.atom_store = load_data_store(datastore_path / "data.atom_idx")
-        self.bond_store = load_data_store(datastore_path / "data.bond_idx")
+            if device == "cpu":
+                return index
+            else:
+                res = faiss.StandardGpuResources()
+                co = faiss.GpuClonerOptions()
+                co.useFloat16 = True
+                return faiss.index_cpu_to_gpu(res, 0, index, co)
+
+        self.atom_store = load_data_store(datastore_path / "data.atom_idx", device=self.device)
+        self.bond_store = load_data_store(datastore_path / "data.bond_idx", device=self.device)
         self.raw_data = np.load(datastore_path / "data.npz")
 
         self.adapter = Adapter(self.model.linearB.weight.shape[0], k=32).to(self.args["device"])
-        self.adapter.load_state_dict(torch.load(adapter_chkpt_path))
+        self.adapter.load_state_dict(torch.load(adapter_chkpt_path, map_location=self.device))
         self.adapter.eval()
 
     def _forward_localretro(self, bg):
