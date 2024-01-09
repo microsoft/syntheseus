@@ -53,16 +53,16 @@ class RetroKNNModel(LocalRetroModel):
         self.bond_store = load_data_store(datastore_path / "data.bond_idx", device=self.device)
         self.raw_data = np.load(datastore_path / "data.npz")
 
-        self.adapter = Adapter(self.model.linearB.weight.shape[0], k=32).to(self.args["device"])
+        self.adapter = Adapter(self.model.linearB.weight.shape[0], k=32).to(self.device)
         self.adapter.load_state_dict(torch.load(adapter_chkpt_path, map_location=self.device))
         self.adapter.eval()
 
     def _forward_localretro(self, bg):
         from local_retro.scripts.model_utils import pair_atom_feats, unbatch_feats, unbatch_mask
 
-        bg = bg.to(self.args["device"])
-        node_feats = bg.ndata.pop("h").to(self.args["device"])
-        edge_feats = bg.edata.pop("e").to(self.args["device"])
+        bg = bg.to(self.device)
+        node_feats = bg.ndata.pop("h").to(self.device)
+        edge_feats = bg.edata.pop("e").to(self.device)
 
         node_feats = self.model.mpnn(bg, node_feats, edge_feats)
         atom_feats = node_feats
@@ -88,7 +88,7 @@ class RetroKNNModel(LocalRetroModel):
             atom_feats,
             bond_feats,
         ) = self._forward_localretro(batch)
-        sg = batch.remove_self_loop().to(self.args["device"])
+        sg = batch.remove_self_loop().to(self.device)
 
         node_dis, _ = self.atom_store.search(atom_feats, k=32)
         edge_dis, _ = self.bond_store.search(bond_feats, k=32)
@@ -100,12 +100,8 @@ class RetroKNNModel(LocalRetroModel):
         batch_atom_prob_nn = torch.nn.Softmax(dim=1)(batch_atom_logits)
         batch_bond_prob_nn = torch.nn.Softmax(dim=1)(batch_bond_logits)
 
-        atom_output_label = torch.from_numpy(self.raw_data["atom_output_label"]).to(
-            self.args["device"]
-        )
-        bond_output_label = torch.from_numpy(self.raw_data["bond_output_label"]).to(
-            self.args["device"]
-        )
+        atom_output_label = torch.from_numpy(self.raw_data["atom_output_label"]).to(self.device)
+        bond_output_label = torch.from_numpy(self.raw_data["bond_output_label"]).to(self.device)
 
         batch_atom_prob_knn = knn_prob(
             atom_feats, self.atom_store, atom_output_label, batch_atom_logits.shape[1], 32, node_t
