@@ -31,7 +31,7 @@ def _make_unique_node_andor_graph(
     # Add all edges
     for rxn, and_node in rxn_to_node.items():
         new_graph._graph.add_edge(mol_to_node[rxn.product], and_node)
-        for reactant in rxn.reactants:
+        for reactant in set(rxn.reactants):
             new_graph._graph.add_edge(and_node, mol_to_node[reactant])
 
         # Mark relevant nodes as expanded

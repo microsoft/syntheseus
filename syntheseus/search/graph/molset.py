@@ -91,7 +91,7 @@ class MolSetGraph(RetrosynthesisSearchGraph[MolSetNode]):
                 edge_data = self._graph.get_edge_data(node, child_node)
                 assert "reaction" in edge_data
                 rxn = edge_data["reaction"]
-                assert ((set(node.mols) - {rxn.product}) | rxn.reactants) == child_node.mols
+                assert ((set(node.mols) - {rxn.product}) | set(rxn.reactants)) == child_node.mols
 
     def expand_with_reactions(
         self,
@@ -119,7 +119,7 @@ class MolSetGraph(RetrosynthesisSearchGraph[MolSetNode]):
         new_nodes: list[MolSetNode] = list()
         node.is_expanded = True
         for reaction in reactions:
-            new_mol_set = frozenset((set(node.mols) - {reaction.product}) | reaction.reactants)
+            new_mol_set = frozenset((set(node.mols) - {reaction.product}) | set(reaction.reactants))
             if new_mol_set in self._molset_to_node:
                 new_node = self._molset_to_node[new_mol_set]
             else:

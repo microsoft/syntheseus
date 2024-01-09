@@ -107,7 +107,7 @@ class AndOrGraph(RetrosynthesisSearchGraph[ANDOR_NODE]):
                 # Should be 1 child OrNode for each reactant
                 all_children = list(self.successors(node))
                 assert len(all_children) == len(
-                    node.reaction.reactants
+                    set(node.reaction.reactants)
                 ), "Should have 1 child per reactant."
                 for child in all_children:
                     assert isinstance(child, OrNode)
@@ -162,7 +162,7 @@ class AndOrGraph(RetrosynthesisSearchGraph[ANDOR_NODE]):
             new_nodes.append(and_node)
             self._graph.add_edge(node, and_node)
 
-            for reactant_mol in reaction.reactants:
+            for reactant_mol in set(reaction.reactants):
                 if reactant_mol in self._mol_to_node:
                     or_node = self._mol_to_node[reactant_mol]
                 else:

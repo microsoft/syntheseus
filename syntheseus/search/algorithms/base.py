@@ -386,7 +386,8 @@ class MolSetSearchAlgorithm(SearchAlgorithm[MolSetGraph, AlgReturnType], Generic
             reactions = [
                 rxn
                 for rxn in reactions
-                if frozenset((node.mols - {rxn.product}) | rxn.reactants) not in ancestor_molsets
+                if frozenset((node.mols - {rxn.product}) | set(rxn.reactants))
+                not in ancestor_molsets
             ]
 
         return reactions
