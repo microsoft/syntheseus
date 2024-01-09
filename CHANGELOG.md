@@ -11,6 +11,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 - Suppress the remaining noisy logs and warnings coming from single-step models ([#53](https://github.com/microsoft/syntheseus/pull/53)) ([@kmaziarz])
 
+### Added
+
+- Add a new tutorial employing non-toy single-step models ([#54](https://github.com/microsoft/syntheseus/pull/54)) ([@kmaziarz])
+
 ## [0.3.0] - 2023-12-19
 
 ### Changed
