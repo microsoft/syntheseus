@@ -47,6 +47,8 @@ class MHNreactModel(ExternalBackwardReactionModel):
 
         with open(get_unique_file_in_dir(self.model_dir, pattern="*.json"), "r") as conf:
             conf_dict = json.load(conf)
+        conf_dict["device"] = self.device
+
         conf = model.ModelConfig(**conf_dict)
         self.model = model.MHN(config=conf)
 
