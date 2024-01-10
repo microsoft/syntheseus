@@ -265,7 +265,8 @@ class SearchAlgorithm(MinimalSearchAlgorithm[GraphType, AlgReturnType]):
 
             # Filter reactions to remove unwanted ones
             filtered_rxn_list = [
-                self._filter_reactions(rxn_list, node, graph) for rxn_list in rxn_model_output
+                self._filter_reactions(rxn_list.predictions, node, graph)  # type: ignore[arg-type]
+                for rxn_list in rxn_model_output
             ]
 
             # Add new nodes to the graph

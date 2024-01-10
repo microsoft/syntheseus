@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
+from syntheseus.interface.models import BackwardPredictionList
 from syntheseus.search.chem import BackwardReaction, Molecule
 from syntheseus.search.reaction_models.base import BackwardReactionModel
 
@@ -13,8 +14,14 @@ class ListOfReactionsModel(BackwardReactionModel):
         super().__init__(**kwargs)
         self.reaction_list = list(reaction_list)
 
-    def _get_backward_reactions(self, mols: list[Molecule]) -> list[list[BackwardReaction]]:
-        return [[r for r in self.reaction_list if r.product == mol] for mol in mols]
+    def _get_prediction_list(self, inputs: list[Molecule], num_results: int) -> list[BackwardPredictionList]:  # type: ignore[override]
+        return [
+            BackwardPredictionList(
+                input=mol,
+                predictions=[r for r in self.reaction_list if r.product == mol][:num_results],  # type: ignore[arg-type]
+            )
+            for mol in inputs
+        ]
 
 
 class LinearMolecules(BackwardReactionModel):
@@ -78,5 +85,14 @@ class LinearMolecules(BackwardReactionModel):
 
         return output
 
-    def _get_backward_reactions(self, mols: list[Molecule]) -> list[list[BackwardReaction]]:
-        return [self._get_single_backward_reactions(mol) for mol in mols]
+    def _get_prediction_list(
+        self, inputs: list[Molecule], num_results: int
+    ) -> list[BackwardPredictionList]:
+        # NOTE: arg-type ignore below is a covariant/invariant issue.
+        # Should resolve properly later
+        return [
+            BackwardPredictionList(
+                input=mol, predictions=self._get_single_backward_reactions(mol)[:num_results]  # type: ignore[arg-type]
+            )
+            for mol in inputs
+        ]

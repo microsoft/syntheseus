@@ -1,15 +1,17 @@
 from __future__ import annotations
 
 import syntheseus.search.reaction_models
-from syntheseus.interface.models import BackwardReactionModel
+from syntheseus.interface.models import BackwardPredictionList, BackwardReactionModel
 from syntheseus.interface.molecule import Molecule
-from syntheseus.search.chem import BackwardReaction, ReactionMetaData
+from syntheseus.search.chem import ReactionMetaData
 
 
 class SyntheseusBackwardReactionModel(syntheseus.search.reaction_models.BackwardReactionModel):
     """
     A syntheseus backward reaction model which wraps a single-step model from this repo.
     The resulting model can be used in search.
+
+    NOTE: should be deleted if interfaces are combined.
     """
 
     def __init__(self, model: BackwardReactionModel, num_results: int, **kwargs):
@@ -19,14 +21,15 @@ class SyntheseusBackwardReactionModel(syntheseus.search.reaction_models.Backward
         self._model = model
         self._num_results = num_results
 
-    def _get_backward_reactions(self, mols: list[Molecule]) -> list[list[BackwardReaction]]:
+    def _get_prediction_list(
+        self, inputs: list[Molecule], num_results: int
+    ) -> list[BackwardPredictionList]:
         # Call the underlying model
-        model_outputs = self._model(mols, self._num_results)
+        # TODO: ignores `num_results`. Won't bother fixing though since this PR makes the class obsolete.
+        model_outputs = self._model(inputs, self._num_results)
 
-        # Convert the outputs to backward reactions
-        reaction_outputs: list[list[BackwardReaction]] = []
+        # Transfer the metadata
         for pred_list in model_outputs:
-            reaction_outputs.append([])  # Initialize the list
             for pred in pred_list.predictions:
                 # Read metadata
                 metadata = ReactionMetaData()
@@ -46,8 +49,4 @@ class SyntheseusBackwardReactionModel(syntheseus.search.reaction_models.Backward
                 if pred.metadata is not None:
                     metadata["other_metadata"] = pred.metadata  # type: ignore[typeddict-unknown-key]
 
-                rxn = BackwardReaction(
-                    product=pred.input, reactants=frozenset(pred.output), metadata=metadata
-                )
-                reaction_outputs[-1].append(rxn)
-        return reaction_outputs
+        return model_outputs
