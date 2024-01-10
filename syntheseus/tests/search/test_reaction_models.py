@@ -9,6 +9,7 @@ look for some behaviours which might be overlooked by the algorithm tests.
 
 import pytest
 
+from syntheseus.interface.models import DEFAULT_NUM_RESULTS, BackwardPredictionList
 from syntheseus.search.chem import BackwardReaction, Molecule
 from syntheseus.search.reaction_models.toy import LinearMolecules, ListOfReactionsModel
 
@@ -37,10 +38,11 @@ def test_remove_duplicates(remove: bool) -> None:
     # Check that outputs are what is expected.
     # NOTE: this test depends on the order of the outputs being consistent,
     # which is the case for this toy model but may not be true in general
+    output_rxns_only = [o.predictions for o in output]
     if remove:
-        assert output == [[rxn_C_C, rxn_CO, rxn_CS]]
+        assert output_rxns_only == [[rxn_C_C, rxn_CO, rxn_CS]]
     else:
-        assert output == [[rxn_C_C, rxn_CO, rxn_CS, rxn_CO, rxn_CS]]
+        assert output_rxns_only == [[rxn_C_C, rxn_CO, rxn_CS, rxn_CO, rxn_CS]]
 
 
 @pytest.mark.parametrize("use_cache", [True, False])
@@ -111,7 +113,11 @@ def test_initial_cache(
     # NOTE: this is *not* what the reaction model would actually output if called.
     # If the cache works correctly then it will output this reaction instead of calling the model.
     CC = Molecule("CC")
-    initial_cache = {cocs_mol: [rxn_cocs_from_co_cs], CC: []}
+    initial_cache_old_type = {cocs_mol: [rxn_cocs_from_co_cs], CC: []}
+    initial_cache = {
+        (k, DEFAULT_NUM_RESULTS): BackwardPredictionList(input=k, predictions=v)  # type: ignore
+        for k, v in initial_cache_old_type.items()
+    }
 
     # Create reaction model, potentially checking for warning
     if use_cache:
@@ -125,16 +131,16 @@ def test_initial_cache(
     outputs = rxn_model([cocs_mol, CC, Molecule("CCC")])
     if use_cache:
         # outputs should reflect initial cache
-        assert outputs[0] == initial_cache[cocs_mol]
-        assert outputs[1] == initial_cache[CC]
+        assert outputs[0] == initial_cache[(cocs_mol, DEFAULT_NUM_RESULTS)]
+        assert outputs[1] == initial_cache[(CC, DEFAULT_NUM_RESULTS)]
         assert rxn_model.num_calls() == 1
     else:
         # outputs should ignore initial cache
-        assert len(outputs[0]) == 7
-        assert len(outputs[1]) == 3
+        assert len(outputs[0].predictions) == 7
+        assert len(outputs[1].predictions) == 3
         assert rxn_model.num_calls() == 3
     assert (
-        len(outputs[2]) == 3
+        len(outputs[2].predictions) == 3
     )  # not in initial cache, so in both cases model should actually be called
 
     # In all cases, resetting should clear the cache
@@ -164,4 +170,5 @@ def test_list_of_reactions_model(
     """Simple test of the ListOfReactionsModel class."""
     model = ListOfReactionsModel([rxn_cocs_from_co_cs, rxn_cocs_from_cocc, rxn_cs_from_cc])
     output = model([Molecule("COCS"), Molecule("CS"), Molecule("CO")])
-    assert output == [[rxn_cocs_from_co_cs, rxn_cocs_from_cocc], [rxn_cs_from_cc], []]
+    output_rxns = [o.predictions for o in output]
+    assert output_rxns == [[rxn_cocs_from_co_cs, rxn_cocs_from_cocc], [rxn_cs_from_cc], []]

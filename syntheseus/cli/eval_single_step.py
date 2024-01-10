@@ -303,7 +303,7 @@ def compute_metrics(
             for prediction, ground_truth_match in zip(
                 prediction_list.predictions, ground_truth_matches
             ):
-                prediction.metadata["ground_truth_match"] = ground_truth_match
+                prediction.metadata["ground_truth_match"] = ground_truth_match  # type: ignore[typeddict-unknown-key]
 
             if back_translation_model is not None:
                 assert back_translation_metrics is not None

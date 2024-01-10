@@ -23,6 +23,7 @@ from syntheseus.reaction_prediction.utils.metrics import ModelTimingResults
 
 class DummyModel(BackwardReactionModel):
     def __init__(self, repeat: bool) -> None:
+        super().__init__(remove_duplicates=False)
         self._repeat = repeat
 
     RESULTS = [
@@ -32,7 +33,9 @@ class DummyModel(BackwardReactionModel):
         Bag([Molecule("NC=O")]),
     ]
 
-    def __call__(self, inputs: List[Molecule], num_results: int) -> List[BackwardPredictionList]:
+    def _get_prediction_list(
+        self, inputs: List[Molecule], num_results: int
+    ) -> List[BackwardPredictionList]:
         outputs: Iterable[Bag[Molecule]] = []
 
         if self._repeat:
