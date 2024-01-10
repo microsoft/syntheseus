@@ -72,7 +72,9 @@ class RetroKNNModel(LocalRetroModel):
 
         return atom_outs, bond_outs, atom_feats, bond_feats
 
-    def __call__(self, inputs: List[Molecule], num_results: int) -> List[BackwardPredictionList]:
+    def _get_prediction_list(
+        self, inputs: List[Molecule], num_results: int
+    ) -> List[BackwardPredictionList]:
         import torch
 
         from syntheseus.reaction_prediction.models.retro_knn import knn_prob

@@ -141,7 +141,9 @@ class LocalRetroModel(ExternalBackwardReactionModel):
 
         return batch_predictions
 
-    def __call__(self, inputs: List[Molecule], num_results: int) -> List[BackwardPredictionList]:
+    def _get_prediction_list(
+        self, inputs: List[Molecule], num_results: int
+    ) -> List[BackwardPredictionList]:
         import torch
         from local_retro.scripts.utils import predict
 

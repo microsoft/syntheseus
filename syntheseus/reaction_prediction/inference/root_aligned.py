@@ -136,7 +136,9 @@ class RootAlignedModel(ExternalBackwardReactionModel):
 
         return kwargs_list
 
-    def __call__(self, inputs, num_results: int, random_augmentation=False) -> List[PredictionList]:
+    def _get_prediction_list(
+        self, inputs, num_results: int, random_augmentation=False
+    ) -> List[PredictionList]:
         # Step 1: Perform data augmentation.
         augmented_inputs = []
         if random_augmentation:

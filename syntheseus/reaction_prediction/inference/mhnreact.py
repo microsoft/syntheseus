@@ -93,7 +93,9 @@ class MHNreactModel(ExternalBackwardReactionModel):
     def get_parameters(self):
         return self.model.parameters()
 
-    def __call__(self, inputs: List[Molecule], num_results: int) -> List[BackwardPredictionList]:
+    def _get_prediction_list(
+        self, inputs: List[Molecule], num_results: int
+    ) -> List[BackwardPredictionList]:
         import pandas as pd
         import torch
 

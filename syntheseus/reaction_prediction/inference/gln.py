@@ -74,5 +74,7 @@ class GLNModel(ExternalBackwardReactionModel):
                 kwargs_list=[{"probability": probability} for probability in result["scores"]],
             )
 
-    def __call__(self, inputs: List[Molecule], num_results: int) -> List[BackwardPredictionList]:
+    def _get_prediction_list(
+        self, inputs: List[Molecule], num_results: int
+    ) -> List[BackwardPredictionList]:
         return [self._get_model_predictions(input, num_results=num_results) for input in inputs]

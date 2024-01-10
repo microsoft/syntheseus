@@ -21,7 +21,7 @@ class ParallelReactionModel(ReactionModel):
         self._devices = devices
         self._model_replicas = [model_fn(device=device) for device in devices]
 
-    def __call__(
+    def _get_prediction_list(
         self, inputs: List[InputType], num_results: int
     ) -> List[PredictionList[InputType, OutputType]]:
         # Chunk up the inputs into (roughly) equal-sized chunks.

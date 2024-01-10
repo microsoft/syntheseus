@@ -140,7 +140,9 @@ class MEGANModel(ExternalBackwardReactionModel):
 
         return input_batch
 
-    def __call__(self, inputs: list[Molecule], num_results: int) -> list[BackwardPredictionList]:
+    def _get_prediction_list(
+        self, inputs: list[Molecule], num_results: int
+    ) -> list[BackwardPredictionList]:
         import torch
         from src.model.beam_search import beam_search
 
