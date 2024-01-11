@@ -7,6 +7,7 @@
 
 [![CI](https://github.com/microsoft/syntheseus/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/microsoft/syntheseus/actions/workflows/ci.yml)
 [![Python Version](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
+[![pypi](https://img.shields.io/pypi/v/syntheseus.svg)](https://pypi.org/project/syntheseus/)
 [![code style](https://img.shields.io/badge/code%20style-black-202020.svg)](https://github.com/ambv/black)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/microsoft/syntheseus/blob/main/LICENSE)
 
@@ -27,7 +28,7 @@ To install `syntheseus` with all the extras, run
 conda env create -f environment_full.yml
 conda activate syntheseus-full
 
-pip install -e ".[all]"
+pip install "syntheseus[all]"
 ```
 
 See [documentation](https://microsoft.github.io/syntheseus/installation) if you prefer a more lightweight installation that only includes the parts you actually need.

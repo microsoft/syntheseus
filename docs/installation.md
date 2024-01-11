@@ -3,7 +3,25 @@ We support two installation modes:
 - *core installation* allows you to build and benchmark your own models or search algorithms
 - *full installation* also allows you to perform end-to-end search using the supported models
 
-=== "Core installation"
+=== "Core (pip)"
+
+    ```bash
+    conda env create -f environment.yml
+    conda activate syntheseus
+
+    pip install syntheseus
+    ```
+
+=== "Full (pip)"
+
+    ```bash
+    conda env create -f environment_full.yml
+    conda activate syntheseus-full
+
+    pip install "syntheseus[all]"
+    ```
+
+=== "Core (source)"
 
     ```bash
     conda env create -f environment.yml
@@ -12,7 +30,7 @@ We support two installation modes:
     pip install -e .
     ```
 
-=== "Full installation"
+=== "Full (source)"
 
     ```bash
     conda env create -f environment_full.yml
