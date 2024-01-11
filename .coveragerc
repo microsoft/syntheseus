@@ -1,7 +1,6 @@
 [run]
-
 branch = True
-include = syntheseus/*
+source = syntheseus
 omit = syntheseus/tests/*
 
 [report]

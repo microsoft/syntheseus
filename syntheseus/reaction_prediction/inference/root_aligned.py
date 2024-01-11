@@ -47,11 +47,16 @@ class RootAlignedModel(ExternalBackwardReactionModel):
         with open(get_unique_file_in_dir(self.model_dir, pattern="*.yml"), "r") as f:
             opt_from_config = yaml.safe_load(f)
 
+        import torch
+
         opt = argparse.Namespace()
         for key, value in opt_from_config.items():
             setattr(opt, key, value)
+
         opt.models = [get_unique_file_in_dir(self.model_dir, pattern="*.pt")]
         opt.output = "/dev/null"
+        opt.gpu = -1 if self.device == "cpu" else torch.device(self.device).index
+
         setattr(opt, "synthon", False)
 
         from root_aligned import score
