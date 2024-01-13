@@ -10,6 +10,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ### Changed
 
 - Suppress the remaining noisy logs and warnings coming from single-step models ([#53](https://github.com/microsoft/syntheseus/pull/53)) ([@kmaziarz])
+- Removed PredictionList objects, replacing them with Sequence[Prediction] ([#60](https://github.com/microsoft/syntheseus/pull/60)) ([@austint])
 
 ### Added
 
