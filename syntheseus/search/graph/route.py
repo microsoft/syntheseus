@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 from collections import Counter
-from collections.abc import Sequence
-from typing import Union
+from typing import Sequence, Union
 
 from syntheseus.search.chem import BackwardReaction, Molecule
 from syntheseus.search.graph.base_graph import BaseReactionGraph

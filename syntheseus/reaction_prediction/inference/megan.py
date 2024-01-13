@@ -11,10 +11,9 @@ from __future__ import annotations
 import logging
 import os
 import sys
-from collections.abc import Sequence
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Sequence
 
 from rdkit import Chem
 

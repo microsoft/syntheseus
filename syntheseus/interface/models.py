@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import math
 from abc import abstractmethod
-from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any, Dict, Generic, List, Optional, TypeVar
+from typing import Any, Dict, Generic, List, Optional, Sequence, TypeVar
 
 from syntheseus.interface.bag import Bag
 from syntheseus.interface.molecule import Molecule

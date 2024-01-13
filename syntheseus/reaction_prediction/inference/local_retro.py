@@ -8,9 +8,8 @@ Parts of this file are based on code from the GitHub repository above.
 """
 
 import sys
-from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, List
+from typing import Any, List, Sequence
 
 from syntheseus.interface.models import BackwardPrediction
 from syntheseus.interface.molecule import Molecule

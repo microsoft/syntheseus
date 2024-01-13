@@ -1,6 +1,5 @@
-from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Sequence, Union
 
 from syntheseus.interface.models import Prediction
 from syntheseus.reaction_prediction.chem.utils import molecule_bag_from_smiles

@@ -4,9 +4,9 @@ import abc
 import math
 import random
 import warnings
-from collections.abc import Collection, Sequence
+from collections.abc import Collection
 from datetime import datetime
-from typing import Generic, Optional, TypeVar
+from typing import Generic, Optional, Sequence, TypeVar
 
 from syntheseus.search import INT_INF
 from syntheseus.search.chem import BackwardReaction, Molecule

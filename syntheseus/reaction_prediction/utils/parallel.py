@@ -1,6 +1,5 @@
 import math
-from collections.abc import Sequence
-from typing import Callable, List
+from typing import Callable, List, Sequence
 
 import torch
 from more_itertools import chunked

@@ -7,9 +7,8 @@ The original GLN code is released under the MIT license.
 """
 
 import sys
-from collections.abc import Sequence
 from pathlib import Path
-from typing import List
+from typing import List, Sequence
 
 from syntheseus.interface.models import BackwardPrediction
 from syntheseus.interface.molecule import Molecule

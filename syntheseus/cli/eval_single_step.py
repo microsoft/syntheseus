@@ -18,12 +18,11 @@ import logging
 import math
 import os
 import time
-from collections.abc import Sequence
 from dataclasses import dataclass, field, fields
 from functools import partial
 from itertools import islice
 from statistics import mean, median
-from typing import Any, Callable, Dict, Generic, Iterable, List, Optional, Set, cast
+from typing import Any, Callable, Dict, Generic, Iterable, List, Optional, Sequence, Set, cast
 
 from more_itertools import batched
 from omegaconf import MISSING, OmegaConf

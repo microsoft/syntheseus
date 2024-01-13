@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
+from typing import Sequence
 
 from syntheseus.search.chem import BackwardReaction, Molecule
 from syntheseus.search.reaction_models.base import BackwardReactionModel

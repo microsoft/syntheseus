@@ -8,9 +8,8 @@ The original MHNreact code is released under the BSD-2-Clause license.
 
 import json
 from collections import defaultdict
-from collections.abc import Sequence
 from functools import partial
-from typing import List
+from typing import List, Sequence
 
 from tqdm.contrib import concurrent
 

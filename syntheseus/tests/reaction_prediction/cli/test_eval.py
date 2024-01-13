@@ -1,7 +1,6 @@
 import tempfile
-from collections.abc import Sequence
 from itertools import cycle, islice
-from typing import Iterable, List
+from typing import Iterable, List, Sequence
 
 import pytest
 

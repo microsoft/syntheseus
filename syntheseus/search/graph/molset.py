@@ -3,9 +3,9 @@ from __future__ import annotations
 import datetime
 import warnings
 from collections import Counter
-from collections.abc import Collection, Sequence
+from collections.abc import Collection
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Sequence
 
 import networkx as nx
 

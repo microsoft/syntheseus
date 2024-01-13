@@ -13,8 +13,7 @@ import multiprocessing
 import random
 import warnings
 from collections import defaultdict
-from collections.abc import Sequence
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 
 import yaml
 from rdkit import Chem

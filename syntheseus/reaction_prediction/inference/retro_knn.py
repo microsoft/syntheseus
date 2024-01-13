@@ -3,9 +3,8 @@
 Paper: https://arxiv.org/abs/2306.04123
 """
 
-from collections.abc import Sequence
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import List, Optional, Sequence, Union
 
 import numpy as np
 

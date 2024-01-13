@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import abc
 import warnings
-from collections.abc import Sequence
-from typing import Optional
+from typing import Optional, Sequence
 
 from syntheseus.search.chem import BackwardReaction, Molecule
 

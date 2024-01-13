@@ -8,9 +8,8 @@ The original Chemformer code is released under the Apache 2.0 license.
 
 import sys
 import warnings
-from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, cast
+from typing import Any, Dict, List, Sequence, Tuple, cast
 
 from syntheseus.interface.bag import Bag
 from syntheseus.interface.models import InputType, OutputType, Prediction

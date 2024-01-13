@@ -1,5 +1,4 @@
-from collections.abc import Sequence
-from typing import List
+from typing import List, Sequence
 
 from syntheseus.interface.bag import Bag
 from syntheseus.interface.models import (
