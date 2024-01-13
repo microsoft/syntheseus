@@ -8,11 +8,12 @@ The original Chemformer code is released under the Apache 2.0 license.
 
 import sys
 import warnings
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, Dict, List, Tuple, cast
 
 from syntheseus.interface.bag import Bag
-from syntheseus.interface.models import InputType, OutputType, PredictionList
+from syntheseus.interface.models import InputType, OutputType, Prediction
 from syntheseus.interface.molecule import Molecule
 from syntheseus.reaction_prediction.inference.base import ExternalReactionModel
 from syntheseus.reaction_prediction.utils.inference import (
@@ -105,7 +106,9 @@ class ChemformerModel(ExternalReactionModel[InputType, OutputType]):
             "encoder_pad_mask": torch.tensor(mask, dtype=torch.bool).transpose(0, 1),
         }
 
-    def __call__(self, inputs: List[InputType], num_results: int) -> List[PredictionList]:
+    def __call__(
+        self, inputs: List[InputType], num_results: int
+    ) -> List[Sequence[Prediction[InputType, OutputType]]]:
         import torch
 
         # Get the data in to the right form to call the sampling method on the model.

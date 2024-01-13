@@ -3,12 +3,13 @@
 Paper: https://arxiv.org/abs/2306.04123
 """
 
+from collections.abc import Sequence
 from pathlib import Path
 from typing import List, Optional, Union
 
 import numpy as np
 
-from syntheseus.interface.models import BackwardPredictionList
+from syntheseus.interface.models import BackwardPrediction
 from syntheseus.interface.molecule import Molecule
 from syntheseus.reaction_prediction.inference.local_retro import LocalRetroModel
 from syntheseus.reaction_prediction.utils.inference import get_unique_file_in_dir
@@ -76,7 +77,9 @@ class RetroKNNModel(LocalRetroModel):
 
         return atom_outs, bond_outs, atom_feats, bond_feats
 
-    def __call__(self, inputs: List[Molecule], num_results: int) -> List[BackwardPredictionList]:
+    def __call__(
+        self, inputs: List[Molecule], num_results: int
+    ) -> List[Sequence[BackwardPrediction]]:
         import torch
 
         from syntheseus.reaction_prediction.models.retro_knn import knn_prob

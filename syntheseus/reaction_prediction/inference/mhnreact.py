@@ -8,12 +8,13 @@ The original MHNreact code is released under the BSD-2-Clause license.
 
 import json
 from collections import defaultdict
+from collections.abc import Sequence
 from functools import partial
 from typing import List
 
 from tqdm.contrib import concurrent
 
-from syntheseus.interface.models import BackwardPredictionList
+from syntheseus.interface.models import BackwardPrediction
 from syntheseus.interface.molecule import Molecule
 from syntheseus.reaction_prediction.inference.base import ExternalBackwardReactionModel
 from syntheseus.reaction_prediction.utils.inference import (
@@ -95,7 +96,9 @@ class MHNreactModel(ExternalBackwardReactionModel):
     def get_parameters(self):
         return self.model.parameters()
 
-    def __call__(self, inputs: List[Molecule], num_results: int) -> List[BackwardPredictionList]:
+    def __call__(
+        self, inputs: List[Molecule], num_results: int
+    ) -> List[Sequence[BackwardPrediction]]:
         import pandas as pd
         import torch
 
@@ -153,7 +156,7 @@ class MHNreactModel(ExternalBackwardReactionModel):
         # Now aggregate over same outcome (parts copied from `utils.sort_by_template_and_flatten`,
         # which does not expose the summed probabilities) and build the prediction objects.
 
-        batch_predictions: List[BackwardPredictionList] = []
+        batch_predictions: List[Sequence[BackwardPrediction]] = []
         for idx in range(len(template_scores)):
             idx_prod_reactants = defaultdict(list)
             for k, v in prod_idx_reactants[idx].items():

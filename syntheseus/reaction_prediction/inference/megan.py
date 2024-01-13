@@ -11,13 +11,14 @@ from __future__ import annotations
 import logging
 import os
 import sys
+from collections.abc import Sequence
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Any, Optional
 
 from rdkit import Chem
 
-from syntheseus.interface.models import BackwardPredictionList
+from syntheseus.interface.models import BackwardPrediction
 from syntheseus.interface.molecule import Molecule
 from syntheseus.reaction_prediction.inference.base import ExternalBackwardReactionModel
 from syntheseus.reaction_prediction.utils.inference import (
@@ -140,7 +141,9 @@ class MEGANModel(ExternalBackwardReactionModel):
 
         return input_batch
 
-    def __call__(self, inputs: list[Molecule], num_results: int) -> list[BackwardPredictionList]:
+    def __call__(
+        self, inputs: list[Molecule], num_results: int
+    ) -> list[Sequence[BackwardPrediction]]:
         import torch
         from src.model.beam_search import beam_search
 

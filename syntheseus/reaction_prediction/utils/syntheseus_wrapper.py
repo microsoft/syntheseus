@@ -27,7 +27,7 @@ class SyntheseusBackwardReactionModel(syntheseus.search.reaction_models.Backward
         reaction_outputs: list[list[BackwardReaction]] = []
         for pred_list in model_outputs:
             reaction_outputs.append([])  # Initialize the list
-            for pred in pred_list.predictions:
+            for pred in pred_list:
                 # Read metadata
                 metadata = ReactionMetaData()
 

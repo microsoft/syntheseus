@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 from abc import abstractmethod
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any, Dict, Generic, List, Optional, TypeVar
 
@@ -53,29 +54,13 @@ class Prediction(Generic[InputType, OutputType]):
             raise ValueError("Prediction does not have associated log prob or probability value.")
 
 
-@dataclass(frozen=True, order=False)
-class PredictionList(Generic[InputType, OutputType]):
-    """Several possible predictions."""
-
-    input: InputType
-    predictions: List[Prediction[InputType, OutputType]]
-
-    # Dictionary to hold additional metadata.
-    metadata: Dict[str, Any] = field(default_factory=dict)
-
-    def truncated(self, num_results: int) -> PredictionList[InputType, OutputType]:
-        return PredictionList(
-            input=self.input, predictions=self.predictions[:num_results], metadata=self.metadata
-        )
-
-
 class ReactionModel(Generic[InputType, OutputType]):
     """Base class for all reaction models, both backward and forward."""
 
     @abstractmethod
     def __call__(
         self, inputs: List[InputType], num_results: int
-    ) -> List[PredictionList[InputType, OutputType]]:
+    ) -> List[Sequence[Prediction[InputType, OutputType]]]:
         """Given a batch of inputs to the reaction model, return a batch of results.
 
         Args:
@@ -122,6 +107,3 @@ class ForwardReactionModel(ReactionModel[Bag[Molecule], Bag[Molecule]]):
 
 BackwardPrediction = Prediction[Molecule, Bag[Molecule]]
 ForwardPrediction = Prediction[Bag[Molecule], Bag[Molecule]]
-
-BackwardPredictionList = PredictionList[Molecule, Bag[Molecule]]
-ForwardPredictionList = PredictionList[Bag[Molecule], Bag[Molecule]]

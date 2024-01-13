@@ -1,14 +1,15 @@
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, Dict, List, Union
 
-from syntheseus.interface.models import Prediction, PredictionList
+from syntheseus.interface.models import Prediction
 from syntheseus.reaction_prediction.chem.utils import molecule_bag_from_smiles
 
 
 def process_raw_smiles_outputs(
     input: Any, output_list: List[str], kwargs_list: List[Dict[str, Any]]
-) -> PredictionList:
-    """Convert raw SMILES outputs into a `PredictionList`.
+) -> Sequence[Prediction]:
+    """Convert raw SMILES outputs into a list of `Prediction` objects.
 
     Args:
         inputs: Model input (can be `Molecule` or `Bag[Molecule]` depending on directionality).
@@ -16,7 +17,7 @@ def process_raw_smiles_outputs(
         kwargs_list: Additional metadata to attach to the predictions (e.g. probability).
 
     Returns:
-        A `PredictionList` with the predictions; may be shorter than `outputs` if some of the raw
+        A list of `Predictions`; may be shorter than `outputs` if some of the raw
         SMILES could not be parsed into valid reactant bags.
     """
     predictions: List[Prediction] = []
@@ -28,7 +29,7 @@ def process_raw_smiles_outputs(
         if reactants is not None:
             predictions.append(Prediction(input=input, output=reactants, **kwargs))
 
-    return PredictionList(input=input, predictions=predictions)
+    return predictions
 
 
 def get_unique_file_in_dir(dir: Union[str, Path], pattern: str) -> Path:

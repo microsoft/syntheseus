@@ -13,12 +13,13 @@ import multiprocessing
 import random
 import warnings
 from collections import defaultdict
+from collections.abc import Sequence
 from typing import Any, Dict, List, Optional
 
 import yaml
 from rdkit import Chem
 
-from syntheseus.interface.models import PredictionList
+from syntheseus.interface.models import Prediction
 from syntheseus.interface.molecule import Molecule
 from syntheseus.reaction_prediction.inference.base import ExternalBackwardReactionModel
 from syntheseus.reaction_prediction.utils.inference import (
@@ -141,7 +142,9 @@ class RootAlignedModel(ExternalBackwardReactionModel):
 
         return kwargs_list
 
-    def __call__(self, inputs, num_results: int, random_augmentation=False) -> List[PredictionList]:
+    def __call__(
+        self, inputs, num_results: int, random_augmentation=False
+    ) -> List[Sequence[Prediction]]:
         # Step 1: Perform data augmentation.
         augmented_inputs = []
         if random_augmentation:

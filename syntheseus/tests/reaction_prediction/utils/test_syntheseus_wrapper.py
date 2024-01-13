@@ -1,10 +1,10 @@
+from collections.abc import Sequence
 from typing import List
 
 from syntheseus.interface.bag import Bag
 from syntheseus.interface.models import (
     BackwardReactionModel,
     Prediction,
-    PredictionList,
 )
 from syntheseus.interface.molecule import Molecule
 from syntheseus.reaction_prediction.utils.syntheseus_wrapper import (
@@ -18,11 +18,8 @@ class MockBackwardReactionModel(BackwardReactionModel):
 
     def __call__(
         self, inputs: List[Molecule], num_results: int
-    ) -> List[PredictionList[Molecule, Bag[Molecule]]]:
-        return [
-            PredictionList(input=mol, predictions=[Prediction(input=mol, output=Bag([mol]))])
-            for mol in inputs
-        ]
+    ) -> List[Sequence[Prediction[Molecule, Bag[Molecule]]]]:
+        return [[Prediction(input=mol, output=Bag([mol]))] for mol in inputs]
 
     def get_parameters(self):
         return []
