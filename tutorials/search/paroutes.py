@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import warnings
+from collections.abc import Sequence
 from pathlib import Path
 
 import numpy as np
@@ -87,7 +88,7 @@ class PaRoutesModel(BackwardReactionModel):
             },
         )
 
-    def _get_backward_reactions(self, mols: list[Molecule]) -> list[list[BackwardReaction]]:
+    def _get_backward_reactions(self, mols: list[Molecule]) -> list[Sequence[BackwardReaction]]:
         # Make fingerprint array
         fingperprints = np.array([get_fingerprint(mol.smiles) for mol in mols])
 

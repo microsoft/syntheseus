@@ -225,7 +225,7 @@ class SearchAlgorithm(MinimalSearchAlgorithm[GraphType, AlgReturnType]):
 
     @abc.abstractmethod
     def _filter_reactions(
-        self, reactions: list[BackwardReaction], node: BaseGraphNode, graph: GraphType
+        self, reactions: Sequence[BackwardReaction], node: BaseGraphNode, graph: GraphType
     ) -> list[BackwardReaction]:
         """Remove unwanted reactions from the list."""
         raise NotImplementedError
@@ -318,7 +318,7 @@ class AndOrSearchAlgorithm(SearchAlgorithm[AndOrGraph, AlgReturnType], Generic[A
         return mols
 
     def _filter_reactions(
-        self, reactions: list[BackwardReaction], node: BaseGraphNode, graph: AndOrGraph
+        self, reactions: Sequence[BackwardReaction], node: BaseGraphNode, graph: AndOrGraph
     ) -> list[BackwardReaction]:
         # Filter out any reactions that contain the root molecule
         reactions = [rxn for rxn in reactions if graph.root_node.mol not in rxn.reactants]
@@ -372,7 +372,7 @@ class MolSetSearchAlgorithm(SearchAlgorithm[MolSetGraph, AlgReturnType], Generic
         return molsets
 
     def _filter_reactions(
-        self, reactions: list[BackwardReaction], node: BaseGraphNode, graph: MolSetGraph
+        self, reactions: Sequence[BackwardReaction], node: BaseGraphNode, graph: MolSetGraph
     ) -> list[BackwardReaction]:
         # Filter out any reactions that contain the root molecule
         assert len(graph.root_node.mols) == 1

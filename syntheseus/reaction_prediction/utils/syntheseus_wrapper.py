@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 import syntheseus.search.reaction_models
 from syntheseus.interface.models import BackwardReactionModel
 from syntheseus.interface.molecule import Molecule
@@ -19,14 +21,15 @@ class SyntheseusBackwardReactionModel(syntheseus.search.reaction_models.Backward
         self._model = model
         self._num_results = num_results
 
-    def _get_backward_reactions(self, mols: list[Molecule]) -> list[list[BackwardReaction]]:
+    def _get_backward_reactions(self, mols: list[Molecule]) -> list[Sequence[BackwardReaction]]:
         # Call the underlying model
         model_outputs = self._model(mols, self._num_results)
 
         # Convert the outputs to backward reactions
-        reaction_outputs: list[list[BackwardReaction]] = []
+        reaction_outputs: list[Sequence[BackwardReaction]] = []
         for pred_list in model_outputs:
-            reaction_outputs.append([])  # Initialize the list
+            replacement_list: list[BackwardReaction] = []
+            reaction_outputs.append(replacement_list)  # Initialize the list
             for pred in pred_list:
                 # Read metadata
                 metadata = ReactionMetaData()
@@ -49,5 +52,5 @@ class SyntheseusBackwardReactionModel(syntheseus.search.reaction_models.Backward
                 rxn = BackwardReaction(
                     product=pred.input, reactants=frozenset(pred.output), metadata=metadata
                 )
-                reaction_outputs[-1].append(rxn)
+                replacement_list.append(rxn)
         return reaction_outputs
