@@ -124,7 +124,7 @@ class RetroStarSearch(
         # Initialize all reaction numbers and retro star values
         for node in nodes:
             node.data.setdefault("retro_star_min_cost", math.inf)
-            node.data.setdefault("reaction_number", math.inf)
+            node.data.setdefault("retro_star_reaction_number", math.inf)
             node.data.setdefault("retro_star_value", math.inf)
         nodes_to_update = set(cast(Collection[ANDOR_NODE], nodes))
 
@@ -214,7 +214,7 @@ def reaction_number_update(node: ANDOR_NODE, graph: AndOrGraph) -> bool:
     if isinstance(node, AndNode):
         # Reaction number from equation 7 in Retro*
         new_rn = node.data["retro_star_rxn_cost"] + sum(
-            c.data["reaction_number"] for c in graph.successors(node)
+            c.data["retro_star_reaction_number"] for c in graph.successors(node)
         )
     elif isinstance(node, OrNode):
         # Reaction number is the minimum the molecule's purchase cost
@@ -223,7 +223,9 @@ def reaction_number_update(node: ANDOR_NODE, graph: AndOrGraph) -> bool:
         possible_costs = [node.data["retro_star_mol_cost"]]
         if node.is_expanded:
             # If the node is expanded, the cost of each child is also an option
-            possible_costs.extend([c.data["reaction_number"] for c in graph.successors(node)])
+            possible_costs.extend(
+                [c.data["retro_star_reaction_number"] for c in graph.successors(node)]
+            )
         else:
             # Otherwise the cost of the reaction number estimate is an option.
             # This estimate must be present!
@@ -233,8 +235,8 @@ def reaction_number_update(node: ANDOR_NODE, graph: AndOrGraph) -> bool:
         raise TypeError(f"Unexpected node type: {type(node)}")
 
     # Do update and return whether the value changed
-    old_rn = node.data["reaction_number"]
-    node.data["reaction_number"] = new_rn
+    old_rn = node.data["retro_star_reaction_number"]
+    node.data["retro_star_reaction_number"] = new_rn
     return not math.isclose(new_rn, old_rn)
 
 
@@ -258,8 +260,8 @@ def retro_star_value_update(node: ANDOR_NODE, graph: AndOrGraph) -> bool:
         assert isinstance(parent, OrNode)
         new_value = (
             parent.data["retro_star_value"]
-            - parent.data["reaction_number"]
-            + node.data["reaction_number"]
+            - parent.data["retro_star_reaction_number"]
+            + node.data["retro_star_reaction_number"]
         )
 
         # Special cases to prevent NaNs
@@ -274,7 +276,7 @@ def retro_star_value_update(node: ANDOR_NODE, graph: AndOrGraph) -> bool:
         # Except the root node: it's r* value estimate is just its RN
         if len(parents) == 0:
             # Root node
-            new_value = node.data["reaction_number"]
+            new_value = node.data["retro_star_reaction_number"]
         elif len(parents) == 1:
             # r* is parent's r*
             parent = parents[0]
