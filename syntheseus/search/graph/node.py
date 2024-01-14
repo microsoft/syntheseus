@@ -30,6 +30,7 @@ class _NodeData_Algorithms(TypedDict, total=False):
     # ==================================================
     # Retro*
     # ==================================================
+    retro_star_min_cost: float  # minimum cost found so far
     reaction_number: float
     reaction_number_estimate: float
     retro_star_value: float
