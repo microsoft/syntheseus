@@ -172,22 +172,33 @@ class GeneralBestFirstSearch(SearchAlgorithm[GraphType, int], Generic[GraphType]
                             queue._entry_finder[updated_node].priority, updated_node_priority
                         )
                     )
-                    if (
-                        not already_in_queue_at_correct_priority
-                        and updated_node_priority < math.inf
-                    ):
+
+                    if already_in_queue_at_correct_priority:
+                        # In this case re-inserting the node is redundant so we do nothing
+                        pass
+                    elif updated_node_priority < math.inf:
+                        # Main case: insert (or re-insert) node into queue
                         queue.push_item(updated_node, updated_node_priority)
+                    else:
+                        # Edge case: reached if new priority is inf.
+                        # In this case, remove the node from the queue if it was there.
+                        queue.remove_item(updated_node)
 
             # Log
             if logger_active:
+                logging_str = (
+                    f"Step: {step}, "
+                    f"Nodes affected during visit: {len(new_nodes)}, "
+                    f"Nodes updated: {len(nodes_updated)}, "
+                    f"Graph size: {len(graph)}, "
+                    f"Queue size: {len(queue)} (raw length: {queue.raw_len()}), "
+                    f"Num popped: {num_popped}, "
+                    f"Reaction model calls: {self.reaction_model.num_calls()}, "
+                    f"Node visited: {node}"
+                )
                 logger.log(
                     log_level,
-                    f"Step {step}:\tvisited node: {node}, "
-                    f"Nodes effected during visit: {len(new_nodes)}, "
-                    f"Nodes updated: {len(nodes_updated)}, "
-                    f"Graph size: {len(graph)}, ",
-                    f"Queue size: {len(queue)} (raw length: {queue.raw_len()}), ",
-                    f"Num popped: {num_popped}",
+                    logging_str,
                 )
 
         return step
