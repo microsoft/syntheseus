@@ -92,7 +92,7 @@ class RetroStarSearch(
                 for node in output_nodes
                 if isinstance(node, OrNode)
                 and "reaction_number_estimate" not in node.data
-                and not node.is_expanded
+                and self.can_expand_node(node, graph)
             ],
             graph=graph,
         )
@@ -226,9 +226,9 @@ def reaction_number_update(node: ANDOR_NODE, graph: AndOrGraph) -> bool:
             possible_costs.extend(
                 [c.data["retro_star_reaction_number"] for c in graph.successors(node)]
             )
-        else:
+        elif "reaction_number_estimate" in node.data:
             # Otherwise the cost of the reaction number estimate is an option.
-            # This estimate must be present!
+            # By design, it will only be present if the node can be expanded
             possible_costs.append(node.data["reaction_number_estimate"])
         new_rn = min(possible_costs)
     else:
