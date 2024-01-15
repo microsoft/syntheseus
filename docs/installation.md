@@ -6,8 +6,8 @@ We support two installation modes:
 There are also two installation sources:
 
 - *pip*, which provides the most recent released version
-- *GitHub*, which provides the latest changes but may be less stable or have backward-incompatible
-  changes with the latest released version
+- *GitHub*, which provides the latest changes but may be less stable and may not be
+  backward-compatible with the latest released version
 
 === "Core (pip)"
 
@@ -30,7 +30,6 @@ There are also two installation sources:
 === "Core (GitHub)"
 
     ```bash
-    # NOTE: clone the repository first
     conda env create -f environment.yml
     conda activate syntheseus
 
@@ -40,7 +39,6 @@ There are also two installation sources:
 === "Full (GitHub)"
 
     ```bash
-    # NOTE: clone the repository first
     conda env create -f environment_full.yml
     conda activate syntheseus-full
 
