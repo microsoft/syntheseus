@@ -1,13 +1,13 @@
 import math
-from typing import Callable, List
+from typing import Callable, List, Sequence
 
 import torch
 from more_itertools import chunked
 
-from syntheseus.interface.models import InputType, OutputType, PredictionList, ReactionModel
+from syntheseus.interface.models import InputType, OutputType, Prediction, ReactionModel
 
 
-class ParallelReactionModel(ReactionModel):
+class ParallelReactionModel(ReactionModel[InputType, OutputType]):
     """Wraps an arbitrary `ReactionModel` to enable multi-GPU inference.
 
     Unlike most off-the-shelf multi-GPU approaches (e.g. strategies in `pytorch_lightning`,
@@ -23,7 +23,7 @@ class ParallelReactionModel(ReactionModel):
 
     def __call__(
         self, inputs: List[InputType], num_results: int
-    ) -> List[PredictionList[InputType, OutputType]]:
+    ) -> List[Sequence[Prediction[InputType, OutputType]]]:
         # Chunk up the inputs into (roughly) equal-sized chunks.
         chunk_size = math.ceil(len(inputs) / len(self._devices))
         input_chunks = list((input,) for input in chunked(inputs, chunk_size))
