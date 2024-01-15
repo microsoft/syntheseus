@@ -16,7 +16,7 @@ def process_raw_smiles_outputs(
         kwargs_list: Additional metadata to attach to the predictions (e.g. probability).
 
     Returns:
-        A list of `Predictions`; may be shorter than `outputs` if some of the raw
+        A list of `Prediction`s; may be shorter than `outputs` if some of the raw
         SMILES could not be parsed into valid reactant bags.
     """
     predictions: List[Prediction] = []
