@@ -94,7 +94,7 @@ def test_print_and_save():
         mean_num_predictions=25.0,
         median_num_predictions=10.0,
         model_time_total=ModelTimingResults(time_model_call=1.0, time_post_processing=0.1),
-        predictions=[BackwardPrediction(input=input_mol, output=output_mol_bag)],
+        predictions=[[BackwardPrediction(input=input_mol, output=output_mol_bag)]],
     )
 
     with tempfile.TemporaryDirectory() as temp_dir:
