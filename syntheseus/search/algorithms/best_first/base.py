@@ -136,9 +136,8 @@ class GeneralBestFirstSearch(SearchAlgorithm[GraphType, int], Generic[GraphType]
                 break
 
             # Take nodes from the priority queue until a node eligible for expansion is found
-            found_node = False
             num_popped = 0
-            while len(queue) > 0 and not found_node:
+            while len(queue) > 0:
                 pq_item = queue.pop_item()
                 num_popped += 1
 
@@ -149,9 +148,9 @@ class GeneralBestFirstSearch(SearchAlgorithm[GraphType, int], Generic[GraphType]
                 ), "priority is not up-to-date. This should not happen."
 
                 if self.node_eligible_for_queue(pq_item.item, graph):
-                    found_node = True
                     node = pq_item.item
-            if not found_node:
+                    break
+            else:
                 logger.log(log_level, "No eligible node found. Stopping search.")
                 break
 
