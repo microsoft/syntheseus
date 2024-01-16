@@ -49,6 +49,16 @@ class Reaction(Generic[ReactantsType, ProductType]):
     def reaction_smiles(self) -> str:
         pass
 
+    @property
+    @abstractmethod
+    def unique_reactants(self) -> Collection[Molecule]:
+        pass
+
+    @property
+    @abstractmethod
+    def unique_products(self) -> Collection[Molecule]:
+        pass
+
 
 def combine_mols_to_string(mols: Collection[Molecule]) -> str:
     """Produces a consistent string representation of a collection of molecules."""
@@ -69,6 +79,14 @@ class MultiProductReaction(Reaction[Bag[Molecule], Bag[Molecule]]):
             product_str=combine_mols_to_string(self.product),
         )
 
+    @property
+    def unique_reactants(self) -> Collection[Molecule]:
+        return set(self.reactants)
+
+    @property
+    def unique_products(self) -> Collection[Molecule]:
+        return set(self.product)
+
 
 @dataclass(frozen=True, order=False)
 class SingleProductReaction(Reaction[Bag[Molecule], Molecule]):
@@ -77,3 +95,11 @@ class SingleProductReaction(Reaction[Bag[Molecule], Molecule]):
         return reaction_string(
             reactants_str=combine_mols_to_string(self.reactants), product_str=self.product.smiles
         )
+
+    @property
+    def unique_reactants(self) -> Collection[Molecule]:
+        return set(self.reactants)
+
+    @property
+    def unique_products(self) -> Collection[Molecule]:
+        return {self.product}
