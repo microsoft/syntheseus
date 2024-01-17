@@ -31,22 +31,21 @@ class PriorityQueue:
     https://docs.python.org/3/library/heapq.html#priority-queue-implementation-notes
 
     In particular, this means items are never really removed from the queue:
-    they are just marked as invalid. This is why the queue length is not
-    necessarily the same as the number of unique items in the queue.
-    It also assumes that items are unique and hashable.
+    they are just marked as invalid and set to `None`. This is why the queue
+    length is not necessarily the same as the number of unique items in the
+    queue. It also assumes that items are unique and hashable.
     """
 
     def __init__(self):
         self._queue = []
         self._entry_finder = {}
         self._counter = itertools.count()  # to break ties in priority
-        self._REMOVED = None
 
     def remove_item(self, item):
         """Removes and item if it is present."""
         if item in self._entry_finder:
             entry = self._entry_finder.pop(item)
-            entry.item = self._REMOVED
+            entry.item = None
 
     def push_item(self, item, priority):
         """
@@ -64,7 +63,10 @@ class PriorityQueue:
         """Removes an item with the lowest priority and returns it."""
         while self._queue:
             entry = heapq.heappop(self._queue)
-            if entry.item is not self._REMOVED:
+            if self._entry_finder.get(entry.item) == entry:
+                # ^^ ensures 1) item in entry finder and
+                # 2) item in entry finder has the same priority as the popped item
+                # (if `None` is added to the queue there may be multiple `None` items)
                 del self._entry_finder[entry.item]
                 return entry
         raise KeyError("pop from an empty priority queue")
