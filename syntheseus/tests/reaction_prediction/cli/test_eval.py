@@ -1,6 +1,6 @@
 import tempfile
 from itertools import cycle, islice
-from typing import Iterable, List
+from typing import Iterable, List, Sequence
 
 import pytest
 
@@ -13,7 +13,6 @@ from syntheseus.cli.eval_single_step import (
 from syntheseus.interface.bag import Bag
 from syntheseus.interface.models import (
     BackwardPrediction,
-    BackwardPredictionList,
     BackwardReactionModel,
 )
 from syntheseus.interface.molecule import Molecule
@@ -32,7 +31,9 @@ class DummyModel(BackwardReactionModel):
         Bag([Molecule("NC=O")]),
     ]
 
-    def __call__(self, inputs: List[Molecule], num_results: int) -> List[BackwardPredictionList]:
+    def __call__(
+        self, inputs: List[Molecule], num_results: int
+    ) -> List[Sequence[BackwardPrediction]]:
         outputs: Iterable[Bag[Molecule]] = []
 
         if self._repeat:
@@ -43,10 +44,7 @@ class DummyModel(BackwardReactionModel):
 
         # Return the same outputs for each input molecule.
         return [
-            BackwardPredictionList(
-                input=input,
-                predictions=[BackwardPrediction(input=input, output=output) for output in outputs],
-            )
+            [BackwardPrediction(input=input, output=output) for output in outputs]
             for input in inputs
         ]
 
@@ -62,7 +60,7 @@ def test_get_results(repeat: bool, measure_time: bool) -> None:
         assert (model_results.model_timing_results is not None) == measure_time
 
         prediction_list = model_results.results[0]
-        return [prediction.output for prediction in prediction_list.predictions]
+        return [prediction.output for prediction in prediction_list]
 
     for num_results in [1, 2, 3, 4, 20]:
         assert get_model_results(num_results=num_results) == [
@@ -96,12 +94,7 @@ def test_print_and_save():
         mean_num_predictions=25.0,
         median_num_predictions=10.0,
         model_time_total=ModelTimingResults(time_model_call=1.0, time_post_processing=0.1),
-        predictions=[
-            BackwardPredictionList(
-                input=input_mol,
-                predictions=[BackwardPrediction(input=input_mol, output=output_mol_bag)],
-            )
-        ],
+        predictions=[[BackwardPrediction(input=input_mol, output=output_mol_bag)]],
     )
 
     with tempfile.TemporaryDirectory() as temp_dir:

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import abc
-from collections.abc import Container, Iterable, Sequence, Sized
-from typing import Generic, TypeVar
+from collections.abc import Container, Iterable, Sized
+from typing import Generic, Sequence, TypeVar
 
 import networkx as nx
 
