@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-from typing import Union
+from typing import Sequence, Union
 
 from syntheseus.search.chem import BackwardReaction
 from syntheseus.search.graph.and_or import AndNode

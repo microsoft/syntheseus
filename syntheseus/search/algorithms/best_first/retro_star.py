@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Sequence
 
 # NOTE: Collection imported here instead of from collections.abc
 # to make casting work for python <3.9
 from typing import (
     Collection,
     Optional,
+    Sequence,
     cast,
 )
 

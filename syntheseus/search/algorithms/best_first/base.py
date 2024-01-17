@@ -5,9 +5,8 @@ import heapq
 import itertools
 import logging
 import math
-from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any, Generic
+from typing import Any, Generic, Sequence
 
 from syntheseus.search.algorithms.base import GraphType, SearchAlgorithm
 from syntheseus.search.graph.node import BaseGraphNode

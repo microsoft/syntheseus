@@ -12,9 +12,8 @@ from __future__ import annotations
 import enum
 import math
 from collections import defaultdict
-from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Callable
+from typing import Callable, Sequence
 
 from syntheseus.search.algorithms.base import AndOrSearchAlgorithm
 from syntheseus.search.algorithms.mcts.base import BaseMCTS, pucb_bound

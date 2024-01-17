@@ -8,9 +8,9 @@ The original GLN code is released under the MIT license.
 
 import sys
 from pathlib import Path
-from typing import List
+from typing import List, Sequence
 
-from syntheseus.interface.models import BackwardPredictionList
+from syntheseus.interface.models import BackwardPrediction
 from syntheseus.interface.molecule import Molecule
 from syntheseus.reaction_prediction.inference.base import ExternalBackwardReactionModel
 from syntheseus.reaction_prediction.utils.inference import process_raw_smiles_outputs
@@ -60,12 +60,14 @@ class GLNModel(ExternalBackwardReactionModel):
     def get_parameters(self):
         return self.model.gln.parameters()
 
-    def _get_model_predictions(self, input: Molecule, num_results: int) -> BackwardPredictionList:
+    def _get_model_predictions(
+        self, input: Molecule, num_results: int
+    ) -> Sequence[BackwardPrediction]:
         with suppress_outputs():
             result = self.model.run(input.smiles, num_results, num_results)
 
         if result is None:
-            return BackwardPredictionList(input=input, predictions=[])
+            return []
         else:
             # `scores` are actually probabilities (produced by running `softmax`).
             return process_raw_smiles_outputs(
@@ -74,5 +76,7 @@ class GLNModel(ExternalBackwardReactionModel):
                 kwargs_list=[{"probability": probability} for probability in result["scores"]],
             )
 
-    def __call__(self, inputs: List[Molecule], num_results: int) -> List[BackwardPredictionList]:
+    def __call__(
+        self, inputs: List[Molecule], num_results: int
+    ) -> List[Sequence[BackwardPrediction]]:
         return [self._get_model_predictions(input, num_results=num_results) for input in inputs]

@@ -50,7 +50,7 @@ def dictify(data: Any) -> Any:
     elif isinstance(data, Molecule):
         return {"smiles": data.smiles}
     elif isinstance(data, (List, tuple, Bag)):
-        # Captures possible lists of `Prediction`s and lists of `PredictionList`s
+        # Captures lists of `Prediction`s
         return [dictify(x) for x in data]
     elif isinstance(data, dict):
         return {k: dictify(v) for k, v in data.items()}

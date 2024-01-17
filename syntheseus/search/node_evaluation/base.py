@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import abc
-from collections.abc import Sequence
-from typing import Generic, Optional, TypeVar
+from typing import Generic, Optional, Sequence, TypeVar
 
 import numpy as np
 
