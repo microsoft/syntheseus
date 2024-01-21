@@ -4,7 +4,8 @@ import math
 import warnings
 from typing import cast
 
-from syntheseus.search.chem import BackwardReaction, Molecule
+from syntheseus.interface.molecule import Molecule
+from syntheseus.interface.reaction import SingleProductReaction
 from syntheseus.search.graph.and_or import ANDOR_NODE, AndNode, AndOrGraph, OrNode
 from syntheseus.search.graph.base_graph import RetrosynthesisSearchGraph
 from syntheseus.search.graph.message_passing import (
@@ -18,7 +19,7 @@ from syntheseus.search.graph.molset import MolSetGraph, MolSetNode
 def _make_unique_node_andor_graph(
     root_mol: Molecule,
     mol_to_node: dict[Molecule, OrNode],
-    rxn_to_node: dict[BackwardReaction, AndNode],
+    rxn_to_node: dict[SingleProductReaction, AndNode],
 ) -> AndOrGraph:
     # Make new graph
     new_graph = AndOrGraph(root_node=mol_to_node[root_mol], one_node_per_molecule=True)
@@ -31,7 +32,7 @@ def _make_unique_node_andor_graph(
     # Add all edges
     for rxn, and_node in rxn_to_node.items():
         new_graph._graph.add_edge(mol_to_node[rxn.product], and_node)
-        for reactant in rxn.reactants:
+        for reactant in rxn.unique_reactants:
             new_graph._graph.add_edge(and_node, mol_to_node[reactant])
 
         # Mark relevant nodes as expanded

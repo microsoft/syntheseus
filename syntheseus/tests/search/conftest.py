@@ -6,11 +6,13 @@ from dataclasses import dataclass, field
 
 import pytest
 
+from syntheseus.interface.bag import Bag
+from syntheseus.interface.molecule import Molecule
+from syntheseus.interface.reaction import SingleProductReaction
 from syntheseus.search.algorithms.breadth_first import (
     AndOr_BreadthFirstSearch,
     MolSet_BreadthFirstSearch,
 )
-from syntheseus.search.chem import BackwardReaction, Molecule
 from syntheseus.search.graph.and_or import AndOrGraph
 from syntheseus.search.graph.molset import MolSetGraph
 from syntheseus.search.graph.route import SynthesisGraph
@@ -37,72 +39,74 @@ def cocs_mol() -> Molecule:
 
 
 @pytest.fixture
-def rxn_cocs_from_co_cs(cocs_mol: Molecule) -> BackwardReaction:
+def rxn_cocs_from_co_cs(cocs_mol: Molecule) -> SingleProductReaction:
     """Returns a reaction with COCS as the product."""
-    return BackwardReaction(product=cocs_mol, reactants=frozenset([Molecule("CO"), Molecule("CS")]))
+    return SingleProductReaction(product=cocs_mol, reactants=Bag([Molecule("CO"), Molecule("CS")]))
 
 
 @pytest.fixture
-def rxn_cs_from_cc() -> BackwardReaction:
-    return BackwardReaction(product=Molecule("CS"), reactants=frozenset([Molecule("CC")]))
+def rxn_cs_from_cc() -> SingleProductReaction:
+    return SingleProductReaction(product=Molecule("CS"), reactants=Bag([Molecule("CC")]))
 
 
 @pytest.fixture
-def rxn_cs_from_co() -> BackwardReaction:
-    return BackwardReaction(product=Molecule("CS"), reactants=frozenset([Molecule("CO")]))
+def rxn_cs_from_co() -> SingleProductReaction:
+    return SingleProductReaction(product=Molecule("CS"), reactants=Bag([Molecule("CO")]))
 
 
 @pytest.fixture
-def rxn_cocs_from_cocc(cocs_mol: Molecule) -> BackwardReaction:
-    return BackwardReaction(product=cocs_mol, reactants=frozenset([Molecule("COCC")]))
+def rxn_cocs_from_cocc(cocs_mol: Molecule) -> SingleProductReaction:
+    return SingleProductReaction(product=cocs_mol, reactants=Bag([Molecule("COCC")]))
 
 
 @pytest.fixture
-def rxn_cocs_from_coco(cocs_mol: Molecule) -> BackwardReaction:
-    return BackwardReaction(product=cocs_mol, reactants=frozenset([Molecule("COCO")]))
+def rxn_cocs_from_coco(cocs_mol: Molecule) -> SingleProductReaction:
+    return SingleProductReaction(product=cocs_mol, reactants=Bag([Molecule("COCO")]))
 
 
 @pytest.fixture
-def rxn_cocc_from_co_cc() -> BackwardReaction:
-    return BackwardReaction(
-        product=Molecule("COCC"), reactants=frozenset([Molecule("CO"), Molecule("CC")])
+def rxn_cocc_from_co_cc() -> SingleProductReaction:
+    return SingleProductReaction(
+        product=Molecule("COCC"), reactants=Bag([Molecule("CO"), Molecule("CC")])
     )
 
 
 @pytest.fixture
-def rxn_co_from_cc() -> BackwardReaction:
-    return BackwardReaction(product=Molecule("CO"), reactants=frozenset([Molecule("CC")]))
+def rxn_co_from_cc() -> SingleProductReaction:
+    return SingleProductReaction(product=Molecule("CO"), reactants=Bag([Molecule("CC")]))
 
 
 @pytest.fixture
-def rxn_cocc_from_coco() -> BackwardReaction:
-    return BackwardReaction(product=Molecule("COCC"), reactants=frozenset([Molecule("COCO")]))
+def rxn_cocc_from_coco() -> SingleProductReaction:
+    return SingleProductReaction(product=Molecule("COCC"), reactants=Bag([Molecule("COCO")]))
 
 
 @pytest.fixture
-def rxn_coco_from_co() -> BackwardReaction:
-    return BackwardReaction(product=Molecule("COCO"), reactants=frozenset([Molecule("CO")]))
+def rxn_coco_from_co() -> SingleProductReaction:
+    return SingleProductReaction(product=Molecule("COCO"), reactants=Bag([Molecule("CO")]))
 
 
 @pytest.fixture
-def bad_rxn_cc_from_cocs() -> BackwardReaction:
+def bad_rxn_cc_from_cocs() -> SingleProductReaction:
     """
     A reaction which is not possible with the LinearMolecules model,
     and has the root node of most tests as a reactant.
     Used to test illegal expansions.
     """
-    return BackwardReaction(product=Molecule("CC"), reactants=frozenset([Molecule("COCS")]))
+    return SingleProductReaction(product=Molecule("CC"), reactants=Bag([Molecule("COCS")]))
 
 
 @pytest.fixture
 def retrosynthesis_task1(
-    cocs_mol: Molecule, rxn_cocs_from_coco: BackwardReaction, rxn_coco_from_co: BackwardReaction
+    cocs_mol: Molecule,
+    rxn_cocs_from_coco: SingleProductReaction,
+    rxn_coco_from_co: SingleProductReaction,
 ) -> RetrosynthesisTask:
     """Returns a retrosynthesis task which can be solved in a single step."""
 
     # Object for best route
     best_route = SynthesisGraph(
-        BackwardReaction(product=cocs_mol, reactants=frozenset([Molecule("CO"), Molecule("CS")]))
+        SingleProductReaction(product=cocs_mol, reactants=Bag([Molecule("CO"), Molecule("CS")]))
     )
 
     # Object for route COCS -> COCO ; COCO -> CO
@@ -121,13 +125,13 @@ def retrosynthesis_task1(
 @pytest.fixture
 def retrosynthesis_task2(
     cocs_mol: Molecule,
-    rxn_cocs_from_co_cs: BackwardReaction,
-    rxn_cs_from_cc: BackwardReaction,
-    rxn_cs_from_co: BackwardReaction,
-    rxn_cocs_from_cocc: BackwardReaction,
-    rxn_cocc_from_co_cc: BackwardReaction,
-    rxn_cocc_from_coco: BackwardReaction,
-    rxn_coco_from_co: BackwardReaction,
+    rxn_cocs_from_co_cs: SingleProductReaction,
+    rxn_cs_from_cc: SingleProductReaction,
+    rxn_cs_from_co: SingleProductReaction,
+    rxn_cocs_from_cocc: SingleProductReaction,
+    rxn_cocc_from_co_cc: SingleProductReaction,
+    rxn_cocc_from_coco: SingleProductReaction,
+    rxn_coco_from_co: SingleProductReaction,
 ) -> RetrosynthesisTask:
     """
     Returns a retrosynthesis task which requires 2 steps to solve.
@@ -173,7 +177,7 @@ def retrosynthesis_task2(
         rxn_cocs_from_co_cs
     )  # incorrect because doesn't end in purchasable molecules
     incorrect_routes["2"] = SynthesisGraph(
-        BackwardReaction(product=cocs_mol, reactants=frozenset([Molecule("COCSCOCS")]))
+        SingleProductReaction(product=cocs_mol, reactants=Bag([Molecule("COCSCOCS")]))
     )  # incorrect because this reaction cannot be output by this reaction model
 
     # Check that all routes are valid
@@ -265,9 +269,9 @@ def retrosynthesis_task6() -> RetrosynthesisTask:
 
 @pytest.fixture
 def rxn_model_for_minimal_graphs(
-    rxn_cocs_from_co_cs: BackwardReaction,
-    rxn_co_from_cc: BackwardReaction,
-    rxn_cs_from_co: BackwardReaction,
+    rxn_cocs_from_co_cs: SingleProductReaction,
+    rxn_co_from_cc: SingleProductReaction,
+    rxn_cs_from_co: SingleProductReaction,
 ) -> ListOfReactionsModel:
     """
     Return a reaction model to help build the minimal graphs.
@@ -283,8 +287,8 @@ def rxn_model_for_minimal_graphs(
 @pytest.fixture
 def rxn_model_for_non_minimal_graphs(
     rxn_model_for_minimal_graphs: ListOfReactionsModel,
-    rxn_cocs_from_cocc: BackwardReaction,
-    rxn_cocc_from_co_cc: BackwardReaction,
+    rxn_cocs_from_cocc: SingleProductReaction,
+    rxn_cocc_from_co_cc: SingleProductReaction,
 ) -> BackwardReactionModel:
     """Add reactions COCS -> COCC ; COCC -> CO + CC to the reaction model above."""
     rxn_model_for_minimal_graphs.reaction_list.extend([rxn_cocs_from_cocc, rxn_cocc_from_co_cc])
@@ -324,9 +328,9 @@ def _complete_molset_graph_with_bfs(
 
 @pytest.fixture
 def minimal_synthesis_graph(
-    rxn_cocs_from_co_cs: BackwardReaction,
-    rxn_co_from_cc: BackwardReaction,
-    rxn_cs_from_co: BackwardReaction,
+    rxn_cocs_from_co_cs: SingleProductReaction,
+    rxn_co_from_cc: SingleProductReaction,
+    rxn_cs_from_co: SingleProductReaction,
 ) -> SynthesisGraph:
     """
     Returns the synthesis graph for the minimal routes below.

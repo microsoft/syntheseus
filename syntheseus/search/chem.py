@@ -23,7 +23,7 @@ class ReactionMetaData(TypedDict, total=False):
 
 
 @dataclass(frozen=True, order=False)
-class BackwardReaction:
+class SingleProductReaction:
     """
     A backward reaction mapping a single product molecule to a set of reactant molecules.
     "identifier" is an optional string to disambiguate between reactions with identical product/reactants.

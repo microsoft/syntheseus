@@ -2,18 +2,22 @@ from __future__ import annotations
 
 from typing import Sequence
 
-from syntheseus.search.chem import BackwardReaction, Molecule
+from syntheseus.interface.bag import Bag
+from syntheseus.interface.molecule import Molecule
+from syntheseus.interface.reaction import SingleProductReaction
 from syntheseus.search.reaction_models.base import BackwardReactionModel
 
 
 class ListOfReactionsModel(BackwardReactionModel):
     """A model which returns reactions from a pre-defined list."""
 
-    def __init__(self, reaction_list: Sequence[BackwardReaction], **kwargs) -> None:
+    def __init__(self, reaction_list: Sequence[SingleProductReaction], **kwargs) -> None:
         super().__init__(**kwargs)
         self.reaction_list = list(reaction_list)
 
-    def _get_backward_reactions(self, mols: list[Molecule]) -> list[Sequence[BackwardReaction]]:
+    def _get_backward_reactions(
+        self, mols: list[Molecule]
+    ) -> list[Sequence[SingleProductReaction]]:
         return [[r for r in self.reaction_list if r.product == mol] for mol in mols]
 
 
@@ -40,19 +44,19 @@ class LinearMolecules(BackwardReactionModel):
         super().__init__(**kwargs)
         self._allow_substitution = allow_substitution  # should not be modified after init
 
-    def _get_single_backward_reactions(self, mol: Molecule) -> list[BackwardReaction]:
+    def _get_single_backward_reactions(self, mol: Molecule) -> list[SingleProductReaction]:
         assert set(mol.smiles) <= set("COS"), "Molecules must be formed out of C,O, and S atoms."
         assert len(mol.smiles) > 0, "Molecules must have at least 1 atom."
-        output: list[BackwardReaction] = []
+        output: list[SingleProductReaction] = []
 
         # String cuts
         for cut_idx in range(1, len(mol.smiles)):
             mol1 = Molecule(mol.smiles[:cut_idx], make_rdkit_mol=False)
             mol2 = Molecule(mol.smiles[cut_idx:], make_rdkit_mol=False)
             output.append(
-                BackwardReaction(
+                SingleProductReaction(
                     product=mol,
-                    reactants=frozenset([mol1, mol2]),
+                    reactants=Bag({mol1, mol2}),  # don't include duplicates
                     metadata={"source": f"string cut at idx {cut_idx}"},
                 )
             )
@@ -69,14 +73,16 @@ class LinearMolecules(BackwardReactionModel):
                             make_rdkit_mol=False,
                         )
                         output.append(
-                            BackwardReaction(
+                            SingleProductReaction(
                                 product=mol,
-                                reactants=frozenset([new_mol]),
+                                reactants=Bag([new_mol]),
                                 metadata={"source": f"substitution idx {sub_idx} with {sub_atom}"},
                             ),
                         )
 
         return output
 
-    def _get_backward_reactions(self, mols: list[Molecule]) -> list[Sequence[BackwardReaction]]:
+    def _get_backward_reactions(
+        self, mols: list[Molecule]
+    ) -> list[Sequence[SingleProductReaction]]:
         return [self._get_single_backward_reactions(mol) for mol in mols]

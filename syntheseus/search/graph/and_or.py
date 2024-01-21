@@ -8,7 +8,8 @@ from typing import Optional, Sequence, Union
 
 import networkx as nx
 
-from syntheseus.search.chem import BackwardReaction, Molecule
+from syntheseus.interface.molecule import Molecule
+from syntheseus.interface.reaction import SingleProductReaction
 from syntheseus.search.graph.base_graph import RetrosynthesisSearchGraph
 from syntheseus.search.graph.node import BaseGraphNode
 from syntheseus.search.graph.route import SynthesisGraph
@@ -40,7 +41,7 @@ class _BaseAndNode:
     E.g. https://stackoverflow.com/questions/51575931/class-inheritance-in-python-3-7-dataclasses
     """
 
-    reaction: BackwardReaction
+    reaction: SingleProductReaction
 
 
 @dataclass(eq=False)
@@ -130,7 +131,7 @@ class AndOrGraph(RetrosynthesisSearchGraph[ANDOR_NODE]):
 
     def expand_with_reactions(  # type: ignore[override]  # because it only accepts OrNodes
         self,
-        reactions: list[BackwardReaction],
+        reactions: list[SingleProductReaction],
         node: OrNode,
         ensure_tree: bool,  # raises an error if something is done to make the graph no longer a tree
     ) -> Sequence[ANDOR_NODE]:
@@ -162,7 +163,7 @@ class AndOrGraph(RetrosynthesisSearchGraph[ANDOR_NODE]):
             new_nodes.append(and_node)
             self._graph.add_edge(node, and_node)
 
-            for reactant_mol in reaction.reactants:
+            for reactant_mol in reaction.unique_reactants:
                 if reactant_mol in self._mol_to_node:
                     or_node = self._mol_to_node[reactant_mol]
                 else:

@@ -5,7 +5,7 @@ from typing import Generic, Optional, Sequence, TypeVar
 
 import numpy as np
 
-from syntheseus.search.chem import BackwardReaction
+from syntheseus.interface.reaction import SingleProductReaction
 from syntheseus.search.graph.base_graph import RetrosynthesisSearchGraph
 from syntheseus.search.graph.node import BaseGraphNode
 
@@ -129,7 +129,7 @@ class ReactionModelBasedEvaluator(NoCacheNodeEvaluator[NodeType]):
         self._clip_probability_max = clip_probability_max
 
     @abc.abstractmethod
-    def _get_reaction(self, node, graph) -> BackwardReaction:
+    def _get_reaction(self, node, graph) -> SingleProductReaction:
         pass
 
     def _get_probability(self, node, graph) -> float:

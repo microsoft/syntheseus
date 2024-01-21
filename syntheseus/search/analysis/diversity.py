@@ -7,7 +7,8 @@ from typing import Callable, Optional
 
 import networkx as nx
 
-from syntheseus.search.chem import BackwardReaction, Molecule
+from syntheseus.interface.molecule import Molecule
+from syntheseus.interface.reaction import SingleProductReaction
 from syntheseus.search.graph.route import SynthesisGraph
 
 ROUTE_DISTANCE_METRIC = Callable[[SynthesisGraph, SynthesisGraph], float]
@@ -213,7 +214,7 @@ def _jaccard_distance(
         return 1.0 - intersection_size / union_size
 
 
-def _get_reactions(route: SynthesisGraph) -> set[BackwardReaction]:
+def _get_reactions(route: SynthesisGraph) -> set[SingleProductReaction]:
     return set(route._graph.nodes)
 
 

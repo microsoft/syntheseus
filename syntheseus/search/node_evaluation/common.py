@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Sequence, Union
 
-from syntheseus.search.chem import BackwardReaction
+from syntheseus.interface.reaction import SingleProductReaction
 from syntheseus.search.graph.and_or import AndNode
 from syntheseus.search.graph.molset import MolSetNode
 from syntheseus.search.node_evaluation.base import NoCacheNodeEvaluator, ReactionModelBasedEvaluator
@@ -30,7 +30,7 @@ class ReactionModelLogProbCost(ReactionModelBasedEvaluator[AndNode]):
     def __init__(self, **kwargs) -> None:
         super().__init__(return_log=True, **kwargs)
 
-    def _get_reaction(self, node: AndNode, graph) -> BackwardReaction:
+    def _get_reaction(self, node: AndNode, graph) -> SingleProductReaction:
         return node.reaction
 
     def _evaluate_nodes(self, nodes, graph=None) -> Sequence[float]:
@@ -44,7 +44,7 @@ class ReactionModelProbPolicy(ReactionModelBasedEvaluator[Union[MolSetNode, AndN
         kwargs["normalize"] = kwargs.get("normalize", True)  # set `normalize = True` by default
         super().__init__(return_log=False, **kwargs)
 
-    def _get_reaction(self, node: Union[MolSetNode, AndNode], graph) -> BackwardReaction:
+    def _get_reaction(self, node: Union[MolSetNode, AndNode], graph) -> SingleProductReaction:
         if isinstance(node, MolSetNode):
             parents = list(graph.predecessors(node))
             assert len(parents) == 1, "Graph must be a tree"
