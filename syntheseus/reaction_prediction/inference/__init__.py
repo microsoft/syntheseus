@@ -1,5 +1,6 @@
 from syntheseus.reaction_prediction.inference.chemformer import ChemformerModel
 from syntheseus.reaction_prediction.inference.gln import GLNModel
+from syntheseus.reaction_prediction.inference.graph2edits import Graph2EditsModel
 from syntheseus.reaction_prediction.inference.local_retro import LocalRetroModel
 from syntheseus.reaction_prediction.inference.megan import MEGANModel
 from syntheseus.reaction_prediction.inference.mhnreact import MHNreactModel
@@ -9,6 +10,7 @@ from syntheseus.reaction_prediction.inference.root_aligned import RootAlignedMod
 __all__ = [
     "ChemformerModel",
     "GLNModel",
+    "Graph2EditsModel",
     "LocalRetroModel",
     "MEGANModel",
     "MHNreactModel",

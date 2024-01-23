@@ -4,6 +4,7 @@ from syntheseus.interface.bag import Bag
 from syntheseus.interface.molecule import Molecule
 from syntheseus.reaction_prediction.inference import (
     ChemformerModel,
+    Graph2EditsModel,
     LocalRetroModel,
     MEGANModel,
     MHNreactModel,
@@ -18,6 +19,7 @@ try:
     # the tests will fail; nevertheless the check below is good enough for our usecase.
 
     import chemformer  # noqa: F401
+    import graph2edits  # noqa: F401
     import local_retro  # noqa: F401
     import megan  # noqa: F401
     import mhnreact  # noqa: F401
@@ -37,6 +39,7 @@ pytestmark = pytest.mark.skipif(
     scope="module",
     params=[
         ChemformerModel,
+        Graph2EditsModel,
         LocalRetroModel,
         MEGANModel,
         MHNreactModel,
