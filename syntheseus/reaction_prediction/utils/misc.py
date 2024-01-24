@@ -2,6 +2,7 @@ import logging
 import multiprocessing
 import os
 import random
+import sys
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from dataclasses import fields, is_dataclass
 from itertools import islice
@@ -112,3 +113,25 @@ def parallelize(
 def cpu_count(default: int = 8) -> int:
     """Return the number of CPUs, fallback to `default` if it cannot be determined."""
     return os.cpu_count() or default
+
+
+def remove_ambiguous_modules(
+    package_name: str, extra_identifying_keywords: Optional[List[str]] = None
+) -> None:
+    """Remove from Python cache ambiguously named modules coming from a given package.
+
+    Args:
+        package_name: Name of the package to deal with.
+        extra_identifying_keywords: Extra keywords that are specific enough to the package in
+            question. For a module to be kept its name must contain either the package name or at
+            least one of the keywords.
+    """
+    keywords = [package_name] + (extra_identifying_keywords or [])
+
+    ambiguous_module_names: List[str] = []
+    for module_name, module in sys.modules.items():
+        if package_name in str(module) and not any(keyword in module_name for keyword in keywords):
+            ambiguous_module_names.append(module_name)
+
+    for module_name in ambiguous_module_names:
+        del sys.modules[module_name]

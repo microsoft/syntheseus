@@ -19,7 +19,7 @@ from syntheseus.reaction_prediction.utils.inference import (
     get_unique_file_in_dir,
     process_raw_smiles_outputs,
 )
-from syntheseus.reaction_prediction.utils.misc import suppress_outputs
+from syntheseus.reaction_prediction.utils.misc import remove_ambiguous_modules, suppress_outputs
 
 
 class LocalRetroModel(ExternalBackwardReactionModel):
@@ -64,12 +64,25 @@ class LocalRetroModel(ExternalBackwardReactionModel):
             self.args["template_infos"],
         ] = load_templates(self.args)
 
+        from local_retro.scripts.Decode_predictions import get_k_predictions
+        from local_retro.scripts.get_edit import combined_edit, get_bg_partition
+        from local_retro.scripts.utils import collate_molgraphs_test, predict
+
+        self._get_k_predictions_fn = get_k_predictions
+        self._combined_edit_fn = combined_edit
+        self._get_bg_partition_fn = get_bg_partition
+        self._collate_molgraphs_test_fn = collate_molgraphs_test
+        self._predict_fn = predict
+
+        remove_ambiguous_modules(
+            package_name="local_retro", extra_identifying_keywords=["LocalTemplate"]
+        )
+
     def get_parameters(self):
         return self.model.parameters()
 
     def _mols_to_batch(self, mols: List[Molecule]) -> Any:
         from dgllife.utils import smiles_to_bigraph
-        from local_retro.scripts.utils import collate_molgraphs_test
 
         graphs = [
             smiles_to_bigraph(
@@ -82,15 +95,12 @@ class LocalRetroModel(ExternalBackwardReactionModel):
             for mol in mols
         ]
 
-        return collate_molgraphs_test([(None, graph, None) for graph in graphs])[1]
+        return self._collate_molgraphs_test_fn([(None, graph, None) for graph in graphs])[1]
 
     def _build_batch_predictions(
         self, batch, num_results: int, inputs: List[Molecule], batch_atom_logits, batch_bond_logits
     ) -> List[Sequence[BackwardPrediction]]:
-        from local_retro.scripts.Decode_predictions import get_k_predictions
-        from local_retro.scripts.get_edit import combined_edit, get_bg_partition
-
-        graphs, nodes_sep, edges_sep = get_bg_partition(batch)
+        graphs, nodes_sep, edges_sep = self._get_bg_partition_fn(batch)
         start_node = 0
         start_edge = 0
 
@@ -98,7 +108,7 @@ class LocalRetroModel(ExternalBackwardReactionModel):
         self.args["raw_predictions"] = []
 
         for input, graph, end_node, end_edge in zip(inputs, graphs, nodes_sep, edges_sep):
-            pred_types, pred_sites, pred_scores = combined_edit(
+            pred_types, pred_sites, pred_scores = self._combined_edit_fn(
                 graph,
                 batch_atom_logits[start_node:end_node],
                 batch_bond_logits[start_edge:end_edge],
@@ -116,7 +126,7 @@ class LocalRetroModel(ExternalBackwardReactionModel):
         batch_predictions = []
         for idx, input in enumerate(inputs):
             try:
-                raw_str_results = get_k_predictions(test_id=idx, args=self.args)[1][0]
+                raw_str_results = self._get_k_predictions_fn(test_id=idx, args=self.args)[1][0]
             except RuntimeError:
                 # In very rare cases we may get `rdkit` errors.
                 raw_str_results = []
@@ -145,10 +155,9 @@ class LocalRetroModel(ExternalBackwardReactionModel):
         self, inputs: List[Molecule], num_results: int
     ) -> List[Sequence[BackwardPrediction]]:
         import torch
-        from local_retro.scripts.utils import predict
 
         batch = self._mols_to_batch(inputs)
-        batch_atom_logits, batch_bond_logits, _ = predict(self.args, self.model, batch)
+        batch_atom_logits, batch_bond_logits, _ = self._predict_fn(self.args, self.model, batch)
 
         batch_atom_logits = torch.nn.Softmax(dim=1)(batch_atom_logits)
         batch_bond_logits = torch.nn.Softmax(dim=1)(batch_bond_logits)
