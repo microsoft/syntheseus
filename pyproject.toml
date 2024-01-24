@@ -35,13 +35,13 @@ dev = [
   "pytest-cov",
   "pre-commit"
 ]
-chemformer = ["syntheseus-chemformer"]
-graph2edits = ["syntheseus-graph2edits"]
+chemformer = ["syntheseus-chemformer==0.1.1"]
+graph2edits = ["syntheseus-graph2edits==0.1.0"]
 local-retro = ["syntheseus-local-retro==0.4.0"]
-megan = ["syntheseus-megan"]
-mhn-react = ["syntheseus-mhnreact"]
-retro-knn = ["syntheseus-local-retro", "torch-scatter"]
-root-aligned = ["syntheseus-root-aligned"]
+megan = ["syntheseus-megan==0.1.0"]
+mhn-react = ["syntheseus-mhnreact==1.0.0"]
+retro-knn = ["syntheseus[local-retro]", "torch-scatter"]
+root-aligned = ["syntheseus-root-aligned==0.1.0"]
 all-single-step = [
   "syntheseus[chemformer,graph2edits,local-retro,megan,mhn-react,retro-knn,root-aligned]"
 ]
