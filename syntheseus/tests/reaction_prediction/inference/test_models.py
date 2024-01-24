@@ -45,7 +45,8 @@ pytestmark = pytest.mark.skipif(
         MHNreactModel,
         RetroKNNModel,
         RootAlignedModel,
-    ],
+    ]
+    * 2,
 )
 def model(request) -> ExternalBackwardReactionModel:
     model_cls = request.param
