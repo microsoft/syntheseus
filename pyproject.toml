@@ -37,7 +37,7 @@ dev = [
 ]
 chemformer = ["syntheseus-chemformer"]
 graph2edits = ["syntheseus-graph2edits"]
-local-retro = ["syntheseus-local-retro"]
+local-retro = ["syntheseus-local-retro==0.4.0"]
 megan = ["syntheseus-megan"]
 mhn-react = ["syntheseus-mhnreact"]
 retro-knn = ["syntheseus-local-retro", "torch-scatter"]

@@ -22,7 +22,7 @@ from syntheseus.reaction_prediction.utils.inference import (
     get_unique_file_in_dir,
     process_raw_smiles_outputs,
 )
-from syntheseus.reaction_prediction.utils.misc import remove_ambiguous_modules, suppress_outputs
+from syntheseus.reaction_prediction.utils.misc import suppress_outputs
 
 
 class Graph2EditsModel(ExternalBackwardReactionModel):
@@ -55,8 +55,6 @@ class Graph2EditsModel(ExternalBackwardReactionModel):
         self._max_edit_steps = max_edit_steps
 
         RDLogger.DisableLog("rdApp.*")
-
-        remove_ambiguous_modules(package_name="graph2edits")
 
     def get_parameters(self):
         return self.model.model.parameters()
