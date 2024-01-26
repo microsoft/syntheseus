@@ -77,9 +77,15 @@ class Graph2EditsModel(ExternalBackwardReactionModel):
                 atom.SetAtomMapNum(idx + 1)
 
             with torch.no_grad(), suppress_outputs():
-                raw_results = self.model.run_search(
-                    prod_smi=Chem.MolToSmiles(mol), max_steps=self._max_edit_steps, rxn_class=None
-                )
+                try:
+                    raw_results = self.model.run_search(
+                        prod_smi=Chem.MolToSmiles(mol),
+                        max_steps=self._max_edit_steps,
+                        rxn_class=None,
+                    )
+                except IndexError:
+                    # This can happen in some rare edge cases (e.g. "OBr").
+                    raw_results = []
 
             # Errors are returned as a string "final_smi_unmapped"; we get rid of those here.
             raw_results = [
