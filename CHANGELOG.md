@@ -14,7 +14,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Integrate the Graph2Edits model ([#65](https://github.com/microsoft/syntheseus/pull/65)) ([@kmaziarz])
+- Integrate the Graph2Edits model ([#65](https://github.com/microsoft/syntheseus/pull/65), [#66](https://github.com/microsoft/syntheseus/pull/66)) ([@kmaziarz])
 - Add a new tutorial employing non-toy single-step models ([#54](https://github.com/microsoft/syntheseus/pull/54)) ([@kmaziarz])
 - Add new unified `Reaction` base class ([#63](https://github.com/microsoft/syntheseus/pull/63)) ([@austint])
 
