@@ -10,7 +10,6 @@ from rdkit import Chem
 from syntheseus.interface.typed_dict import TypedDict
 
 SMILES_SEPARATOR = "."
-REACTION_SEPARATOR = ">"
 
 
 class MoleculeMetaData(TypedDict, total=False):

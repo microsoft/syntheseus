@@ -4,8 +4,7 @@ import abc
 import heapq
 import logging
 import math
-from collections.abc import Sequence
-from typing import Generic
+from typing import Generic, Sequence
 
 from syntheseus.search.algorithms.base import GraphType, SearchAlgorithm
 from syntheseus.search.graph.node import BaseGraphNode

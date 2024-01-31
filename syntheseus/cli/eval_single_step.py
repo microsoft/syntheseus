@@ -22,7 +22,7 @@ from dataclasses import dataclass, field, fields
 from functools import partial
 from itertools import islice
 from statistics import mean, median
-from typing import Any, Callable, Dict, Generic, Iterable, List, Optional, Set, cast
+from typing import Any, Callable, Dict, Generic, Iterable, List, Optional, Sequence, Set, cast
 
 from more_itertools import batched
 from omegaconf import MISSING, OmegaConf
@@ -33,7 +33,6 @@ from syntheseus.interface.models import (
     InputType,
     OutputType,
     Prediction,
-    PredictionList,
     ReactionModel,
 )
 from syntheseus.interface.molecule import Molecule
@@ -91,7 +90,7 @@ class EvalConfig(BackwardModelConfig, BaseEvalConfig):
 
 @dataclass(frozen=True)
 class ModelResults(Generic[InputType, OutputType]):
-    results: List[PredictionList[InputType, OutputType]]
+    results: List[Sequence[Prediction[InputType, OutputType]]]
     model_timing_results: Optional[ModelTimingResults] = None
 
 
@@ -111,8 +110,8 @@ class EvalResults:
     model_time_total: ModelTimingResults
     back_translation_top_k: Optional[List[float]] = None
     back_translation_mrr: Optional[float] = None
-    predictions: Optional[List[PredictionList]] = None
-    back_translation_predictions: Optional[List[List[PredictionList]]] = None
+    predictions: Optional[List[Sequence[Prediction]]] = None
+    back_translation_predictions: Optional[List[List[Sequence[Prediction]]]] = None
     back_translation_time_total: Optional[ModelTimingResults] = None
 
 
@@ -158,18 +157,16 @@ def get_results(
         time_model_call_end = time.time()
         timing_results["time_model_call"] = time_model_call_end - time_model_call_start
 
-    batch_outputs: List[PredictionList[InputType, OutputType]] = []
+    batch_outputs: List[Sequence[Prediction[InputType, OutputType]]] = []
 
     for outputs in raw_batch_outputs:
-        if len(outputs.predictions) > num_results:
-            raise ValueError(
-                f"Requested {num_results} results, but model produced {len(outputs.predictions)}"
-            )
+        if len(outputs) > num_results:
+            raise ValueError(f"Requested {num_results} results, but model produced {len(outputs)}")
 
         seen_outputs: Set[OutputType] = set()
         selected_predictions: List[Prediction[InputType, OutputType]] = []
 
-        for prediction in outputs.predictions:
+        for prediction in outputs:
             if skip_repeats:
                 if prediction.output in seen_outputs:
                     continue
@@ -182,11 +179,7 @@ def get_results(
                 f"Tried to get {num_results} results, but only got {len(selected_predictions)}"
             )
 
-        batch_outputs.append(
-            PredictionList(
-                input=outputs.input, predictions=selected_predictions, metadata=outputs.metadata
-            )
-        )
+        batch_outputs.append(list(selected_predictions))
 
     if measure_time:
         timing_results["time_post_processing"] = time.time() - time_model_call_end
@@ -238,8 +231,8 @@ def compute_metrics(
 
     print(f"Testing model {model.__class__.__name__} with args {eval_args}")
 
-    all_predictions: List[PredictionList] = []
-    all_back_translation_predictions: List[List[PredictionList]] = []
+    all_predictions: List[Sequence[Prediction]] = []
+    all_back_translation_predictions: List[List[Sequence[Prediction]]] = []
 
     model_timing_results: List[ModelTimingResults] = []
     back_translation_timing_results: List[ModelTimingResults] = []
@@ -289,20 +282,18 @@ def compute_metrics(
         assert results_with_timing.model_timing_results is not None
         model_timing_results.append(results_with_timing.model_timing_results)
 
-        batch_predictions: List[PredictionList[InputType, OutputType]] = results_with_timing.results
+        batch_predictions: List[
+            Sequence[Prediction[InputType, OutputType]]
+        ] = results_with_timing.results
 
-        batch_back_translation_predictions: List[List[PredictionList]] = []
+        batch_back_translation_predictions: List[List[Sequence[Prediction]]] = []
         for input, output, prediction_list in zip(inputs, outputs, batch_predictions):
-            num_predictions.append(len(prediction_list.predictions))
+            num_predictions.append(len(prediction_list))
 
-            ground_truth_matches = [
-                prediction.output == output for prediction in prediction_list.predictions
-            ]
+            ground_truth_matches = [prediction.output == output for prediction in prediction_list]
             ground_truth_match_metrics.add(ground_truth_matches)
 
-            for prediction, ground_truth_match in zip(
-                prediction_list.predictions, ground_truth_matches
-            ):
+            for prediction, ground_truth_match in zip(prediction_list, ground_truth_matches):
                 prediction.metadata["ground_truth_match"] = ground_truth_match
 
             if back_translation_model is not None:
@@ -310,7 +301,7 @@ def compute_metrics(
 
                 back_translation_results_with_timing = get_results(
                     back_translation_model,
-                    [prediction.output for prediction in prediction_list.predictions],
+                    [prediction.output for prediction in prediction_list],
                     num_results=back_translation_num_results,
                     skip_repeats=False,
                     measure_time=True,
@@ -329,10 +320,7 @@ def compute_metrics(
                 # Back translation is successful if any of the `back_translation_num_results` bags
                 # of products returned by the forward model contains the input.
                 back_translation_matches = [
-                    any(
-                        input in cast(Bag[Molecule], prediction.output)
-                        for prediction in result.predictions
-                    )
+                    any(input in cast(Bag[Molecule], prediction.output) for prediction in result)
                     for result in back_translation_results
                 ]
 

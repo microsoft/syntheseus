@@ -7,15 +7,13 @@ The original LocalRetro code is released under the Apache 2.0 license.
 Parts of this file are based on code from the GitHub repository above.
 """
 
-import sys
 from pathlib import Path
-from typing import Any, List
+from typing import Any, List, Sequence
 
-from syntheseus.interface.models import BackwardPredictionList
+from syntheseus.interface.models import BackwardPrediction
 from syntheseus.interface.molecule import Molecule
 from syntheseus.reaction_prediction.inference.base import ExternalBackwardReactionModel
 from syntheseus.reaction_prediction.utils.inference import (
-    get_module_path,
     get_unique_file_in_dir,
     process_raw_smiles_outputs,
 )
@@ -32,13 +30,6 @@ class LocalRetroModel(ExternalBackwardReactionModel):
         - `model_dir/data` contains `*.csv` data files needed by LocalRetro
         """
         super().__init__(*args, **kwargs)
-
-        import local_retro
-        from local_retro import scripts
-
-        # We need to hack `sys.path` because LocalRetro uses relative imports.
-        sys.path.insert(0, get_module_path(local_retro))
-        sys.path.insert(0, get_module_path(scripts))
 
         from local_retro.Retrosynthesis import load_templates
         from local_retro.scripts.utils import init_featurizer, load_model
@@ -86,7 +77,7 @@ class LocalRetroModel(ExternalBackwardReactionModel):
 
     def _build_batch_predictions(
         self, batch, num_results: int, inputs: List[Molecule], batch_atom_logits, batch_bond_logits
-    ) -> List[BackwardPredictionList]:
+    ) -> List[Sequence[BackwardPrediction]]:
         from local_retro.scripts.Decode_predictions import get_k_predictions
         from local_retro.scripts.get_edit import combined_edit, get_bg_partition
 
@@ -141,7 +132,9 @@ class LocalRetroModel(ExternalBackwardReactionModel):
 
         return batch_predictions
 
-    def __call__(self, inputs: List[Molecule], num_results: int) -> List[BackwardPredictionList]:
+    def __call__(
+        self, inputs: List[Molecule], num_results: int
+    ) -> List[Sequence[BackwardPrediction]]:
         import torch
         from local_retro.scripts.utils import predict
 

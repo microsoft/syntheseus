@@ -10,6 +10,17 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ### Changed
 
 - Suppress the remaining noisy logs and warnings coming from single-step models ([#53](https://github.com/microsoft/syntheseus/pull/53)) ([@kmaziarz])
+- Remove `PredictionList` objects, replacing them with `Sequence[Prediction]` ([#61](https://github.com/microsoft/syntheseus/pull/61)) ([@austint])
+
+### Added
+
+- Integrate the Graph2Edits model ([#65](https://github.com/microsoft/syntheseus/pull/65), [#66](https://github.com/microsoft/syntheseus/pull/66)) ([@kmaziarz])
+- Add a new tutorial employing non-toy single-step models ([#54](https://github.com/microsoft/syntheseus/pull/54)) ([@kmaziarz])
+- Add new unified `Reaction` base class ([#63](https://github.com/microsoft/syntheseus/pull/63)) ([@austint])
+
+### Fixed
+
+- Get all single-step models to work on CPU ([#57](https://github.com/microsoft/syntheseus/pull/57)) ([@kmaziarz])
 
 ## [0.3.0] - 2023-12-19
 

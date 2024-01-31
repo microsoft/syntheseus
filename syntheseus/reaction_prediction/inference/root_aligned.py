@@ -13,12 +13,12 @@ import multiprocessing
 import random
 import warnings
 from collections import defaultdict
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 
 import yaml
 from rdkit import Chem
 
-from syntheseus.interface.models import PredictionList
+from syntheseus.interface.models import Prediction
 from syntheseus.interface.molecule import Molecule
 from syntheseus.reaction_prediction.inference.base import ExternalBackwardReactionModel
 from syntheseus.reaction_prediction.utils.inference import (
@@ -47,11 +47,16 @@ class RootAlignedModel(ExternalBackwardReactionModel):
         with open(get_unique_file_in_dir(self.model_dir, pattern="*.yml"), "r") as f:
             opt_from_config = yaml.safe_load(f)
 
+        import torch
+
         opt = argparse.Namespace()
         for key, value in opt_from_config.items():
             setattr(opt, key, value)
+
         opt.models = [get_unique_file_in_dir(self.model_dir, pattern="*.pt")]
         opt.output = "/dev/null"
+        opt.gpu = -1 if self.device == "cpu" else torch.device(self.device).index
+
         setattr(opt, "synthon", False)
 
         from root_aligned import score
@@ -136,7 +141,9 @@ class RootAlignedModel(ExternalBackwardReactionModel):
 
         return kwargs_list
 
-    def __call__(self, inputs, num_results: int, random_augmentation=False) -> List[PredictionList]:
+    def __call__(
+        self, inputs, num_results: int, random_augmentation=False
+    ) -> List[Sequence[Prediction]]:
         # Step 1: Perform data augmentation.
         augmented_inputs = []
         if random_augmentation:

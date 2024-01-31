@@ -5,9 +5,8 @@ import logging
 import math
 import random
 import warnings
-from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Callable, Generic, Optional, TypeVar, cast
+from typing import Callable, Generic, Optional, Sequence, TypeVar, cast
 
 import numpy as np
 

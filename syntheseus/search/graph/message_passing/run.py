@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import logging
 from collections import deque
-from collections.abc import Collection, Iterable, Sequence
-from typing import Callable, TypeVar
+from collections.abc import Collection, Iterable
+from typing import Callable, Sequence, TypeVar
 
 from syntheseus.search import INT_INF
 from syntheseus.search.graph.base_graph import RetrosynthesisSearchGraph
