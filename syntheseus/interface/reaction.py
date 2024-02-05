@@ -26,6 +26,7 @@ class ReactionMetaData(TypedDict, total=False):
     confidence: float  # confidence (probability) that this reaction is possible
     reaction_id: int  # template id or other kind of reaction id, if applicable
     reaction_smiles: str  # reaction smiles for this reaction
+    ground_truth_match: bool  # whether this reaction matches ground truth
 
 
 @dataclass(frozen=True, order=False)

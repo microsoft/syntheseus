@@ -13,12 +13,12 @@ from typing import List, Sequence
 
 from tqdm.contrib import concurrent
 
-from syntheseus.interface.models import BackwardPrediction
 from syntheseus.interface.molecule import Molecule
+from syntheseus.interface.reaction import SingleProductReaction
 from syntheseus.reaction_prediction.inference.base import ExternalBackwardReactionModel
 from syntheseus.reaction_prediction.utils.inference import (
     get_unique_file_in_dir,
-    process_raw_smiles_outputs,
+    process_raw_smiles_outputs_backwards,
 )
 from syntheseus.reaction_prediction.utils.misc import cpu_count, suppress_outputs
 
@@ -97,7 +97,7 @@ class MHNreactModel(ExternalBackwardReactionModel):
 
     def __call__(
         self, inputs: List[Molecule], num_results: int
-    ) -> List[Sequence[BackwardPrediction]]:
+    ) -> List[Sequence[SingleProductReaction]]:
         import pandas as pd
         import torch
 
@@ -155,7 +155,7 @@ class MHNreactModel(ExternalBackwardReactionModel):
         # Now aggregate over same outcome (parts copied from `utils.sort_by_template_and_flatten`,
         # which does not expose the summed probabilities) and build the prediction objects.
 
-        batch_predictions: List[Sequence[BackwardPrediction]] = []
+        batch_predictions: List[Sequence[SingleProductReaction]] = []
         for idx in range(len(template_scores)):
             idx_prod_reactants = defaultdict(list)
             for k, v in prod_idx_reactants[idx].items():
@@ -178,10 +178,12 @@ class MHNreactModel(ExternalBackwardReactionModel):
                 probs = df_sorted.values.ravel().tolist()
 
             batch_predictions.append(
-                process_raw_smiles_outputs(
+                process_raw_smiles_outputs_backwards(
                     input=inputs[idx],
                     output_list=results,
-                    kwargs_list=[{"probability": probability} for probability in probs],
+                    kwargs_list=[
+                        {"metadata": {"probability": probability}} for probability in probs
+                    ],
                 )
             )
 

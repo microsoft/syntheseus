@@ -1,15 +1,12 @@
 from typing import List, Sequence
 
 from syntheseus.interface.bag import Bag
-from syntheseus.interface.models import (
-    BackwardReactionModel,
-    Prediction,
-)
+from syntheseus.interface.models import BackwardReactionModel
 from syntheseus.interface.molecule import Molecule
+from syntheseus.interface.reaction import SingleProductReaction
 from syntheseus.reaction_prediction.utils.syntheseus_wrapper import (
     SyntheseusBackwardReactionModel,
 )
-from syntheseus.search.chem import BackwardReaction
 
 
 class MockBackwardReactionModel(BackwardReactionModel):
@@ -17,8 +14,8 @@ class MockBackwardReactionModel(BackwardReactionModel):
 
     def __call__(
         self, inputs: List[Molecule], num_results: int
-    ) -> List[Sequence[Prediction[Molecule, Bag[Molecule]]]]:
-        return [[Prediction(input=mol, output=Bag([mol]))] for mol in inputs]
+    ) -> List[Sequence[SingleProductReaction]]:
+        return [[SingleProductReaction(product=mol, reactants=Bag([mol]))] for mol in inputs]
 
     def get_parameters(self):
         return []
@@ -32,13 +29,13 @@ def test_syntheseus_wrapper() -> None:
 
     assert output == [
         [
-            BackwardReaction(
-                product=Molecule(smiles="CC"), reactants=frozenset([Molecule(smiles="CC")])
+            SingleProductReaction(
+                product=Molecule(smiles="CC"), reactants=Bag([Molecule(smiles="CC")])
             ),
         ],
         [
-            BackwardReaction(
-                product=Molecule(smiles="CCC"), reactants=frozenset([Molecule(smiles="CCC")])
+            SingleProductReaction(
+                product=Molecule(smiles="CCC"), reactants=Bag([Molecule(smiles="CCC")])
             ),
         ],
     ]

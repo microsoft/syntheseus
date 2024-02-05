@@ -18,12 +18,12 @@ from typing import Any, Dict, List, Optional, Sequence
 import yaml
 from rdkit import Chem
 
-from syntheseus.interface.models import Prediction
 from syntheseus.interface.molecule import Molecule
+from syntheseus.interface.reaction import SingleProductReaction
 from syntheseus.reaction_prediction.inference.base import ExternalBackwardReactionModel
 from syntheseus.reaction_prediction.utils.inference import (
     get_unique_file_in_dir,
-    process_raw_smiles_outputs,
+    process_raw_smiles_outputs_backwards,
 )
 
 
@@ -119,31 +119,38 @@ class RootAlignedModel(ExternalBackwardReactionModel):
             assert 0 <= best_pos < self.beam_size
             assert 0.0 < total_rr <= max_possible_total_rr
 
-            metadata = {"original_score": score, "best_pos": best_pos, "total_rr": total_rr}
             new_score = total_rr - (best_pos + 1) * max_possible_total_rr
-
             assert new_score <= 0.0
-            kwargs_list.append({"score": new_score, "metadata": metadata})
+            metadata = {
+                "original_score": score,
+                "best_pos": best_pos,
+                "total_rr": total_rr,
+                "score": new_score,
+            }
+
+            kwargs_list.append({"metadata": metadata})
 
         # Make sure the new scores produce the same ranking.
         for kwargs, next_kwargs in zip(kwargs_list, kwargs_list[1:]):
-            assert kwargs["score"] >= next_kwargs["score"]
+            assert kwargs["metadata"]["score"] >= next_kwargs["metadata"]["score"]
 
         if self.probability_from_score_temperature is not None:
             scaled_scores = [
-                self.probability_from_score_temperature * kwargs["score"] / max_possible_total_rr
+                self.probability_from_score_temperature
+                * kwargs["metadata"]["score"]
+                / max_possible_total_rr
                 for kwargs in kwargs_list
             ]
             probabilities = torch.nn.functional.softmax(torch.as_tensor(scaled_scores), dim=-1)
 
             for kwargs, probability in zip(kwargs_list, probabilities):
-                kwargs["probability"] = probability
+                kwargs["metadata"]["probability"] = probability
 
         return kwargs_list
 
     def __call__(
         self, inputs, num_results: int, random_augmentation=False
-    ) -> List[Sequence[Prediction]]:
+    ) -> List[Sequence[SingleProductReaction]]:
         # Step 1: Perform data augmentation.
         augmented_inputs = []
         if random_augmentation:
@@ -244,6 +251,8 @@ class RootAlignedModel(ExternalBackwardReactionModel):
             ranked_scores.append([item[1] for item in rank])  # Output scores used for ranking.
 
         return [
-            process_raw_smiles_outputs(input, outputs, self._build_kwargs_from_scores(scores))
+            process_raw_smiles_outputs_backwards(
+                input, outputs, self._build_kwargs_from_scores(scores)
+            )
             for input, outputs, scores in zip(inputs, ranked_results, ranked_scores)
         ]

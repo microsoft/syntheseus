@@ -1,32 +1,61 @@
 from pathlib import Path
 from typing import Any, Dict, List, Sequence, Union
 
-from syntheseus.interface.models import Prediction
+from syntheseus.interface.bag import Bag
+from syntheseus.interface.molecule import Molecule
+from syntheseus.interface.reaction import MultiProductReaction, SingleProductReaction
 from syntheseus.reaction_prediction.chem.utils import molecule_bag_from_smiles
 
 
-def process_raw_smiles_outputs(
-    input: Any, output_list: List[str], kwargs_list: List[Dict[str, Any]]
-) -> Sequence[Prediction]:
-    """Convert raw SMILES outputs into a list of `Prediction` objects.
+def process_raw_smiles_outputs_backwards(
+    input: Molecule, output_list: List[str], kwargs_list: List[Dict[str, Any]]
+) -> Sequence[SingleProductReaction]:
+    """Convert raw SMILES outputs into a list of `SingleProductReaction` objects.
 
     Args:
-        inputs: Model input (can be `Molecule` or `Bag[Molecule]` depending on directionality).
+        inputs: Model input `Molecule` object
         output_list: Raw SMILES outputs (including potentially invalid ones).
         kwargs_list: Additional metadata to attach to the predictions (e.g. probability).
 
     Returns:
-        A list of `Prediction`s; may be shorter than `outputs` if some of the raw
+        A list of `SingleProductReaction`s; may be shorter than `outputs` if some of the raw
         SMILES could not be parsed into valid reactant bags.
     """
-    predictions: List[Prediction] = []
+    predictions: List[SingleProductReaction] = []
 
     for raw_output, kwargs in zip(output_list, kwargs_list):
         reactants = molecule_bag_from_smiles(raw_output)
 
         # Only consider the prediction if the SMILES can be parsed.
         if reactants is not None:
-            predictions.append(Prediction(input=input, output=reactants, **kwargs))
+            predictions.append(SingleProductReaction(product=input, reactants=reactants, **kwargs))
+
+    return predictions
+
+
+def process_raw_smiles_outputs_forwards(
+    input: Bag[Molecule], output_list: List[str], kwargs_list: List[Dict[str, Any]]
+) -> Sequence[MultiProductReaction]:
+    """Convert raw SMILES outputs into a list of `MultiProductReaction` objects.
+    Like method `process_raw_smiles_outputs_backwards`, but for forward models.
+
+    Args:
+        inputs: Model input `Bag[Molecule]` object
+        output_list: Raw SMILES outputs (including potentially invalid ones).
+        kwargs_list: Additional metadata to attach to the predictions (e.g. probability).
+
+    Returns:
+        A list of `MultiProductReactions`s; may be shorter than `outputs` if some of the raw
+        SMILES could not be parsed into valid reactant bags.
+    """
+    predictions: List[MultiProductReaction] = []
+
+    for raw_output, kwargs in zip(output_list, kwargs_list):
+        products = molecule_bag_from_smiles(raw_output)
+
+        # Only consider the prediction if the SMILES can be parsed.
+        if products is not None:
+            predictions.append(MultiProductReaction(product=products, reactants=input, **kwargs))
 
     return predictions
 
