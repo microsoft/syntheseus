@@ -1,4 +1,4 @@
-Syntheseus currently supports 7 established single-step models.
+Syntheseus currently supports 8 established single-step models.
 
 For convenience, for each model we include a default checkpoint trained on USPTO-50K.
 If no checkpoint directory is provided during model loading, `syntheseus` will automatically download a default checkpoint and cache it on disk for future use.
@@ -9,6 +9,7 @@ See table below for the links to the default checkpoints.
 |----------------------------------------------------------------|--------|
 | [Chemformer](https://figshare.com/ndownloader/files/42009888)  | finetuned by us starting from checkpoint released by authors |
 | [GLN](https://figshare.com/ndownloader/files/42012720)         | released by authors |
+| [Graph2Edits](https://figshare.com/ndownloader/files/44194301) | released by authors |
 | [LocalRetro](https://figshare.com/ndownloader/files/42287319)  | trained by us |
 | [MEGAN](https://figshare.com/ndownloader/files/42012732)       | trained by us |
 | [MHNreact](https://figshare.com/ndownloader/files/42012777)    | trained by us |

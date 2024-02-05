@@ -5,7 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Optional
 
-from syntheseus.interface.molecule import REACTION_SEPARATOR, SMILES_SEPARATOR, Molecule
+from syntheseus.interface.molecule import SMILES_SEPARATOR, Molecule
+from syntheseus.interface.reaction import REACTION_SEPARATOR
 from syntheseus.interface.typed_dict import TypedDict
 
 

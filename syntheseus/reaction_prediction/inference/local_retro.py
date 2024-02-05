@@ -7,7 +7,6 @@ The original LocalRetro code is released under the Apache 2.0 license.
 Parts of this file are based on code from the GitHub repository above.
 """
 
-import sys
 from pathlib import Path
 from typing import Any, List, Sequence
 
@@ -15,7 +14,6 @@ from syntheseus.interface.models import BackwardPrediction
 from syntheseus.interface.molecule import Molecule
 from syntheseus.reaction_prediction.inference.base import ExternalBackwardReactionModel
 from syntheseus.reaction_prediction.utils.inference import (
-    get_module_path,
     get_unique_file_in_dir,
     process_raw_smiles_outputs,
 )
@@ -32,13 +30,6 @@ class LocalRetroModel(ExternalBackwardReactionModel):
         - `model_dir/data` contains `*.csv` data files needed by LocalRetro
         """
         super().__init__(*args, **kwargs)
-
-        import local_retro
-        from local_retro import scripts
-
-        # We need to hack `sys.path` because LocalRetro uses relative imports.
-        sys.path.insert(0, get_module_path(local_retro))
-        sys.path.insert(0, get_module_path(scripts))
 
         from local_retro.Retrosynthesis import load_templates
         from local_retro.scripts.utils import init_featurizer, load_model
