@@ -23,7 +23,6 @@ class PriorityQueueItem:
 
 class PriorityQueue:
     """
-
     Simple priority queue implementation which supports removing elements
     and changing their priority.
 
@@ -42,7 +41,7 @@ class PriorityQueue:
         self._counter = itertools.count()  # to break ties in priority
 
     def remove_item(self, item):
-        """Removes and item if it is present."""
+        """Removes an item if it is present."""
         if item in self._entry_finder:
             entry = self._entry_finder.pop(item)
             entry.item = None
@@ -143,10 +142,10 @@ class GeneralBestFirstSearch(SearchAlgorithm[GraphType, int], Generic[GraphType]
                 num_popped += 1
 
                 # Do a few checks
-                assert pq_item.priority < math.inf, "inf priority should not be in the queue"
+                assert pq_item.priority < math.inf, "Inf priority should not be in the queue"
                 assert math.isclose(
                     pq_item.priority, self.priority_function(pq_item.item, graph)
-                ), "priority is not up-to-date. This should not happen."
+                ), "Priority in the queue should always be up-to-date"
 
                 if self.node_eligible_for_queue(pq_item.item, graph):
                     node = pq_item.item

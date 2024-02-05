@@ -132,7 +132,7 @@ class RetroStarSearch(
 
         # Perform bottom-up update of `retro_star_min_cost`,
         # sorting by decreasing depth and not updating children for efficiency
-        # (min costs depends only on children)
+        # (min cost depends only on children)
         nodes_to_update.update(
             cast(  # mypy doesn't know that `run_message_passing` returns a `Collection[ANDOR_NODE]`
                 Collection[ANDOR_NODE],
