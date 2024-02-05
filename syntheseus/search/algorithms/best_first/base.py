@@ -68,13 +68,20 @@ class PriorityQueue:
                 # (if `None` is added to the queue there may be multiple `None` items)
                 del self._entry_finder[entry.item]
                 return entry
-        raise KeyError("pop from an empty priority queue")
+        raise IndexError("pop from an empty priority queue")
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Length is number of unique items in the queue."""
         return len(self._entry_finder)
 
-    def raw_len(self):
+    def __contains__(self, item) -> bool:
+        return item in self._entry_finder
+
+    def get_priority(self, item) -> Any:
+        """Returns the priority of an item in the queue, raising KeyError if not found."""
+        return self._entry_finder[item].priority
+
+    def raw_len(self) -> int:
         return len(self._queue)
 
 
@@ -165,11 +172,8 @@ class GeneralBestFirstSearch(SearchAlgorithm[GraphType, int], Generic[GraphType]
             for updated_node in dict.fromkeys(new_nodes + list(nodes_updated)):
                 if self.node_eligible_for_queue(updated_node, graph):
                     updated_node_priority = self.priority_function(updated_node, graph)
-                    already_in_queue_at_correct_priority = (
-                        updated_node in queue._entry_finder
-                        and math.isclose(
-                            queue._entry_finder[updated_node].priority, updated_node_priority
-                        )
+                    already_in_queue_at_correct_priority = updated_node in queue and math.isclose(
+                        queue.get_priority(updated_node), updated_node_priority
                     )
 
                     if already_in_queue_at_correct_priority:
