@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass(order=True)
 class PriorityQueueItem:
-    priority: float
+    priority: Any  # usually float, but just needs to be comparable
     tie_breaker: int
     item: Any = field(compare=False)
 
