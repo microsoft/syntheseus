@@ -49,6 +49,8 @@ jobs:
         shell: bash -l {0}
     name: test-models
     steps:
+    - name: Free extra disk space
+      uses: jlumbroso/free-disk-space@main
     - uses: actions/checkout@v3
     - uses: conda-incubator/setup-miniconda@v2
       with:
