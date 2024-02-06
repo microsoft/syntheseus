@@ -122,7 +122,8 @@ class TestRetroStar(BaseAlgorithmTest):
         assert not output_graph.root_node.has_solution
         assert get_first_solution_time(output_graph) == math.inf
         assert math.isclose(output_graph.root_node.data["retro_star_value"], 0.6)
-        assert math.isclose(output_graph.root_node.data["reaction_number"], 0.6)
+        assert math.isclose(output_graph.root_node.data["retro_star_reaction_number"], 0.6)
+        assert math.isclose(output_graph.root_node.data["retro_star_min_cost"], math.inf)
         assert_retro_star_values_in_graph(output_graph, [1.9, 0.6, 1.1])
 
     def test_by_hand_step2(
@@ -160,7 +161,8 @@ class TestRetroStar(BaseAlgorithmTest):
         assert not output_graph.root_node.has_solution
         assert get_first_solution_time(output_graph) == math.inf
         assert math.isclose(output_graph.root_node.data["retro_star_value"], 0.6)
-        assert math.isclose(output_graph.root_node.data["reaction_number"], 0.6)
+        assert math.isclose(output_graph.root_node.data["retro_star_reaction_number"], 0.6)
+        assert math.isclose(output_graph.root_node.data["retro_star_min_cost"], math.inf)
         assert_retro_star_values_in_graph(output_graph, [5.6, 1.1, 0.6, 1.9])
 
     def test_by_hand_step3(
@@ -205,7 +207,8 @@ class TestRetroStar(BaseAlgorithmTest):
         assert output_graph.root_node.has_solution
         assert get_first_solution_time(output_graph) == 3
         assert math.isclose(output_graph.root_node.data["retro_star_value"], 1.1)
-        assert math.isclose(output_graph.root_node.data["reaction_number"], 1.1)
+        assert math.isclose(output_graph.root_node.data["retro_star_reaction_number"], 1.1)
+        assert math.isclose(output_graph.root_node.data["retro_star_min_cost"], 2.6)
         assert_retro_star_values_in_graph(output_graph, [5.6, 1.1, 2.6, 1.9, 5.7])
 
     def test_by_hand_step4(
@@ -255,7 +258,8 @@ class TestRetroStar(BaseAlgorithmTest):
         assert output_graph.root_node.has_solution
         assert get_first_solution_time(output_graph) == 3
         assert math.isclose(output_graph.root_node.data["retro_star_value"], 1.9)
-        assert math.isclose(output_graph.root_node.data["reaction_number"], 1.9)
+        assert math.isclose(output_graph.root_node.data["retro_star_reaction_number"], 1.9)
+        assert math.isclose(output_graph.root_node.data["retro_star_min_cost"], 2.6)
         assert_retro_star_values_in_graph(output_graph, [1.9, 5.6, 2.6, 2.1, 5.7])
 
     def test_by_hand_step5(
@@ -304,5 +308,6 @@ class TestRetroStar(BaseAlgorithmTest):
         assert output_graph.root_node.has_solution
         assert get_first_solution_time(output_graph) == 3
         assert math.isclose(output_graph.root_node.data["retro_star_value"], 1.6)
-        assert math.isclose(output_graph.root_node.data["reaction_number"], 1.6)
+        assert math.isclose(output_graph.root_node.data["retro_star_reaction_number"], 1.6)
+        assert math.isclose(output_graph.root_node.data["retro_star_min_cost"], 1.6)
         assert_retro_star_values_in_graph(output_graph, [1.6, 2.6, 2.1])
