@@ -58,16 +58,16 @@ class DiskReactionDataset(ReactionDataset[SampleType]):
         self._sample_cls = sample_cls
         self._num_processes = num_processes
 
-        filenames = [str(filename) for filename in self._data_dir.iterdir()]
+        paths = list(self._data_dir.iterdir())
 
         if data_format is None:
-            logger.info(f"Detecting data format from files: {filenames}")
+            logger.info(f"Detecting data format from files: {[path.name for path in paths]}")
             formats_to_try = list(DataFormat)
         else:
             formats_to_try = [data_format]
 
         matches = {
-            format: DiskReactionDataset.match_filenames_to_folds(format=format, filenames=filenames)
+            format: DiskReactionDataset.match_paths_to_folds(format=format, paths=paths)
             for format in formats_to_try
         }
         matches = {key: values for key, values in matches.items() if values}
@@ -82,16 +82,12 @@ class DiskReactionDataset(ReactionDataset[SampleType]):
                 f"No files matching *{{train, val, test}}.{data_format.value} were found"
             )
 
-        [(self._data_format, fold_to_filename)] = matches.items()
+        [(self._data_format, self._fold_to_path)] = matches.items()
 
         if data_format is None:
             logger.info(f"Detected format: {self._data_format.name}")
 
-        logger.info(f"Loading data from files {fold_to_filename}")
-
-        self._fold_to_path = {
-            fold: self._data_dir / filename for fold, filename in fold_to_filename.items()
-        }
+        logger.info(f"Loading data from files {self._fold_to_path}")
         self._num_samples: Dict[DataFold, int] = {}
 
     def _get_lines(self, fold: DataFold) -> Iterable[str]:
@@ -125,22 +121,22 @@ class DiskReactionDataset(ReactionDataset[SampleType]):
         return self._num_samples[fold]
 
     @staticmethod
-    def match_filenames_to_folds(format: DataFormat, filenames: List[str]) -> Dict[DataFold, str]:
-        fold_to_filename: Dict[DataFold, str] = {}
+    def match_paths_to_folds(format: DataFormat, paths: List[Path]) -> Dict[DataFold, Path]:
+        fold_to_path: Dict[DataFold, Path] = {}
         for fold in DataFold:
             suffix = DiskReactionDataset.get_filename_suffix(format, fold)
-            matching_filenames = [filename for filename in filenames if filename.endswith(suffix)]
+            matching_paths = [path for path in paths if path.name.endswith(suffix)]
 
-            if len(matching_filenames) > 1:
+            if len(matching_paths) > 1:
                 raise ValueError(
-                    f"Found more than one {format.value} file for fold {fold.name}: {matching_filenames}"
+                    f"Found more than one {format.value} file for fold {fold.name}: {matching_paths}"
                 )
 
-            if matching_filenames:
-                [filename] = matching_filenames
-                fold_to_filename[fold] = filename
+            if matching_paths:
+                [path] = matching_paths
+                fold_to_path[fold] = path
 
-        return fold_to_filename
+        return fold_to_path
 
     @staticmethod
     def get_filename_suffix(format: DataFormat, fold: DataFold) -> str:
