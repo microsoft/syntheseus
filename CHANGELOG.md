@@ -11,6 +11,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 - Suppress the remaining noisy logs and warnings coming from single-step models ([#53](https://github.com/microsoft/syntheseus/pull/53)) ([@kmaziarz])
 - Improve efficiency and logging of retro* algorithm ([#62](https://github.com/microsoft/syntheseus/pull/62)) ([@austint])
+- Replace the term "value function" with "search heuristic" when appropriate ([#70](https://github.com/microsoft/syntheseus/pull/70)) ([@austint])
 - Remove `PredictionList` objects, replacing them with `Sequence[Prediction]` ([#61](https://github.com/microsoft/syntheseus/pull/61)) ([@austint])
 
 ### Added
