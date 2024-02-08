@@ -15,8 +15,8 @@ class _NodeData_Time(TypedDict, total=False):
     # How many times has the rxn model been called when this node was created?
     num_calls_rxn_model: int
 
-    # How many times has the value function been called when this node was created?
-    num_calls_value_function: int
+    # How many times has the search heuristic been called when this node was created?
+    num_calls_search_heuristic: int
 
 
 class _NodeData_Algorithms(TypedDict, total=False):

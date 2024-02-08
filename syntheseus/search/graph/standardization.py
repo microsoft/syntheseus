@@ -80,7 +80,7 @@ def _unique_node_andor_from_andor(
 
         # Set time attributes
         node_in_new_graph.creation_time = min(node_in_new_graph.creation_time, node.creation_time)
-        for k in ["num_calls_rxn_model", "num_calls_value_function"]:
+        for k in ["num_calls_rxn_model", "num_calls_search_heuristic"]:
             if k in node.data:
                 # doesn't understand typeddict
                 node_in_new_graph.data[k] = min(  # type: ignore[literal-required]
@@ -118,7 +118,7 @@ def _unique_node_andor_from_molset(
         for mol in node.mols:
             mol_to_node[mol].creation_time = min(mol_to_node[mol].creation_time, node.creation_time)
 
-            for k in ["num_calls_rxn_model", "num_calls_value_function"]:
+            for k in ["num_calls_rxn_model", "num_calls_search_heuristic"]:
                 if k in node.data:
                     mol_to_node[mol].data[k] = min(  # type: ignore[literal-required]
                         cast(int, mol_to_node[mol].data.get(k, math.inf)),
@@ -135,7 +135,7 @@ def _unique_node_andor_from_molset(
             if c_time < rxn_to_node[rxn].creation_time:
                 rxn_to_node[rxn].creation_time = c_time
 
-            for k in ["num_calls_rxn_model", "num_calls_value_function"]:
+            for k in ["num_calls_rxn_model", "num_calls_search_heuristic"]:
                 if k in node.data:
                     cand_time = max(node.data[k], parent.data[k])  # type: ignore[literal-required]
                     rxn_to_node[rxn].data[k] = min(  # type: ignore[literal-required]

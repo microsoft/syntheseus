@@ -63,21 +63,21 @@ class PDVN_MCTS(BaseMCTS[AndOrGraph, OrNode, AndNode], AndOrSearchAlgorithm[int]
     def __init__(
         self,
         c_dead: float,  # cost of a dead end (equation 1 of Liu et al 2023)
-        value_function_syn: BaseNodeEvaluator[OrNode],
-        value_function_cost: BaseNodeEvaluator[OrNode],
+        search_heuristic_syn: BaseNodeEvaluator[OrNode],
+        search_heuristic_cost: BaseNodeEvaluator[OrNode],
         and_node_cost_fn: BaseNodeEvaluator[AndNode],
         bound_function: Callable[[AndNode], AndOrGraph] = pucb_bound,  # type: ignore[assignment]  # sloppy typing for bounds
         **kwargs,
     ):
         super().__init__(
             bound_function=bound_function,  # type: ignore[arg-type]  # sloppy typing for bounds
-            value_function=value_function_cost,
+            search_heuristic=search_heuristic_cost,
             reward_function=None,  # type: ignore[arg-type]  # reward function is not used for PDVN MCTS
             **kwargs,
         )
         self.c_dead = c_dead
-        self.value_function_syn = value_function_syn
-        self.value_function_cost = value_function_cost
+        self.search_heuristic_syn = search_heuristic_syn
+        self.search_heuristic_cost = search_heuristic_cost
         self.and_node_cost_fn = and_node_cost_fn
         assert self.policy is not None, "PDVN_MCTS requires a policy to be specified."
 
@@ -178,8 +178,8 @@ class PDVN_MCTS(BaseMCTS[AndOrGraph, OrNode, AndNode], AndOrSearchAlgorithm[int]
             reward_syn = float(purchasable)
             reward_cost = 0.0 if purchasable else self.c_dead
         else:
-            reward_syn = self.value_function_syn([node], graph)[0]
-            reward_cost = self.value_function_cost([node], graph)[0]
+            reward_syn = self.search_heuristic_syn([node], graph)[0]
+            reward_cost = self.search_heuristic_cost([node], graph)[0]
 
         return reward_syn, reward_cost
 

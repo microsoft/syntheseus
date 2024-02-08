@@ -56,8 +56,8 @@ logger = logging.getLogger(__file__)
 class RetroStarConfig:
     max_expansion_depth: int = 10
 
-    value_function_class: str = "ConstantNodeEvaluator"
-    value_function_kwargs: Dict[str, Any] = field(default_factory=lambda: {"constant": 0.0})
+    search_heuristic_class: str = "ConstantNodeEvaluator"
+    search_heuristic_kwargs: Dict[str, Any] = field(default_factory=lambda: {"constant": 0.0})
 
     and_node_cost_fn_class: str = "ReactionModelLogProbCost"
     and_node_cost_fn_kwargs: Dict[str, Any] = field(default_factory=dict)
@@ -67,8 +67,8 @@ class RetroStarConfig:
 class MCTSConfig:
     max_expansion_depth: int = 20
 
-    value_function_class: str = "ConstantNodeEvaluator"
-    value_function_kwargs: Dict[str, Any] = field(default_factory=lambda: {"constant": 0.5})
+    search_heuristic_class: str = "ConstantNodeEvaluator"
+    search_heuristic_kwargs: Dict[str, Any] = field(default_factory=lambda: {"constant": 0.5})
 
     reward_function_class: str = "HasSolutionValueFunction"
     reward_function_kwargs: Dict[str, Any] = field(default_factory=dict)
@@ -84,11 +84,11 @@ class MCTSConfig:
 class PDVNConfig:
     max_expansion_depth: int = 10
 
-    value_function_syn_class: str = "ConstantNodeEvaluator"
-    value_function_syn_kwargs: Dict[str, Any] = field(default_factory=lambda: {"constant": 0.5})
+    search_heuristic_syn_class: str = "ConstantNodeEvaluator"
+    search_heuristic_syn_kwargs: Dict[str, Any] = field(default_factory=lambda: {"constant": 0.5})
 
-    value_function_cost_class: str = "ConstantNodeEvaluator"
-    value_function_cost_kwargs: Dict[str, Any] = field(default_factory=lambda: {"constant": 0.0})
+    search_heuristic_cost_class: str = "ConstantNodeEvaluator"
+    search_heuristic_cost_kwargs: Dict[str, Any] = field(default_factory=lambda: {"constant": 0.0})
 
     and_node_cost_fn_class: str = "ConstantNodeEvaluator"
     and_node_cost_fn_kwargs: Dict[str, Any] = field(default_factory=lambda: {"constant": 0.1})
@@ -207,13 +207,13 @@ def run_from_config(config: SearchConfig) -> Path:
     alg: Any = None
     if config.search_algorithm == "retro_star":
         alg_kwargs.update(cast(Dict[str, Any], OmegaConf.to_container(config.retro_star_config)))
-        build_node_evaluator("value_function")
+        build_node_evaluator("search_heuristic")
         build_node_evaluator("and_node_cost_fn")
 
         alg = RetroStarSearch(**alg_kwargs)
     elif config.search_algorithm == "mcts":
         alg_kwargs.update(cast(Dict[str, Any], OmegaConf.to_container(config.mcts_config)))
-        build_node_evaluator("value_function")
+        build_node_evaluator("search_heuristic")
         build_node_evaluator("reward_function")
         build_node_evaluator("policy")
 
@@ -223,8 +223,8 @@ def run_from_config(config: SearchConfig) -> Path:
         alg = MolSetMCTS(**alg_kwargs)
     elif config.search_algorithm == "pdvn":
         alg_kwargs.update(cast(Dict[str, Any], OmegaConf.to_container(config.pdvn_config)))
-        build_node_evaluator("value_function_syn")
-        build_node_evaluator("value_function_cost")
+        build_node_evaluator("search_heuristic_syn")
+        build_node_evaluator("search_heuristic_cost")
         build_node_evaluator("and_node_cost_fn")
         build_node_evaluator("policy")
 

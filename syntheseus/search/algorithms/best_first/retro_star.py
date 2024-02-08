@@ -13,7 +13,7 @@ from typing import (
 
 from syntheseus.search.algorithms.base import AndOrSearchAlgorithm
 from syntheseus.search.algorithms.best_first.base import GeneralBestFirstSearch
-from syntheseus.search.algorithms.mixins import ValueFunctionMixin
+from syntheseus.search.algorithms.mixins import SearchHeuristicMixin
 from syntheseus.search.graph.and_or import ANDOR_NODE, AndNode, AndOrGraph, OrNode
 from syntheseus.search.graph.message_passing import run_message_passing
 from syntheseus.search.node_evaluation.base import BaseNodeEvaluator, NoCacheNodeEvaluator
@@ -31,7 +31,7 @@ class MolIsPurchasableCost(NoCacheNodeEvaluator[OrNode]):
 class RetroStarSearch(
     AndOrSearchAlgorithm[int],
     GeneralBestFirstSearch[AndOrGraph],
-    ValueFunctionMixin[OrNode],
+    SearchHeuristicMixin[OrNode],
 ):
     def __init__(
         self,
@@ -48,15 +48,15 @@ class RetroStarSearch(
 
     @property
     def reaction_number_estimator(self) -> BaseNodeEvaluator[OrNode]:
-        """Alias for value function (they use this term in the paper)"""
-        return self.value_function
+        """Alias for search heuristic / value function (they use this term in the paper)"""
+        return self.search_heuristic
 
     def priority_function(self, node: ANDOR_NODE, _: AndNode) -> float:  # type: ignore[override]
         return node.data["retro_star_value"]
 
     def setup(self, graph: AndOrGraph) -> None:
         # If there is only one node, set its reaction number estimate to 0.
-        # This saves a call to the value function
+        # This saves a call to the search heuristic
         if len(graph) == 1:
             graph.root_node.data.setdefault("reaction_number_estimate", 0.0)
 

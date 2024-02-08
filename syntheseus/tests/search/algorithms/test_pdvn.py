@@ -78,8 +78,8 @@ rxns_step5 = rxns_step4 + [
 class TestPDVN_MCTS(BaseAlgorithmTest):
     def setup_algorithm(self, **kwargs) -> PDVN_MCTS:
         kwargs.setdefault("c_dead", 10.0)
-        kwargs.setdefault("value_function_syn", ConstantNodeEvaluator(0.8))
-        kwargs.setdefault("value_function_cost", ConstantNodeEvaluator(2.0))
+        kwargs.setdefault("search_heuristic_syn", ConstantNodeEvaluator(0.8))
+        kwargs.setdefault("search_heuristic_cost", ConstantNodeEvaluator(2.0))
         kwargs.setdefault("policy", ConstantNodeEvaluator(1.0))
         kwargs.setdefault("and_node_cost_fn", ConstantNodeEvaluator(1.0))
         kwargs.setdefault("bound_constant", 1e4)
@@ -112,8 +112,8 @@ class TestPDVN_MCTS(BaseAlgorithmTest):
             retrosynthesis_task5,
             1,
             policy=policy,
-            value_function_syn=mol_syn_estimate,
-            value_function_cost=mol_cost_estimate,
+            search_heuristic_syn=mol_syn_estimate,
+            search_heuristic_cost=mol_cost_estimate,
         )
         assert output_graph.reaction_smiles_counter() == Counter(rxns_step1)  # type: ignore[attr-defined]
 
@@ -149,7 +149,7 @@ class TestPDVN_MCTS(BaseAlgorithmTest):
         r"""
         Continuation of test above.
 
-        In the second iteration the value function for CS should be evaluated,
+        In the second iteration the search heuristic for CS should be evaluated,
         and in the third iteration CO should be expanded and the OO node visited.
 
         The tree should have the following structure:
@@ -166,8 +166,8 @@ class TestPDVN_MCTS(BaseAlgorithmTest):
             retrosynthesis_task5,
             3,
             policy=policy,
-            value_function_syn=mol_syn_estimate,
-            value_function_cost=mol_cost_estimate,
+            search_heuristic_syn=mol_syn_estimate,
+            search_heuristic_cost=mol_cost_estimate,
         )
         assert output_graph.reaction_smiles_counter() == Counter(rxns_step2)  # type: ignore[attr-defined]
 
@@ -205,7 +205,7 @@ class TestPDVN_MCTS(BaseAlgorithmTest):
         r"""
         Continuation of test above.
 
-        In the fourth iteration the value function for C should be evaluated,
+        In the fourth iteration the search heuristic for C should be evaluated,
         and in the fifth iteration OO should be expanded.
 
         The tree should have the following structure:
@@ -226,8 +226,8 @@ class TestPDVN_MCTS(BaseAlgorithmTest):
             retrosynthesis_task5,
             5,
             policy=policy,
-            value_function_syn=mol_syn_estimate,
-            value_function_cost=mol_cost_estimate,
+            search_heuristic_syn=mol_syn_estimate,
+            search_heuristic_cost=mol_cost_estimate,
         )
         assert output_graph.reaction_smiles_counter() == Counter(rxns_step3)  # type: ignore[attr-defined]
 
@@ -274,8 +274,8 @@ class TestPDVN_MCTS(BaseAlgorithmTest):
             retrosynthesis_task5,
             6,
             policy=policy,
-            value_function_syn=mol_syn_estimate,
-            value_function_cost=mol_cost_estimate,
+            search_heuristic_syn=mol_syn_estimate,
+            search_heuristic_cost=mol_cost_estimate,
         )
         assert output_graph.reaction_smiles_counter() == Counter(rxns_step4)  # type: ignore[attr-defined]
 
@@ -293,7 +293,7 @@ class TestPDVN_MCTS(BaseAlgorithmTest):
         r"""
         Continuation of test above.
 
-        For iterations 7-9 the value function of various other nodes will be evaluated
+        For iterations 7-9 the search heuristic of various other nodes will be evaluated
         without expansion. Then, on iteration 10 "C" will be expanded,
         leading to a new solution (O -> C).
 
@@ -315,8 +315,8 @@ class TestPDVN_MCTS(BaseAlgorithmTest):
             retrosynthesis_task5,
             10,
             policy=policy,
-            value_function_syn=mol_syn_estimate,
-            value_function_cost=mol_cost_estimate,
+            search_heuristic_syn=mol_syn_estimate,
+            search_heuristic_cost=mol_cost_estimate,
         )
         assert output_graph.reaction_smiles_counter() == Counter(rxns_step5)  # type: ignore[attr-defined]
 
@@ -352,8 +352,8 @@ class TestPDVN_MCTS(BaseAlgorithmTest):
             retrosynthesis_task5,
             1_000,
             policy=policy,
-            value_function_syn=mol_syn_estimate,
-            value_function_cost=mol_cost_estimate,
+            search_heuristic_syn=mol_syn_estimate,
+            search_heuristic_cost=mol_cost_estimate,
         )
 
         # Check training data is correct

@@ -9,17 +9,17 @@ from syntheseus.search.node_evaluation import BaseNodeEvaluator
 NodeType = TypeVar("NodeType", bound=BaseGraphNode)
 
 
-class ValueFunctionMixin(SearchAlgorithm, Generic[NodeType]):
-    def __init__(self, *args, value_function: BaseNodeEvaluator[NodeType], **kwargs):
+class SearchHeuristicMixin(SearchAlgorithm, Generic[NodeType]):
+    def __init__(self, *args, search_heuristic: BaseNodeEvaluator[NodeType], **kwargs):
         super().__init__(*args, **kwargs)
-        self.value_function = value_function
+        self.search_heuristic = search_heuristic
 
     def set_node_values(self, nodes, graph):
         output_nodes = super().set_node_values(nodes, graph)
         for node in output_nodes:
-            node.data.setdefault("num_calls_value_function", self.value_function.num_calls)
+            node.data.setdefault("num_calls_search_heuristic", self.search_heuristic.num_calls)
         return output_nodes
 
     def reset(self) -> None:
         super().reset()
-        self.value_function.reset()
+        self.search_heuristic.reset()

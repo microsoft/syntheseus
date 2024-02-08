@@ -12,7 +12,7 @@ import numpy as np
 
 from syntheseus.search import INT_INF
 from syntheseus.search.algorithms.base import GraphType, SearchAlgorithm
-from syntheseus.search.algorithms.mixins import ValueFunctionMixin
+from syntheseus.search.algorithms.mixins import SearchHeuristicMixin
 from syntheseus.search.graph.base_graph import RetrosynthesisSearchGraph
 from syntheseus.search.graph.node import BaseGraphNode
 from syntheseus.search.node_evaluation import BaseNodeEvaluator
@@ -107,7 +107,7 @@ def pucb_bound(node: BaseGraphNode, graph: RetrosynthesisSearchGraph) -> float:
 
 
 class BaseMCTS(
-    ValueFunctionMixin[RewardNodeType],
+    SearchHeuristicMixin[RewardNodeType],
     SearchAlgorithm[GraphType, int],
     Generic[GraphType, RewardNodeType, PolicyNodeType],
     abc.ABC,
@@ -151,7 +151,7 @@ class BaseMCTS(
 
     def setup(self, graph) -> None:
         # If there is only one node in the initial graph (the root node),
-        # then the first visit will call the value function unnecessarily.
+        # then the first visit will call the search heuristic unnecessarily.
         # Save one call by doing a "pseudo-visit" and setting the value arbitrarily.
         if len(graph) == 1 and graph.root_node.num_visit == 0:
             graph.root_node.data.setdefault("mcts_value", self.init_mcts_value)
@@ -291,7 +291,7 @@ class BaseMCTS(
         """
         Get a reward for visiting a node.
         This is either the value of the reward function (for terminal nodes),
-        or the value of the value function (for non-terminal nodes).
+        or the value of the search heuristic (for non-terminal nodes).
         """
         assert len(list(graph.successors(node))) == 0, "This is not a leaf node."
 
@@ -302,7 +302,7 @@ class BaseMCTS(
         if node.is_expanded or not self.can_expand_node(node, graph):
             return self.reward_function([node], graph)[0]
         else:
-            return self.value_function([node], graph)[0]
+            return self.search_heuristic([node], graph)[0]
 
     def _update_value_from_reward(self, node: BaseGraphNode, _: GraphType, reward: float) -> None:
         if node.num_visit == 0:

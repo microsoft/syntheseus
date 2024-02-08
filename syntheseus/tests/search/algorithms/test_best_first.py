@@ -83,7 +83,7 @@ class TestRetroStar(BaseAlgorithmTest):
         # Return retro*0 with a constant unit cost for each reaction
         kwargs.setdefault("and_node_cost_fn", ConstantNodeEvaluator(1.0))
         kwargs.setdefault("or_node_cost_fn", MolIsPurchasableCost())
-        kwargs.setdefault("value_function", ConstantNodeEvaluator(0.0))
+        kwargs.setdefault("search_heuristic", ConstantNodeEvaluator(0.0))
         return RetroStarSearch(**kwargs)
 
     def test_by_hand_step1(
@@ -111,7 +111,7 @@ class TestRetroStar(BaseAlgorithmTest):
         (c=Z) denotes the cost cost of the reaction Z
         """
         output_graph = self.run_alg_for_n_iterations(
-            retrosynthesis_task5, 1, and_node_cost_fn=rxn_cost_fn, value_function=mol_value_fn
+            retrosynthesis_task5, 1, and_node_cost_fn=rxn_cost_fn, search_heuristic=mol_value_fn
         )
         assert output_graph.reaction_smiles_counter() == {  # type: ignore  # unsure about rxn_counter
             "C>>CC": 1,
@@ -146,7 +146,7 @@ class TestRetroStar(BaseAlgorithmTest):
         (disclaimer: because the tree is large it is possible that some hand-calculated values are wrong)
         """
         output_graph = self.run_alg_for_n_iterations(
-            retrosynthesis_task5, 2, and_node_cost_fn=rxn_cost_fn, value_function=mol_value_fn
+            retrosynthesis_task5, 2, and_node_cost_fn=rxn_cost_fn, search_heuristic=mol_value_fn
         )
         assert output_graph.reaction_smiles_counter() == {  # type: ignore  # unsure about rxn_counter
             "C>>CC": 1,
@@ -189,7 +189,7 @@ class TestRetroStar(BaseAlgorithmTest):
         (disclaimer: because the tree is large it is possible that some hand-calculated values are wrong)
         """
         output_graph = self.run_alg_for_n_iterations(
-            retrosynthesis_task5, 3, and_node_cost_fn=rxn_cost_fn, value_function=mol_value_fn
+            retrosynthesis_task5, 3, and_node_cost_fn=rxn_cost_fn, search_heuristic=mol_value_fn
         )
         assert output_graph.reaction_smiles_counter() == {  # type: ignore  # unsure about rxn_counter
             "C>>CC": 1,
@@ -236,7 +236,7 @@ class TestRetroStar(BaseAlgorithmTest):
         (disclaimer: because the tree is large it is possible that some hand-calculated values are wrong)
         """
         output_graph = self.run_alg_for_n_iterations(
-            retrosynthesis_task5, 4, and_node_cost_fn=rxn_cost_fn, value_function=mol_value_fn
+            retrosynthesis_task5, 4, and_node_cost_fn=rxn_cost_fn, search_heuristic=mol_value_fn
         )
         assert output_graph.reaction_smiles_counter() == {  # type: ignore  # unsure about rxn_counter
             "C>>CC": 1,
@@ -284,7 +284,7 @@ class TestRetroStar(BaseAlgorithmTest):
         (disclaimer: because the tree is large it is possible that some hand-calculated values are wrong)
         """
         output_graph = self.run_alg_for_n_iterations(
-            retrosynthesis_task5, 5, and_node_cost_fn=rxn_cost_fn, value_function=mol_value_fn
+            retrosynthesis_task5, 5, and_node_cost_fn=rxn_cost_fn, search_heuristic=mol_value_fn
         )
         assert output_graph.reaction_smiles_counter() == {  # type: ignore  # unsure about rxn_counter
             "C>>CC": 1,

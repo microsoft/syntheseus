@@ -103,13 +103,13 @@ class TestMolSetMCTS(BaseAlgorithmTest):
     def setup_algorithm(
         self,
         reward_function=None,
-        value_function=None,
+        search_heuristic=None,
         bound_constant: float = 1e4,  # high default to ensure lots of exploring
         **kwargs,
     ) -> MolSetMCTS:
         return MolSetMCTS(
             reward_function=reward_function or HasSolutionValueFunction(),
-            value_function=value_function or ConstantNodeEvaluator(0.5),
+            search_heuristic=search_heuristic or ConstantNodeEvaluator(0.5),
             bound_constant=bound_constant,
             random_state=random.Random(42),  # control random seed
             **kwargs,
@@ -132,7 +132,7 @@ class TestMolSetMCTS(BaseAlgorithmTest):
         output_graph = self.run_alg_for_n_iterations(
             retrosynthesis_task5,
             1,
-            value_function=value_fn,
+            search_heuristic=value_fn,
             bound_constant=HAND_EXAMPLE_BOUND_CONSTANT,
         )
         assert not output_graph.root_node.has_solution  # should not be solved yet
@@ -152,7 +152,7 @@ class TestMolSetMCTS(BaseAlgorithmTest):
         output_graph = self.run_alg_for_n_iterations(
             retrosynthesis_task5,
             3,
-            value_function=value_fn,
+            search_heuristic=value_fn,
             bound_constant=HAND_EXAMPLE_BOUND_CONSTANT,
         )
         assert not output_graph.root_node.has_solution  # should not be solved yet
@@ -175,7 +175,7 @@ class TestMolSetMCTS(BaseAlgorithmTest):
         output_graph = self.run_alg_for_n_iterations(
             retrosynthesis_task5,
             4,
-            value_function=value_fn,
+            search_heuristic=value_fn,
             bound_constant=HAND_EXAMPLE_BOUND_CONSTANT,
         )
         assert len(output_graph) == 8
@@ -198,7 +198,7 @@ class TestMolSetMCTS(BaseAlgorithmTest):
         output_graph = self.run_alg_for_n_iterations(
             retrosynthesis_task5,
             5,
-            value_function=value_fn,
+            search_heuristic=value_fn,
             bound_constant=HAND_EXAMPLE_BOUND_CONSTANT,
         )
         assert len(output_graph) == 10
@@ -227,7 +227,7 @@ class TestMolSetMCTS(BaseAlgorithmTest):
         output_graph = self.run_alg_for_n_iterations(
             retrosynthesis_task5,
             4 * n - 1,
-            value_function=value_fn,
+            search_heuristic=value_fn,
             min_num_visit_to_expand=n,
             bound_constant=1e3,  # higher constant so that rewards don't matter
         )
@@ -252,7 +252,7 @@ class TestMolSetMCTS(BaseAlgorithmTest):
             self.run_alg_for_n_iterations(
                 retrosynthesis_task5,
                 10,
-                value_function=value_fn,
+                search_heuristic=value_fn,
                 bound_function=pucb_bound,
             )
 
@@ -289,7 +289,7 @@ class TestMolSetMCTS(BaseAlgorithmTest):
         output_graph = self.run_alg_for_n_iterations(
             retrosynthesis_task5,
             50,
-            value_function=value_fn,
+            search_heuristic=value_fn,
             bound_function=pucb_bound,
             policy=policy,
             bound_constant=10.0,

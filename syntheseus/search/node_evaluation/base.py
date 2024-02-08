@@ -15,7 +15,7 @@ NodeType = TypeVar("NodeType", bound=BaseGraphNode)
 class BaseNodeEvaluator(Generic[NodeType], abc.ABC):
     """
     Parent class for functions which assign values to nodes.
-    This includes value functions, policies, reward functions, etc.
+    This includes search heuristics, policies, reward functions, etc.
 
     Also counts number of times it has been called.
     However, unlike for reaction models caching is not implemented by default.
