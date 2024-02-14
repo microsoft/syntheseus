@@ -9,7 +9,7 @@ from syntheseus.interface.reaction import SingleProductReaction
 
 @pytest.fixture
 def cocs_mol() -> Molecule:
-    """Returns the molecule with smiles 'COCS'"""
+    """Returns the molecule with smiles 'COCS'."""
     return Molecule("COCS", make_rdkit_mol=False)
 
 

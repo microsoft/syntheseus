@@ -13,7 +13,7 @@ def process_raw_smiles_outputs_backwards(
     """Convert raw SMILES outputs into a list of `SingleProductReaction` objects.
 
     Args:
-        inputs: Model input `Molecule` object
+        input: Model input.
         output_list: Raw SMILES outputs (including potentially invalid ones).
         kwargs_list: Additional metadata to attach to the predictions (e.g. probability).
 
@@ -40,7 +40,7 @@ def process_raw_smiles_outputs_forwards(
     Like method `process_raw_smiles_outputs_backwards`, but for forward models.
 
     Args:
-        inputs: Model input `Bag[Molecule]` object
+        input: Model input.
         output_list: Raw SMILES outputs (including potentially invalid ones).
         kwargs_list: Additional metadata to attach to the predictions (e.g. probability).
 

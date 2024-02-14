@@ -64,7 +64,7 @@ def test_frozen(cocs_mol: Molecule) -> None:
 
 def test_canonicalization() -> None:
     """
-    Test that the 'canonicalize' argument works as expected,
+    Test that the `canonicalize` argument works as expected,
     canonicalizing the SMILES if True and leaving it unchanged if False.
     """
     non_canonical_smiles = "OCC"
@@ -80,7 +80,7 @@ def test_canonicalization() -> None:
 
 
 def test_make_rdkit_mol() -> None:
-    """Test that the argument make_rdkit_mol works as expected."""
+    """Test that the argument `make_rdkit_mol` works as expected."""
 
     # Test 1: make_rdkit_mol=True
     smiles = "CCO"
@@ -97,7 +97,7 @@ def test_make_rdkit_mol() -> None:
 
 
 def test_sorting() -> None:
-    """Test that sorting molecules works as expected: by SMILES, then by identifier"""
+    """Test that sorting molecules works as expected: by SMILES, then by identifier."""
 
     # Make individual molecules
     mol1 = Molecule("CC")
