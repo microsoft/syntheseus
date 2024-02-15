@@ -52,12 +52,12 @@ class Reaction(Generic[ReactantsType, ProductType]):
 
     @property
     @abstractmethod
-    def unique_reactants(self) -> Collection[Molecule]:
+    def unique_reactants(self) -> set[Molecule]:
         pass
 
     @property
     @abstractmethod
-    def unique_products(self) -> Collection[Molecule]:
+    def unique_products(self) -> set[Molecule]:
         pass
 
 
@@ -81,11 +81,11 @@ class MultiProductReaction(Reaction[Bag[Molecule], Bag[Molecule]]):
         )
 
     @property
-    def unique_reactants(self) -> Collection[Molecule]:
+    def unique_reactants(self) -> set[Molecule]:
         return set(self.reactants)
 
     @property
-    def unique_products(self) -> Collection[Molecule]:
+    def unique_products(self) -> set[Molecule]:
         return set(self.product)
 
 
@@ -98,9 +98,9 @@ class SingleProductReaction(Reaction[Bag[Molecule], Molecule]):
         )
 
     @property
-    def unique_reactants(self) -> Collection[Molecule]:
+    def unique_reactants(self) -> set[Molecule]:
         return set(self.reactants)
 
     @property
-    def unique_products(self) -> Collection[Molecule]:
+    def unique_products(self) -> set[Molecule]:
         return {self.product}
