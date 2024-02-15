@@ -15,10 +15,10 @@ class ListOfReactionsModel(BackwardReactionModel):
         super().__init__(**kwargs)
         self.reaction_list = list(reaction_list)
 
-    def _get_backward_reactions(
-        self, mols: list[Molecule]
+    def _get_reactions(
+        self, inputs: list[Molecule], num_results: int
     ) -> list[Sequence[SingleProductReaction]]:
-        return [[r for r in self.reaction_list if r.product == mol] for mol in mols]
+        return [[r for r in self.reaction_list if r.product == mol] for mol in inputs]
 
 
 class LinearMolecules(BackwardReactionModel):
@@ -82,7 +82,7 @@ class LinearMolecules(BackwardReactionModel):
 
         return output
 
-    def _get_backward_reactions(
-        self, mols: list[Molecule]
+    def _get_reactions(
+        self, inputs: list[Molecule], num_results: int
     ) -> list[Sequence[SingleProductReaction]]:
-        return [self._get_single_backward_reactions(mol) for mol in mols]
+        return [self._get_single_backward_reactions(mol) for mol in inputs]
