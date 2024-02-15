@@ -12,6 +12,9 @@ InputType = TypeVar("InputType")
 ReactionType = TypeVar("ReactionType", bound=Reaction)
 
 
+DEFAULT_NUM_RESULTS = 100
+
+
 class ReactionModel(Generic[InputType, ReactionType]):
     """Base class for all reaction models, both backward and forward."""
 
@@ -22,7 +25,7 @@ class ReactionModel(Generic[InputType, ReactionType]):
         use_cache: bool = False,
         count_cache_in_num_calls: bool = False,
         initial_cache: Optional[dict[tuple[InputType, int], Sequence[ReactionType]]] = None,
-        default_num_results: int = 100,
+        default_num_results: int = DEFAULT_NUM_RESULTS,
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)  # in case this is not the first class in the MRO
