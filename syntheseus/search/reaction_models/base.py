@@ -1,5 +1,0 @@
-from __future__ import annotations
-
-from syntheseus.interface.models import BackwardReactionModel as BackwardReactionModelInterface
-
-BackwardReactionModel = BackwardReactionModelInterface

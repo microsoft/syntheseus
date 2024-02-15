@@ -3,9 +3,9 @@ from __future__ import annotations
 from typing import Sequence
 
 from syntheseus.interface.bag import Bag
+from syntheseus.interface.models import BackwardReactionModel
 from syntheseus.interface.molecule import Molecule
 from syntheseus.interface.reaction import SingleProductReaction
-from syntheseus.search.reaction_models.base import BackwardReactionModel
 
 
 class ListOfReactionsToyModel(BackwardReactionModel):

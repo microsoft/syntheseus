@@ -9,7 +9,7 @@ from syntheseus.interface.bag import Bag
 from syntheseus.interface.models import DEFAULT_NUM_RESULTS
 from syntheseus.interface.molecule import Molecule
 from syntheseus.interface.reaction import SingleProductReaction
-from syntheseus.search.reaction_models.toy import LinearMoleculesToyModel
+from syntheseus.reaction_prediction.inference.toy_models import LinearMoleculesToyModel
 
 
 @pytest.mark.parametrize("remove", [True, False])

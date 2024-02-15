@@ -23,10 +23,10 @@ except ImportError:
 
 
 from syntheseus.interface.bag import Bag
+from syntheseus.interface.models import BackwardReactionModel
 from syntheseus.interface.molecule import Molecule
 from syntheseus.interface.reaction import SingleProductReaction
 from syntheseus.search.mol_inventory import SmilesListInventory
-from syntheseus.search.reaction_models import BackwardReactionModel
 
 # Various files from PaRoutes
 BASE_PATH = Path(__file__).parent.absolute() / "paroutes_files"

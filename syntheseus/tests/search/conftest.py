@@ -7,8 +7,13 @@ from dataclasses import dataclass, field
 import pytest
 
 from syntheseus.interface.bag import Bag
+from syntheseus.interface.models import BackwardReactionModel
 from syntheseus.interface.molecule import Molecule
 from syntheseus.interface.reaction import SingleProductReaction
+from syntheseus.reaction_prediction.inference.toy_models import (
+    LinearMoleculesToyModel,
+    ListOfReactionsToyModel,
+)
 from syntheseus.search.algorithms.breadth_first import (
     AndOr_BreadthFirstSearch,
     MolSet_BreadthFirstSearch,
@@ -17,8 +22,6 @@ from syntheseus.search.graph.and_or import AndOrGraph
 from syntheseus.search.graph.molset import MolSetGraph
 from syntheseus.search.graph.route import SynthesisGraph
 from syntheseus.search.mol_inventory import BaseMolInventory, SmilesListInventory
-from syntheseus.search.reaction_models import BackwardReactionModel
-from syntheseus.search.reaction_models.toy import LinearMoleculesToyModel, ListOfReactionsToyModel
 
 
 @dataclass

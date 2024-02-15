@@ -8,6 +8,7 @@ from collections.abc import Collection
 from datetime import datetime
 from typing import Generic, Optional, Sequence, TypeVar
 
+from syntheseus.interface.models import BackwardReactionModel
 from syntheseus.interface.molecule import Molecule
 from syntheseus.interface.reaction import SingleProductReaction
 from syntheseus.search import INT_INF
@@ -21,7 +22,6 @@ from syntheseus.search.graph.message_passing import (
 from syntheseus.search.graph.molset import MolSetGraph, MolSetNode
 from syntheseus.search.graph.node import BaseGraphNode
 from syntheseus.search.mol_inventory import BaseMolInventory
-from syntheseus.search.reaction_models import BackwardReactionModel
 
 AlgReturnType = TypeVar("AlgReturnType")
 GraphType = TypeVar("GraphType", bound=RetrosynthesisSearchGraph)

@@ -8,9 +8,9 @@ import pytest
 from syntheseus.interface.bag import Bag
 from syntheseus.interface.molecule import Molecule
 from syntheseus.interface.reaction import SingleProductReaction
+from syntheseus.reaction_prediction.inference.toy_models import ListOfReactionsToyModel
 from syntheseus.search.algorithms.pdvn import PDVN_MCTS, pdvn_extract_training_data
 from syntheseus.search.node_evaluation.common import ConstantNodeEvaluator
-from syntheseus.search.reaction_models.toy import ListOfReactionsToyModel
 from syntheseus.tests.search.algorithms.test_base import BaseAlgorithmTest
 from syntheseus.tests.search.algorithms.test_best_first import (
     DictMolCost,
