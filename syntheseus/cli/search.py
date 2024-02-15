@@ -29,13 +29,11 @@ import yaml
 from omegaconf import MISSING, DictConfig, OmegaConf
 from tqdm import tqdm
 
-from syntheseus.interface.models import BackwardReactionModel
 from syntheseus.interface.molecule import Molecule
 from syntheseus.reaction_prediction.inference.config import BackwardModelConfig
 from syntheseus.reaction_prediction.utils.config import get_config as cli_get_config
 from syntheseus.reaction_prediction.utils.misc import set_random_seed
 from syntheseus.reaction_prediction.utils.model_loading import get_model
-from syntheseus.reaction_prediction.utils.syntheseus_wrapper import SyntheseusBackwardReactionModel
 from syntheseus.search.algorithms.best_first.retro_star import RetroStarSearch
 from syntheseus.search.algorithms.mcts import base as mcts_base
 from syntheseus.search.algorithms.mcts.molset import MolSetMCTS
@@ -165,14 +163,7 @@ def run_from_config(config: SearchConfig) -> Path:
         )
 
     # Load the single-step model
-    base_model = get_model(config, batch_size=1, num_gpus=int(config.use_gpu))  # type: ignore
-
-    # Set up the search algorithm
-    search_rxn_model = SyntheseusBackwardReactionModel(
-        cast(BackwardReactionModel, base_model),
-        num_results=config.num_top_results,
-        use_cache=config.reaction_model_use_cache,
-    )
+    search_rxn_model = get_model(config, batch_size=1, num_gpus=int(config.use_gpu))  # type: ignore
 
     # Set up the inventory
     with open(config.inventory_smiles_file, "rt") as f_inventory:
