@@ -10,7 +10,7 @@ from syntheseus.interface.molecule import Molecule
 from syntheseus.interface.reaction import SingleProductReaction
 from syntheseus.search.algorithms.pdvn import PDVN_MCTS, pdvn_extract_training_data
 from syntheseus.search.node_evaluation.common import ConstantNodeEvaluator
-from syntheseus.search.reaction_models.toy import ListOfReactionsModel
+from syntheseus.search.reaction_models.toy import ListOfReactionsToyModel
 from syntheseus.tests.search.algorithms.test_base import BaseAlgorithmTest
 from syntheseus.tests.search.algorithms.test_best_first import (
     DictMolCost,
@@ -403,7 +403,7 @@ class TestPDVN_MCTS(BaseAlgorithmTest):
     ) -> None:
         """Test PDVN MCTS on a system with dead end reactions."""
 
-        rxn_model = ListOfReactionsModel(
+        rxn_model = ListOfReactionsToyModel(
             [
                 SingleProductReaction(reactants=Bag({Molecule("C")}), product=Molecule("CC")),
                 SingleProductReaction(reactants=Bag({Molecule("CO")}), product=Molecule("CC")),

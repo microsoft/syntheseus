@@ -2,7 +2,10 @@ import pytest
 
 from syntheseus.interface.molecule import Molecule
 from syntheseus.interface.reaction import SingleProductReaction
-from syntheseus.search.reaction_models.toy import LinearMolecules, ListOfReactionsModel
+from syntheseus.reaction_prediction.inference import (
+    LinearMoleculesToyModel,
+    ListOfReactionsToyModel,
+)
 
 
 def test_linear_molecules_invalid_molecule() -> None:
@@ -14,7 +17,7 @@ def test_linear_molecules_invalid_molecule() -> None:
     NOTE: in the future the behaviour could be changed to just return an empty list,
     but for a toy example I thought it would be best to alert the user with a warning.
     """
-    rxn_model = LinearMolecules()
+    rxn_model = LinearMoleculesToyModel()
     with pytest.raises(AssertionError):
         rxn_model([Molecule("CC(C)C")])
 
@@ -25,6 +28,6 @@ def test_list_of_reactions_model(
     rxn_cs_from_cc: SingleProductReaction,
 ) -> None:
     """Simple test of the ListOfReactionsModel class."""
-    model = ListOfReactionsModel([rxn_cocs_from_co_cs, rxn_cocs_from_cocc, rxn_cs_from_cc])
+    model = ListOfReactionsToyModel([rxn_cocs_from_co_cs, rxn_cocs_from_cocc, rxn_cs_from_cc])
     output = model([Molecule("COCS"), Molecule("CS"), Molecule("CO")])
     assert output == [[rxn_cocs_from_co_cs, rxn_cocs_from_cocc], [rxn_cs_from_cc], []]

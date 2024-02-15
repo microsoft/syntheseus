@@ -17,3 +17,13 @@ def cocs_mol() -> Molecule:
 def rxn_cocs_from_co_cs(cocs_mol: Molecule) -> SingleProductReaction:
     """Returns a reaction with COCS as the product."""
     return SingleProductReaction(product=cocs_mol, reactants=Bag([Molecule("CO"), Molecule("CS")]))
+
+
+@pytest.fixture
+def rxn_cs_from_cc() -> SingleProductReaction:
+    return SingleProductReaction(product=Molecule("CS"), reactants=Bag([Molecule("CC")]))
+
+
+@pytest.fixture
+def rxn_cocs_from_cocc(cocs_mol: Molecule) -> SingleProductReaction:
+    return SingleProductReaction(product=cocs_mol, reactants=Bag([Molecule("COCC")]))

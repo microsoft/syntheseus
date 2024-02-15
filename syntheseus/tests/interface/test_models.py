@@ -9,7 +9,7 @@ from syntheseus.interface.bag import Bag
 from syntheseus.interface.models import DEFAULT_NUM_RESULTS
 from syntheseus.interface.molecule import Molecule
 from syntheseus.interface.reaction import SingleProductReaction
-from syntheseus.search.reaction_models.toy import LinearMolecules
+from syntheseus.search.reaction_models.toy import LinearMoleculesToyModel
 
 
 @pytest.mark.parametrize("remove", [True, False])
@@ -30,7 +30,7 @@ def test_remove_duplicates(remove: bool) -> None:
     rxn_CS = SingleProductReaction(product=CC, reactants=Bag({Molecule("CS")}))
 
     # Call reaction model
-    rxn_model = LinearMolecules(remove_duplicates=remove)
+    rxn_model = LinearMoleculesToyModel(remove_duplicates=remove)
     output = rxn_model([CC])
 
     # Check that outputs are what is expected.
@@ -47,7 +47,7 @@ def test_caching(cocs_mol: Molecule, use_cache: bool) -> None:
     """Test all aspects of caching for reaction models."""
 
     # Call model twice on same molecule
-    rxn_model = LinearMolecules(use_cache=use_cache)
+    rxn_model = LinearMoleculesToyModel(use_cache=use_cache)
     output1 = rxn_model([cocs_mol])
     output2 = rxn_model([cocs_mol])
 
@@ -117,11 +117,11 @@ def test_initial_cache(
 
     # Create reaction model, potentially checking for warning
     if use_cache:
-        rxn_model = LinearMolecules(use_cache=use_cache, initial_cache=initial_cache)
+        rxn_model = LinearMoleculesToyModel(use_cache=use_cache, initial_cache=initial_cache)
     else:
         # If caching is off then providing an initial cache should raise a warning
         with pytest.warns(UserWarning):
-            rxn_model = LinearMolecules(use_cache=use_cache, initial_cache=initial_cache)
+            rxn_model = LinearMoleculesToyModel(use_cache=use_cache, initial_cache=initial_cache)
 
     # Call reaction model
     outputs = rxn_model([cocs_mol, CC, Molecule("CCC")])
