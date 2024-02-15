@@ -108,6 +108,13 @@ class SearchAlgorithm(MinimalSearchAlgorithm[GraphType, AlgReturnType]):
                 " since the graph will not be a tree and there will be no repeat mols."
             )
 
+        # Warning about lack of caching in reaction model
+        if not self.reaction_model._use_cache:
+            warnings.warn(
+                "The reaction model does not use caching, which may result "
+                "in unnecessary duplicate calls with the same input molecule."
+            )
+
     @property
     def requires_tree(self) -> bool:
         """Whether this algorithm must be run on a tree."""

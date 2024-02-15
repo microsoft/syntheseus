@@ -408,7 +408,8 @@ class TestPDVN_MCTS(BaseAlgorithmTest):
                 SingleProductReaction(reactants=Bag({Molecule("C")}), product=Molecule("CC")),
                 SingleProductReaction(reactants=Bag({Molecule("CO")}), product=Molecule("CC")),
                 SingleProductReaction(reactants=Bag({Molecule("O")}), product=Molecule("C")),
-            ]
+            ],
+            use_cache=True,
         )
         retrosynthesis_task = RetrosynthesisTask(
             inventory=retrosynthesis_task5.inventory,

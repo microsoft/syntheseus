@@ -97,7 +97,7 @@ def retrosynthesis_task1(
 
     return RetrosynthesisTask(
         target_mol=cocs_mol,
-        reaction_model=LinearMoleculesToyModel(),
+        reaction_model=LinearMoleculesToyModel(use_cache=True),
         inventory=SmilesListInventory(["CO", "CS"]),
         known_routes={"min-cost": best_route, "other": other_route},
     )
@@ -170,7 +170,7 @@ def retrosynthesis_task2(
 
     return RetrosynthesisTask(
         target_mol=cocs_mol,
-        reaction_model=LinearMoleculesToyModel(),
+        reaction_model=LinearMoleculesToyModel(use_cache=True),
         inventory=SmilesListInventory(["CO", "CC"]),
         known_routes=known_routes,
         incorrect_routes=incorrect_routes,
@@ -189,7 +189,7 @@ def retrosynthesis_task3(cocs_mol: Molecule) -> RetrosynthesisTask:
     """
     return RetrosynthesisTask(
         target_mol=cocs_mol,
-        reaction_model=LinearMoleculesToyModel(),
+        reaction_model=LinearMoleculesToyModel(use_cache=True),
         inventory=SmilesListInventory(["CC"]),
     )
 
@@ -207,7 +207,7 @@ def retrosynthesis_task4(cocs_mol: Molecule) -> RetrosynthesisTask:
     """
     return RetrosynthesisTask(
         target_mol=cocs_mol,
-        reaction_model=LinearMoleculesToyModel(allow_substitution=False),
+        reaction_model=LinearMoleculesToyModel(allow_substitution=False, use_cache=True),
         inventory=SmilesListInventory(["C", "O", "S"]),
     )
 
@@ -218,9 +218,10 @@ def retrosynthesis_task5() -> RetrosynthesisTask:
     A very small, *infinite* retrosynthesis task which cannot be solved in 1 step.
     Good for testing full expansion of trees.
     """
+
     return RetrosynthesisTask(
         target_mol=Molecule("CC", make_rdkit_mol=False),
-        reaction_model=LinearMoleculesToyModel(allow_substitution=True),
+        reaction_model=LinearMoleculesToyModel(allow_substitution=True, use_cache=True),
         inventory=SmilesListInventory(["O"]),
     )
 
@@ -245,7 +246,7 @@ def retrosynthesis_task6() -> RetrosynthesisTask:
     """
     return RetrosynthesisTask(
         target_mol=Molecule("CCCOC", make_rdkit_mol=False),
-        reaction_model=LinearMoleculesToyModel(allow_substitution=True),
+        reaction_model=LinearMoleculesToyModel(allow_substitution=True, use_cache=True),
         inventory=SmilesListInventory(["CCCO", "CC", "COC", "O"]),
     )
 
@@ -265,7 +266,8 @@ def rxn_model_for_minimal_graphs(
     CS -> CO
     """
     return ListOfReactionsToyModel(
-        reaction_list=[rxn_cocs_from_co_cs, rxn_co_from_cc, rxn_cs_from_co]
+        reaction_list=[rxn_cocs_from_co_cs, rxn_co_from_cc, rxn_cs_from_co],
+        use_cache=True,
     )
 
 
