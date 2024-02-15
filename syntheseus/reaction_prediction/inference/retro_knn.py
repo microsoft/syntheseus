@@ -8,8 +8,8 @@ from typing import List, Optional, Sequence, Union
 
 import numpy as np
 
-from syntheseus.interface.models import BackwardPrediction
 from syntheseus.interface.molecule import Molecule
+from syntheseus.interface.reaction import SingleProductReaction
 from syntheseus.reaction_prediction.inference.local_retro import LocalRetroModel
 from syntheseus.reaction_prediction.utils.inference import get_unique_file_in_dir
 
@@ -78,7 +78,7 @@ class RetroKNNModel(LocalRetroModel):
 
     def __call__(
         self, inputs: List[Molecule], num_results: int
-    ) -> List[Sequence[BackwardPrediction]]:
+    ) -> List[Sequence[SingleProductReaction]]:
         import torch
 
         from syntheseus.reaction_prediction.models.retro_knn import knn_prob

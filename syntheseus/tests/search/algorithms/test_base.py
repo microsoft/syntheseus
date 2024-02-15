@@ -7,11 +7,11 @@ import warnings
 
 import pytest
 
+from syntheseus.interface.molecule import Molecule
 from syntheseus.search import INT_INF
 from syntheseus.search.algorithms.base import SearchAlgorithm
 from syntheseus.search.analysis.route_extraction import iter_routes_cost_order
 from syntheseus.search.analysis.solution_time import get_first_solution_time
-from syntheseus.search.chem import Molecule
 from syntheseus.search.graph.and_or import AndNode, AndOrGraph, OrNode
 from syntheseus.search.graph.base_graph import RetrosynthesisSearchGraph
 from syntheseus.search.graph.message_passing import has_solution_update, run_message_passing

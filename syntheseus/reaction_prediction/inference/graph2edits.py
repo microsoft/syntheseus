@@ -14,13 +14,13 @@ from typing import Sequence
 
 from rdkit import Chem, RDLogger
 
-from syntheseus.interface.models import BackwardPrediction
 from syntheseus.interface.molecule import Molecule
+from syntheseus.interface.reaction import SingleProductReaction
 from syntheseus.reaction_prediction.inference.base import ExternalBackwardReactionModel
 from syntheseus.reaction_prediction.utils.inference import (
     get_module_path,
     get_unique_file_in_dir,
-    process_raw_smiles_outputs,
+    process_raw_smiles_outputs_backwards,
 )
 from syntheseus.reaction_prediction.utils.misc import suppress_outputs
 
@@ -61,7 +61,7 @@ class Graph2EditsModel(ExternalBackwardReactionModel):
 
     def __call__(
         self, inputs: list[Molecule], num_results: int
-    ) -> list[Sequence[BackwardPrediction]]:
+    ) -> list[Sequence[SingleProductReaction]]:
         import torch
 
         self.model.beam_size = num_results
@@ -95,10 +95,12 @@ class Graph2EditsModel(ExternalBackwardReactionModel):
             ]
 
             batch_predictions.append(
-                process_raw_smiles_outputs(
+                process_raw_smiles_outputs_backwards(
                     input=input,
                     output_list=[raw_result["final_smi"] for raw_result in raw_results],
-                    kwargs_list=[{"probability": raw_result["prob"]} for raw_result in raw_results],
+                    metadata_list=[
+                        {"probability": raw_result["prob"]} for raw_result in raw_results
+                    ],
                 )
             )
 

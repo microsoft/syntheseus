@@ -5,8 +5,10 @@ from collections import Counter
 
 import pytest
 
+from syntheseus.interface.bag import Bag
+from syntheseus.interface.molecule import Molecule
+from syntheseus.interface.reaction import SingleProductReaction
 from syntheseus.search.algorithms.pdvn import PDVN_MCTS, pdvn_extract_training_data
-from syntheseus.search.chem import BackwardReaction, Molecule
 from syntheseus.search.node_evaluation.common import ConstantNodeEvaluator
 from syntheseus.search.reaction_models.toy import ListOfReactionsModel
 from syntheseus.tests.search.algorithms.test_base import BaseAlgorithmTest
@@ -403,9 +405,9 @@ class TestPDVN_MCTS(BaseAlgorithmTest):
 
         rxn_model = ListOfReactionsModel(
             [
-                BackwardReaction(reactants=frozenset({Molecule("C")}), product=Molecule("CC")),
-                BackwardReaction(reactants=frozenset({Molecule("CO")}), product=Molecule("CC")),
-                BackwardReaction(reactants=frozenset({Molecule("O")}), product=Molecule("C")),
+                SingleProductReaction(reactants=Bag({Molecule("C")}), product=Molecule("CC")),
+                SingleProductReaction(reactants=Bag({Molecule("CO")}), product=Molecule("CC")),
+                SingleProductReaction(reactants=Bag({Molecule("O")}), product=Molecule("C")),
             ]
         )
         retrosynthesis_task = RetrosynthesisTask(

@@ -17,13 +17,13 @@ from typing import Any, Optional, Sequence
 
 from rdkit import Chem
 
-from syntheseus.interface.models import BackwardPrediction
 from syntheseus.interface.molecule import Molecule
+from syntheseus.interface.reaction import SingleProductReaction
 from syntheseus.reaction_prediction.inference.base import ExternalBackwardReactionModel
 from syntheseus.reaction_prediction.utils.inference import (
     get_module_path,
     get_unique_file_in_dir,
-    process_raw_smiles_outputs,
+    process_raw_smiles_outputs_backwards,
 )
 from syntheseus.reaction_prediction.utils.misc import suppress_outputs
 
@@ -142,7 +142,7 @@ class MEGANModel(ExternalBackwardReactionModel):
 
     def __call__(
         self, inputs: list[Molecule], num_results: int
-    ) -> list[Sequence[BackwardPrediction]]:
+    ) -> list[Sequence[SingleProductReaction]]:
         import torch
         from src.model.beam_search import beam_search
 
@@ -175,10 +175,10 @@ class MEGANModel(ExternalBackwardReactionModel):
             all_outputs[idx] = raw_outputs
 
         return [
-            process_raw_smiles_outputs(
+            process_raw_smiles_outputs_backwards(
                 input=input,
                 output_list=[prediction["final_smi_unmapped"] for prediction in raw_outputs],
-                kwargs_list=[{"probability": prediction["prob"]} for prediction in raw_outputs],
+                metadata_list=[{"probability": prediction["prob"]} for prediction in raw_outputs],
             )
             for input, raw_outputs in zip(inputs, all_outputs)
         ]

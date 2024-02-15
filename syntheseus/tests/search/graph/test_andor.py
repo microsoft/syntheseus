@@ -6,7 +6,9 @@ the tests here are sparse and mainly check edge cases which won't come up in alg
 """
 import pytest
 
-from syntheseus.search.chem import BackwardReaction, Molecule
+from syntheseus.interface.bag import Bag
+from syntheseus.interface.molecule import Molecule
+from syntheseus.interface.reaction import SingleProductReaction
 from syntheseus.search.graph.and_or import AndNode, AndOrGraph, OrNode
 from syntheseus.search.graph.route import SynthesisGraph
 from syntheseus.tests.search.graph.test_base import BaseNodeTest
@@ -15,7 +17,7 @@ from syntheseus.tests.search.graph.test_base import BaseNodeTest
 class TestAndNode(BaseNodeTest):
     def get_node(self):
         return AndNode(
-            reaction=BackwardReaction(product=Molecule("CC"), reactants=frozenset([Molecule("C")]))
+            reaction=SingleProductReaction(product=Molecule("CC"), reactants=Bag([Molecule("C")]))
         )
 
     def test_nodes_not_frozen(self):
@@ -110,7 +112,7 @@ class TestAndOrGraph:
             )[
                 0
             ]
-            first_and_node.reaction = BackwardReaction(
+            first_and_node.reaction = SingleProductReaction(
                 product=Molecule("CCC"), reactants=first_and_node.reaction.reactants
             )
 
@@ -131,8 +133,8 @@ class TestAndOrGraph:
     def test_invalid_expansions(
         self,
         andor_graph_non_minimal: AndOrGraph,
-        bad_rxn_cc_from_cocs: BackwardReaction,
-        rxn_cs_from_cc: BackwardReaction,
+        bad_rxn_cc_from_cocs: SingleProductReaction,
+        rxn_cs_from_cc: SingleProductReaction,
         reason: str,
     ) -> None:
         """
@@ -154,8 +156,8 @@ class TestAndOrGraph:
             with pytest.raises(AssertionError):
                 andor_graph_non_minimal.expand_with_reactions(
                     reactions=[
-                        BackwardReaction(
-                            product=Molecule("CC"), reactants=frozenset([Molecule("CO")])
+                        SingleProductReaction(
+                            product=Molecule("CC"), reactants=Bag([Molecule("CO")])
                         )
                     ],
                     node=cc_nodes[0],

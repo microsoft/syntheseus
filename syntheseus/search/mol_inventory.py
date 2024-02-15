@@ -3,7 +3,7 @@ from __future__ import annotations
 import abc
 from collections.abc import Collection
 
-from syntheseus.search.chem import Molecule
+from syntheseus.interface.molecule import Molecule
 
 
 class BaseMolInventory(abc.ABC):

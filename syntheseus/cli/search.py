@@ -30,6 +30,7 @@ from omegaconf import MISSING, DictConfig, OmegaConf
 from tqdm import tqdm
 
 from syntheseus.interface.models import BackwardReactionModel
+from syntheseus.interface.molecule import Molecule
 from syntheseus.reaction_prediction.inference.config import BackwardModelConfig
 from syntheseus.reaction_prediction.utils.config import get_config as cli_get_config
 from syntheseus.reaction_prediction.utils.misc import set_random_seed
@@ -41,7 +42,6 @@ from syntheseus.search.algorithms.mcts.molset import MolSetMCTS
 from syntheseus.search.algorithms.pdvn import PDVN_MCTS
 from syntheseus.search.analysis.route_extraction import iter_routes_time_order
 from syntheseus.search.analysis.solution_time import get_first_solution_time
-from syntheseus.search.chem import Molecule
 from syntheseus.search.graph.and_or import AndOrGraph
 from syntheseus.search.graph.molset import MolSetGraph
 from syntheseus.search.mol_inventory import SmilesListInventory

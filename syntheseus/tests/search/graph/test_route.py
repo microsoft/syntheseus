@@ -1,6 +1,6 @@
 """Route objects are tested implicity in other tests, so there are only minimal tests for now."""
 
-from syntheseus.search.chem import Molecule
+from syntheseus.interface.molecule import Molecule
 
 
 def test_route_starting_molecules(minimal_synthesis_graph):

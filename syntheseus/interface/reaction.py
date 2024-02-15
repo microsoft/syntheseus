@@ -26,6 +26,7 @@ class ReactionMetaData(TypedDict, total=False):
     confidence: float  # confidence (probability) that this reaction is possible
     reaction_id: int  # template id or other kind of reaction id, if applicable
     reaction_smiles: str  # reaction smiles for this reaction
+    ground_truth_match: bool  # whether this reaction matches ground truth
 
 
 @dataclass(frozen=True, order=False)
@@ -51,12 +52,12 @@ class Reaction(Generic[ReactantsType, ProductType]):
 
     @property
     @abstractmethod
-    def unique_reactants(self) -> Collection[Molecule]:
+    def unique_reactants(self) -> set[Molecule]:
         pass
 
     @property
     @abstractmethod
-    def unique_products(self) -> Collection[Molecule]:
+    def unique_products(self) -> set[Molecule]:
         pass
 
 
@@ -80,11 +81,11 @@ class MultiProductReaction(Reaction[Bag[Molecule], Bag[Molecule]]):
         )
 
     @property
-    def unique_reactants(self) -> Collection[Molecule]:
+    def unique_reactants(self) -> set[Molecule]:
         return set(self.reactants)
 
     @property
-    def unique_products(self) -> Collection[Molecule]:
+    def unique_products(self) -> set[Molecule]:
         return set(self.product)
 
 
@@ -97,9 +98,9 @@ class SingleProductReaction(Reaction[Bag[Molecule], Molecule]):
         )
 
     @property
-    def unique_reactants(self) -> Collection[Molecule]:
+    def unique_reactants(self) -> set[Molecule]:
         return set(self.reactants)
 
     @property
-    def unique_products(self) -> Collection[Molecule]:
+    def unique_products(self) -> set[Molecule]:
         return {self.product}

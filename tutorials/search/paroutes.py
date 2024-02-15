@@ -22,7 +22,9 @@ except ImportError:
     warnings.warn("rdchiral not installed, PaRoutes model will not be available.")
 
 
-from syntheseus.search.chem import BackwardReaction, Molecule
+from syntheseus.interface.bag import Bag
+from syntheseus.interface.molecule import Molecule
+from syntheseus.interface.reaction import SingleProductReaction
 from syntheseus.search.mol_inventory import SmilesListInventory
 from syntheseus.search.reaction_models import BackwardReactionModel
 
@@ -88,7 +90,9 @@ class PaRoutesModel(BackwardReactionModel):
             },
         )
 
-    def _get_backward_reactions(self, mols: list[Molecule]) -> list[Sequence[BackwardReaction]]:
+    def _get_backward_reactions(
+        self, mols: list[Molecule]
+    ) -> list[Sequence[SingleProductReaction]]:
         # Make fingerprint array
         fingperprints = np.array([get_fingerprint(mol.smiles) for mol in mols])
 
@@ -98,9 +102,9 @@ class PaRoutesModel(BackwardReactionModel):
         template_argsort = np.argsort(-template_softmax, axis=1)
 
         # Run reactions for most likely templates
-        output: list[list[BackwardReaction]] = []
+        output: list[list[SingleProductReaction]] = []
         for mol_i, mol in enumerate(mols):
-            curr_rxn_list: list[BackwardReaction] = []
+            curr_rxn_list: list[SingleProductReaction] = []
             for template_rank in range(self.max_num_templates):
                 # Get template at this rank
                 template_idx = template_argsort[mol_i, template_rank]
@@ -121,8 +125,8 @@ class PaRoutesModel(BackwardReactionModel):
                         Molecule(smiles=s, make_rdkit_mol=False) for s in reactant_strs
                     ]
                     curr_rxn_list.append(
-                        BackwardReaction(
-                            reactants=frozenset(reactant_mols),
+                        SingleProductReaction(
+                            reactants=Bag(reactant_mols),
                             product=mol,
                             metadata={
                                 "template": curr_template_row.retro_template,

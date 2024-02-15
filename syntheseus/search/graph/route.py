@@ -3,26 +3,27 @@ from __future__ import annotations
 from collections import Counter
 from typing import Sequence, Union
 
-from syntheseus.search.chem import BackwardReaction, Molecule
+from syntheseus.interface.molecule import Molecule
+from syntheseus.interface.reaction import SingleProductReaction
 from syntheseus.search.graph.base_graph import BaseReactionGraph
 
-MOL_AND_RXN = Union[Molecule, BackwardReaction]
+MOL_AND_RXN = Union[Molecule, SingleProductReaction]
 
 
-class SynthesisGraph(BaseReactionGraph[BackwardReaction]):
+class SynthesisGraph(BaseReactionGraph[SingleProductReaction]):
     """
     Data structure used to hold a retrosynthesis graph containing only
     reaction objects. The purpose of this class is as a minimal container
     for route objects, instead of storing them as AndOrGraphs or MolSetGraphs.
     """
 
-    def __init__(self, root_node: BackwardReaction, **kwargs) -> None:
+    def __init__(self, root_node: SingleProductReaction, **kwargs) -> None:
         super().__init__(**kwargs)
         self._root_node = root_node
         self._graph.add_node(self._root_node)
 
     @property
-    def root_node(self) -> BackwardReaction:
+    def root_node(self) -> SingleProductReaction:
         return self._root_node
 
     @property
@@ -42,9 +43,9 @@ class SynthesisGraph(BaseReactionGraph[BackwardReaction]):
         super().assert_validity()
 
         for node in self._graph.nodes:
-            assert isinstance(node, BackwardReaction)
+            assert isinstance(node, SingleProductReaction)
             for parent in self.predecessors(node):
-                assert isinstance(parent, BackwardReaction)
+                assert isinstance(parent, SingleProductReaction)
                 assert node.product in parent.reactants
             children = list(self.successors(node))
             assert len(children) == len(set(children))  # all children should be unique
@@ -54,10 +55,10 @@ class SynthesisGraph(BaseReactionGraph[BackwardReaction]):
 
     def expand_with_reactions(
         self,
-        reactions: list[BackwardReaction],
-        node: BackwardReaction,
+        reactions: list[SingleProductReaction],
+        node: SingleProductReaction,
         ensure_tree: bool,
-    ) -> Sequence[BackwardReaction]:
+    ) -> Sequence[SingleProductReaction]:
         raise NotImplementedError
 
     def get_starting_molecules(self) -> set[Molecule]:
@@ -68,7 +69,7 @@ class SynthesisGraph(BaseReactionGraph[BackwardReaction]):
         output: set[Molecule] = set()
         for rxn in self._graph.nodes:
             successor_products = {child_rxn.product for child_rxn in self.successors(rxn)}
-            for reactant in rxn.reactants:
+            for reactant in rxn.unique_reactants:
                 if reactant not in successor_products:
                     output.add(reactant)
         return output

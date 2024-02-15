@@ -10,12 +10,12 @@ Parts of this file are based on code from the GitHub repository above.
 from pathlib import Path
 from typing import Any, List, Sequence
 
-from syntheseus.interface.models import BackwardPrediction
 from syntheseus.interface.molecule import Molecule
+from syntheseus.interface.reaction import SingleProductReaction
 from syntheseus.reaction_prediction.inference.base import ExternalBackwardReactionModel
 from syntheseus.reaction_prediction.utils.inference import (
     get_unique_file_in_dir,
-    process_raw_smiles_outputs,
+    process_raw_smiles_outputs_backwards,
 )
 from syntheseus.reaction_prediction.utils.misc import suppress_outputs
 
@@ -77,7 +77,7 @@ class LocalRetroModel(ExternalBackwardReactionModel):
 
     def _build_batch_predictions(
         self, batch, num_results: int, inputs: List[Molecule], batch_atom_logits, batch_bond_logits
-    ) -> List[Sequence[BackwardPrediction]]:
+    ) -> List[Sequence[SingleProductReaction]]:
         from local_retro.scripts.Decode_predictions import get_k_predictions
         from local_retro.scripts.get_edit import combined_edit, get_bg_partition
 
@@ -123,10 +123,10 @@ class LocalRetroModel(ExternalBackwardReactionModel):
                 raw_outputs = probabilities = []
 
             batch_predictions.append(
-                process_raw_smiles_outputs(
+                process_raw_smiles_outputs_backwards(
                     input=input,
                     output_list=raw_outputs,
-                    kwargs_list=[{"probability": probability} for probability in probabilities],
+                    metadata_list=[{"probability": probability} for probability in probabilities],
                 )
             )
 
@@ -134,7 +134,7 @@ class LocalRetroModel(ExternalBackwardReactionModel):
 
     def __call__(
         self, inputs: List[Molecule], num_results: int
-    ) -> List[Sequence[BackwardPrediction]]:
+    ) -> List[Sequence[SingleProductReaction]]:
         import torch
         from local_retro.scripts.utils import predict
 

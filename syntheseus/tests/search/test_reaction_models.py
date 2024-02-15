@@ -9,7 +9,9 @@ look for some behaviours which might be overlooked by the algorithm tests.
 
 import pytest
 
-from syntheseus.search.chem import BackwardReaction, Molecule
+from syntheseus.interface.bag import Bag
+from syntheseus.interface.molecule import Molecule
+from syntheseus.interface.reaction import SingleProductReaction
 from syntheseus.search.reaction_models.toy import LinearMolecules, ListOfReactionsModel
 
 
@@ -26,9 +28,9 @@ def test_remove_duplicates(remove: bool) -> None:
 
     # Define mols and reactions
     CC = Molecule("CC")
-    rxn_C_C = BackwardReaction(product=CC, reactants=frozenset({Molecule("C")}))
-    rxn_CO = BackwardReaction(product=CC, reactants=frozenset({Molecule("CO")}))
-    rxn_CS = BackwardReaction(product=CC, reactants=frozenset({Molecule("CS")}))
+    rxn_C_C = SingleProductReaction(product=CC, reactants=Bag({Molecule("C")}))
+    rxn_CO = SingleProductReaction(product=CC, reactants=Bag({Molecule("CO")}))
+    rxn_CS = SingleProductReaction(product=CC, reactants=Bag({Molecule("CS")}))
 
     # Call reaction model
     rxn_model = LinearMolecules(remove_duplicates=remove)
@@ -103,7 +105,7 @@ def test_caching(cocs_mol: Molecule, use_cache: bool) -> None:
 
 @pytest.mark.parametrize("use_cache", [True, False])
 def test_initial_cache(
-    cocs_mol: Molecule, rxn_cocs_from_co_cs: BackwardReaction, use_cache: bool
+    cocs_mol: Molecule, rxn_cocs_from_co_cs: SingleProductReaction, use_cache: bool
 ) -> None:
     """Test that seeding the reaction model with an initial cache works as expected."""
 
@@ -157,9 +159,9 @@ def test_linear_molecules_invalid_molecule() -> None:
 
 
 def test_list_of_reactions_model(
-    rxn_cocs_from_co_cs: BackwardReaction,
-    rxn_cocs_from_cocc: BackwardReaction,
-    rxn_cs_from_cc: BackwardReaction,
+    rxn_cocs_from_co_cs: SingleProductReaction,
+    rxn_cocs_from_cocc: SingleProductReaction,
+    rxn_cs_from_cc: SingleProductReaction,
 ) -> None:
     """Simple test of the ListOfReactionsModel class."""
     model = ListOfReactionsModel([rxn_cocs_from_co_cs, rxn_cocs_from_cocc, rxn_cs_from_cc])

@@ -11,11 +11,9 @@ from syntheseus.cli.eval_single_step import (
     print_and_save,
 )
 from syntheseus.interface.bag import Bag
-from syntheseus.interface.models import (
-    BackwardPrediction,
-    BackwardReactionModel,
-)
+from syntheseus.interface.models import BackwardReactionModel
 from syntheseus.interface.molecule import Molecule
+from syntheseus.interface.reaction import SingleProductReaction
 from syntheseus.reaction_prediction.inference.config import BackwardModelClass
 from syntheseus.reaction_prediction.utils.metrics import ModelTimingResults
 
@@ -33,7 +31,7 @@ class DummyModel(BackwardReactionModel):
 
     def __call__(
         self, inputs: List[Molecule], num_results: int
-    ) -> List[Sequence[BackwardPrediction]]:
+    ) -> List[Sequence[SingleProductReaction]]:
         outputs: Iterable[Bag[Molecule]] = []
 
         if self._repeat:
@@ -44,7 +42,7 @@ class DummyModel(BackwardReactionModel):
 
         # Return the same outputs for each input molecule.
         return [
-            [BackwardPrediction(input=input, output=output) for output in outputs]
+            [SingleProductReaction(product=input, reactants=output) for output in outputs]
             for input in inputs
         ]
 
@@ -59,8 +57,7 @@ def test_get_results(repeat: bool, measure_time: bool) -> None:
 
         assert (model_results.model_timing_results is not None) == measure_time
 
-        prediction_list = model_results.results[0]
-        return [prediction.output for prediction in prediction_list]
+        return [rxn.reactants for rxn in model_results.results[0]]
 
     for num_results in [1, 2, 3, 4, 20]:
         assert get_model_results(num_results=num_results) == [
@@ -94,7 +91,7 @@ def test_print_and_save():
         mean_num_predictions=25.0,
         median_num_predictions=10.0,
         model_time_total=ModelTimingResults(time_model_call=1.0, time_post_processing=0.1),
-        predictions=[[BackwardPrediction(input=input_mol, output=output_mol_bag)]],
+        predictions=[[SingleProductReaction(product=input_mol, reactants=output_mol_bag)]],
     )
 
     with tempfile.TemporaryDirectory() as temp_dir:
