@@ -35,7 +35,7 @@ from syntheseus.interface.models import (
     ReactionType,
 )
 from syntheseus.interface.molecule import Molecule
-from syntheseus.interface.reaction import MultiProductReaction, Reaction
+from syntheseus.interface.reaction import MultiProductReaction, Reaction, SingleProductReaction
 from syntheseus.reaction_prediction.data.dataset import (
     DataFold,
     DiskReactionDataset,
@@ -263,21 +263,31 @@ def compute_metrics(
         batched(test_dataset, batch_size),
         total=math.ceil(test_dataset_size / batch_size),
     ):
+        # Tell mypy what the type of `batch` is as `batched` seems to lose it.
+        batch = cast(tuple[ReactionSample], batch)
+
         inputs: List[InputType] = []
         outputs: List[ReactionType] = []
 
         for sample in batch:
+            # We need to cast when appending to `inputs`/`outputs` because link between types and
+            # reaction models is unclear to mypy.
+
+            output: Reaction
             if model.is_forward():
                 inputs.append(sample.reactants)
+                output = MultiProductReaction(reactants=sample.reactants, product=sample.products)
             else:
-                single_product = sample.product
+                [single_product] = sample.products
                 assert isinstance(
                     single_product, Molecule
                 ), f"Model expected a single target product, got {len(sample.products)}"
 
-                # casting is because links between types and reaction models is unclear to mypy
                 inputs.append(cast(InputType, single_product))
-            outputs.append(sample)
+                output = SingleProductReaction(reactants=sample.reactants, product=single_product)
+
+            outputs.append(cast(ReactionType, output))
+            del output
 
         results_with_timing = get_results(
             model,
