@@ -73,9 +73,7 @@ class GLNModel(ExternalBackwardReactionModel):
             return process_raw_smiles_outputs_backwards(
                 input=input,
                 output_list=result["reactants"],
-                kwargs_list=[
-                    {"metadata": {"probability": probability}} for probability in result["scores"]
-                ],
+                metadata_list=[{"probability": probability} for probability in result["scores"]],
             )
 
     def __call__(

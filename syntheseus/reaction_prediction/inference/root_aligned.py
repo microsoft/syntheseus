@@ -128,23 +128,21 @@ class RootAlignedModel(ExternalBackwardReactionModel):
                 "score": new_score,
             }
 
-            kwargs_list.append({"metadata": metadata})
+            kwargs_list.append(metadata)
 
         # Make sure the new scores produce the same ranking.
         for kwargs, next_kwargs in zip(kwargs_list, kwargs_list[1:]):
-            assert kwargs["metadata"]["score"] >= next_kwargs["metadata"]["score"]
+            assert kwargs["score"] >= next_kwargs["score"]
 
         if self.probability_from_score_temperature is not None:
             scaled_scores = [
-                self.probability_from_score_temperature
-                * kwargs["metadata"]["score"]
-                / max_possible_total_rr
+                self.probability_from_score_temperature * kwargs["score"] / max_possible_total_rr
                 for kwargs in kwargs_list
             ]
             probabilities = torch.nn.functional.softmax(torch.as_tensor(scaled_scores), dim=-1)
 
             for kwargs, probability in zip(kwargs_list, probabilities):
-                kwargs["metadata"]["probability"] = probability
+                kwargs["probability"] = probability
 
         return kwargs_list
 

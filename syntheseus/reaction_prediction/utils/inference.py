@@ -1,14 +1,18 @@
 from pathlib import Path
-from typing import Any, Dict, List, Sequence, Union
+from typing import Any, Dict, List, Sequence, Union, cast
 
 from syntheseus.interface.bag import Bag
 from syntheseus.interface.molecule import Molecule
-from syntheseus.interface.reaction import MultiProductReaction, SingleProductReaction
+from syntheseus.interface.reaction import (
+    MultiProductReaction,
+    ReactionMetaData,
+    SingleProductReaction,
+)
 from syntheseus.reaction_prediction.chem.utils import molecule_bag_from_smiles
 
 
 def process_raw_smiles_outputs_backwards(
-    input: Molecule, output_list: List[str], kwargs_list: List[Dict[str, Any]]
+    input: Molecule, output_list: List[str], metadata_list: List[Dict[str, Any]]
 ) -> Sequence[SingleProductReaction]:
     """Convert raw SMILES outputs into a list of `SingleProductReaction` objects.
 
@@ -23,18 +27,22 @@ def process_raw_smiles_outputs_backwards(
     """
     predictions: List[SingleProductReaction] = []
 
-    for raw_output, kwargs in zip(output_list, kwargs_list):
+    for raw_output, metadata in zip(output_list, metadata_list):
         reactants = molecule_bag_from_smiles(raw_output)
 
         # Only consider the prediction if the SMILES can be parsed.
         if reactants is not None:
-            predictions.append(SingleProductReaction(product=input, reactants=reactants, **kwargs))
+            predictions.append(
+                SingleProductReaction(
+                    product=input, reactants=reactants, metadata=cast(ReactionMetaData, metadata)
+                )
+            )
 
     return predictions
 
 
 def process_raw_smiles_outputs_forwards(
-    input: Bag[Molecule], output_list: List[str], kwargs_list: List[Dict[str, Any]]
+    input: Bag[Molecule], output_list: List[str], metadata_list: List[Dict[str, Any]]
 ) -> Sequence[MultiProductReaction]:
     """Convert raw SMILES outputs into a list of `MultiProductReaction` objects.
     Like method `process_raw_smiles_outputs_backwards`, but for forward models.
@@ -50,12 +58,16 @@ def process_raw_smiles_outputs_forwards(
     """
     predictions: List[MultiProductReaction] = []
 
-    for raw_output, kwargs in zip(output_list, kwargs_list):
+    for raw_output, metadata in zip(output_list, metadata_list):
         products = molecule_bag_from_smiles(raw_output)
 
         # Only consider the prediction if the SMILES can be parsed.
         if products is not None:
-            predictions.append(MultiProductReaction(product=products, reactants=input, **kwargs))
+            predictions.append(
+                MultiProductReaction(
+                    product=products, reactants=input, metadata=cast(ReactionMetaData, metadata)
+                )
+            )
 
     return predictions
 

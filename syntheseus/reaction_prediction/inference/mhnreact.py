@@ -181,9 +181,7 @@ class MHNreactModel(ExternalBackwardReactionModel):
                 process_raw_smiles_outputs_backwards(
                     input=inputs[idx],
                     output_list=results,
-                    kwargs_list=[
-                        {"metadata": {"probability": probability}} for probability in probs
-                    ],
+                    metadata_list=[{"probability": probability} for probability in probs],
                 )
             )
 

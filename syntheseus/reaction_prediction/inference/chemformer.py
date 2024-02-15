@@ -138,9 +138,7 @@ class ChemformerModel(ExternalReactionModel[InputType, ReactionType]):
             process_fn = process_raw_smiles_outputs_backwards  # type: ignore[assignment]
 
         return [
-            process_fn(
-                input, outputs, [{"metadata": {"log_prob": log_prob}} for log_prob in log_probs]
-            )
+            process_fn(input, outputs, [{"log_prob": log_prob} for log_prob in log_probs])
             for input, outputs, log_probs in zip(inputs, smiles_batch, batch_log_likelihoods)
         ]
 

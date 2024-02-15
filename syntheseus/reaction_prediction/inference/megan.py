@@ -178,9 +178,7 @@ class MEGANModel(ExternalBackwardReactionModel):
             process_raw_smiles_outputs_backwards(
                 input=input,
                 output_list=[prediction["final_smi_unmapped"] for prediction in raw_outputs],
-                kwargs_list=[
-                    {"metadata": {"probability": prediction["prob"]}} for prediction in raw_outputs
-                ],
+                metadata_list=[{"probability": prediction["prob"]} for prediction in raw_outputs],
             )
             for input, raw_outputs in zip(inputs, all_outputs)
         ]

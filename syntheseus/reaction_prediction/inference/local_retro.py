@@ -126,9 +126,7 @@ class LocalRetroModel(ExternalBackwardReactionModel):
                 process_raw_smiles_outputs_backwards(
                     input=input,
                     output_list=raw_outputs,
-                    kwargs_list=[
-                        {"metadata": {"probability": probability}} for probability in probabilities
-                    ],
+                    metadata_list=[{"probability": probability} for probability in probabilities],
                 )
             )
 

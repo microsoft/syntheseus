@@ -98,9 +98,8 @@ class Graph2EditsModel(ExternalBackwardReactionModel):
                 process_raw_smiles_outputs_backwards(
                     input=input,
                     output_list=[raw_result["final_smi"] for raw_result in raw_results],
-                    kwargs_list=[
-                        {"metadata": {"probability": raw_result["prob"]}}
-                        for raw_result in raw_results
+                    metadata_list=[
+                        {"probability": raw_result["prob"]} for raw_result in raw_results
                     ],
                 )
             )
