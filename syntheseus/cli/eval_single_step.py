@@ -442,7 +442,7 @@ def run_from_config(
     if OmegaConf.is_missing(config.back_translation_config, "model_class"):
         back_translation_model = None
     else:
-        # Cast is ok because back translation code calls "is_forward"
+        # Back translation model must be a forward model (checked in `compute_metrics`).
         back_translation_model = cast(
             ForwardReactionModel, get_model_fn(config.back_translation_config)
         )

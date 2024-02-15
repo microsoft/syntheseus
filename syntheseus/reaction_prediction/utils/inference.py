@@ -19,7 +19,7 @@ def process_raw_smiles_outputs_backwards(
     Args:
         input: Model input.
         output_list: Raw SMILES outputs (including potentially invalid ones).
-        kwargs_list: Additional metadata to attach to the predictions (e.g. probability).
+        metadata_list: Additional metadata to attach to the predictions (e.g. probability).
 
     Returns:
         A list of `SingleProductReaction`s; may be shorter than `outputs` if some of the raw
@@ -50,7 +50,7 @@ def process_raw_smiles_outputs_forwards(
     Args:
         input: Model input.
         output_list: Raw SMILES outputs (including potentially invalid ones).
-        kwargs_list: Additional metadata to attach to the predictions (e.g. probability).
+        metadata_list: Additional metadata to attach to the predictions (e.g. probability).
 
     Returns:
         A list of `MultiProductReactions`s; may be shorter than `outputs` if some of the raw
