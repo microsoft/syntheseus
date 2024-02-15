@@ -55,6 +55,11 @@ from syntheseus.reaction_prediction.utils.model_loading import get_model
 logger = logging.getLogger(__file__)
 
 
+_RXN_WTIH_IDENTIFIER_ERROR = (
+    "Reactions with the `identifier` field currently not supported in evaluation"
+)
+
+
 @dataclass
 class BaseEvalConfig:
     data_dir: str = MISSING  # Directory containing preprocessed data
@@ -169,6 +174,8 @@ def get_results(
         selected_predictions: List[ReactionType] = []
 
         for reaction in outputs:
+            if reaction.identifier is not None:
+                raise NotImplementedError(_RXN_WTIH_IDENTIFIER_ERROR)
             if skip_repeats:
                 if reaction in seen_outputs:
                     continue
@@ -289,6 +296,10 @@ def compute_metrics(
         for input, output, reaction_list in zip(inputs, outputs, batch_predictions):
             num_predictions.append(len(reaction_list))
 
+            # Check that the identifier field is not used in the evaluation,
+            # otherwise `==` below will not work as intended.
+            if output.identifier is not None:
+                raise NotImplementedError(_RXN_WTIH_IDENTIFIER_ERROR)
             ground_truth_matches = [rxn == output for rxn in reaction_list]
             ground_truth_match_metrics.add(ground_truth_matches)
 
