@@ -28,8 +28,8 @@ from more_itertools import batched
 from omegaconf import MISSING, OmegaConf
 from tqdm import tqdm
 
-from syntheseus.interface.bag import Bag
 from syntheseus.interface.models import (
+    ForwardReactionModel,
     InputType,
     ReactionModel,
     ReactionType,
@@ -197,7 +197,7 @@ def compute_metrics(
     dataset: ReactionDataset,
     num_dataset_truncation: Optional[int],
     num_top_results: int,
-    back_translation_model: Optional[ReactionModel[Bag[Molecule], MultiProductReaction]] = None,
+    back_translation_model: Optional[ForwardReactionModel] = None,
     back_translation_num_results: int = 1,
     fold: DataFold = DataFold.VALIDATION,
     batch_size: int = 16,
@@ -366,7 +366,7 @@ def compute_metrics(
 def compute_metrics_from_config(
     model: ReactionModel[InputType, ReactionType],
     dataset: ReactionDataset,
-    back_translation_model: Optional[ReactionModel[Bag[Molecule], MultiProductReaction]],
+    back_translation_model: Optional[ForwardReactionModel],
     config: BaseEvalConfig,
 ) -> EvalResults:
     """Variant of `compute_metrics` that uses an eval config instead of explicit arguments."""
@@ -431,7 +431,10 @@ def run_from_config(
     if OmegaConf.is_missing(config.back_translation_config, "model_class"):
         back_translation_model = None
     else:
-        back_translation_model = get_model_fn(config.back_translation_config)
+        # Cast is ok because back translation code calls "is_forward"
+        back_translation_model = cast(
+            ForwardReactionModel, get_model_fn(config.back_translation_config)
+        )
 
     dataset = DiskReactionDataset(config.data_dir, sample_cls=ReactionSample)
     results = compute_metrics_from_config(
