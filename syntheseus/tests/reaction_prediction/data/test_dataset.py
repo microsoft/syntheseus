@@ -1,5 +1,7 @@
 import csv
+import os
 from pathlib import Path
+from typing import Generator
 
 import pytest
 
@@ -14,8 +16,26 @@ from syntheseus.reaction_prediction.data.dataset import (
 from syntheseus.reaction_prediction.data.reaction_sample import ReactionSample
 
 
+@pytest.fixture(params=[False, True])
+def temp_path(request, tmp_path: Path) -> Generator[Path, None, None]:
+    """Fixture to provide a temporary path that is either absolute or relative."""
+    if request.param:
+        # The built-in `tmp_path` fixture is absolute; if the fixture parameter is `True` we convert
+        # that to a relative path. This is done by stripping away the root `/` that signifies an
+        # absolute path and changing the working directory to `/` so that the path remains correct.
+
+        old_working_dir = os.getcwd()
+        os.chdir("/")
+
+        yield Path(*list(tmp_path.parts)[1:])
+
+        os.chdir(old_working_dir)
+    else:
+        yield tmp_path
+
+
 @pytest.mark.parametrize("mapped", [False, True])
-def test_save_and_load(tmp_path: Path, mapped: bool) -> None:
+def test_save_and_load(temp_path: Path, mapped: bool) -> None:
     samples = [
         ReactionSample.from_reaction_smiles_strict(reaction_smiles, mapped=mapped)
         for reaction_smiles in [
@@ -25,18 +45,18 @@ def test_save_and_load(tmp_path: Path, mapped: bool) -> None:
     ]
 
     for fold in DataFold:
-        DiskReactionDataset.save_samples_to_file(data_dir=tmp_path, fold=fold, samples=samples)
+        DiskReactionDataset.save_samples_to_file(data_dir=temp_path, fold=fold, samples=samples)
 
     for load_format in [None, DataFormat.JSONL]:
         # Now try to load the data we just saved.
-        dataset = DiskReactionDataset(tmp_path, sample_cls=ReactionSample, data_format=load_format)
+        dataset = DiskReactionDataset(temp_path, sample_cls=ReactionSample, data_format=load_format)
 
         for fold in DataFold:
             assert list(dataset[fold]) == samples
 
 
 @pytest.mark.parametrize("format", [DataFormat.CSV, DataFormat.SMILES])
-def test_load_external_format(tmp_path: Path, format: DataFormat) -> None:
+def test_load_external_format(temp_path: Path, format: DataFormat) -> None:
     # Example reaction SMILES, purposefully using non-canonical forms of reactants and product.
     reaction_smiles = (
         "[cH:1]1[cH:2][c:3]([CH3:4])[cH:5][cH:6][c:7]1Br.B(O)(O)[c:8]1[cH:9][cH:10][c:11]([CH3:12])[cH:13][cH:14]1>>"
@@ -44,7 +64,7 @@ def test_load_external_format(tmp_path: Path, format: DataFormat) -> None:
     )
 
     filename = DiskReactionDataset.get_filename_suffix(format=format, fold=DataFold.TRAIN)
-    with open(tmp_path / filename, "wt") as f:
+    with open(temp_path / filename, "wt") as f:
         if format == DataFormat.CSV:
             writer = csv.DictWriter(f, fieldnames=["id", "class", CSV_REACTION_SMILES_COLUMN_NAME])
             writer.writeheader()
@@ -55,7 +75,7 @@ def test_load_external_format(tmp_path: Path, format: DataFormat) -> None:
             f.write(f"{reaction_smiles}\n")
 
     for load_format in [None, format]:
-        dataset = DiskReactionDataset(tmp_path, sample_cls=ReactionSample, data_format=load_format)
+        dataset = DiskReactionDataset(temp_path, sample_cls=ReactionSample, data_format=load_format)
         assert dataset.get_num_samples(DataFold.TRAIN) == 1
 
         samples = list(dataset[DataFold.TRAIN])
@@ -75,31 +95,31 @@ def test_load_external_format(tmp_path: Path, format: DataFormat) -> None:
 
 
 @pytest.mark.parametrize("format", [DataFormat.JSONL, DataFormat.CSV, DataFormat.SMILES])
-def test_format_detection(tmp_path: Path, format: DataFormat) -> None:
+def test_format_detection(temp_path: Path, format: DataFormat) -> None:
     other_format = (set(DataFormat) - {format}).pop()
 
     # Create two files with different extensions, so that it is ambiguous which format we want.
-    (tmp_path / DiskReactionDataset.get_filename_suffix(format, DataFold.TRAIN)).touch()
-    (tmp_path / DiskReactionDataset.get_filename_suffix(other_format, DataFold.TEST)).touch()
+    (temp_path / DiskReactionDataset.get_filename_suffix(format, DataFold.TRAIN)).touch()
+    (temp_path / DiskReactionDataset.get_filename_suffix(other_format, DataFold.TEST)).touch()
 
     # Loading with automatic resolution should fail.
     with pytest.raises(ValueError):
-        DiskReactionDataset(data_dir=tmp_path, sample_cls=ReactionSample)
+        DiskReactionDataset(data_dir=temp_path, sample_cls=ReactionSample)
 
     # Loading with an explicit format should succeed.
     for f in [format, other_format]:
-        DiskReactionDataset(data_dir=tmp_path, sample_cls=ReactionSample, data_format=f)
+        DiskReactionDataset(data_dir=temp_path, sample_cls=ReactionSample, data_format=f)
 
     # Loading with an explicit format but no matching files should fail.
     another_format = (set(DataFormat) - {format, other_format}).pop()
     with pytest.raises(ValueError):
         DiskReactionDataset(
-            data_dir=tmp_path, sample_cls=ReactionSample, data_format=another_format
+            data_dir=temp_path, sample_cls=ReactionSample, data_format=another_format
         )
 
     # Create another file with the right suffix.
-    (tmp_path / f"raw_{DiskReactionDataset.get_filename_suffix(format, DataFold.TRAIN)}").touch()
+    (temp_path / f"raw_{DiskReactionDataset.get_filename_suffix(format, DataFold.TRAIN)}").touch()
 
     # Loading with an explicit format should now fail due to ambiguity.
     with pytest.raises(ValueError):
-        DiskReactionDataset(data_dir=tmp_path, sample_cls=ReactionSample, data_format=format)
+        DiskReactionDataset(data_dir=temp_path, sample_cls=ReactionSample, data_format=format)
