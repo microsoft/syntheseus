@@ -23,7 +23,9 @@ class ReactionModel(Generic[InputType, ReactionType]):
         count_cache_in_num_calls: bool = False,
         initial_cache: Optional[dict[tuple[InputType, int], Sequence[ReactionType]]] = None,
         default_num_results: int = 100,
+        **kwargs,
     ) -> None:
+        super().__init__(**kwargs)  # in case this is not the first class in the MRO
         self.count_cache_in_num_calls = count_cache_in_num_calls
         self.default_num_results = default_num_results
 

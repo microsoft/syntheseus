@@ -132,7 +132,7 @@ class LocalRetroModel(ExternalBackwardReactionModel):
 
         return batch_predictions
 
-    def __call__(
+    def _get_reactions(
         self, inputs: List[Molecule], num_results: int
     ) -> List[Sequence[SingleProductReaction]]:
         import torch

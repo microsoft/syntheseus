@@ -146,7 +146,7 @@ class RootAlignedModel(ExternalBackwardReactionModel):
 
         return kwargs_list
 
-    def __call__(
+    def _get_reactions(
         self, inputs, num_results: int, random_augmentation=False
     ) -> List[Sequence[SingleProductReaction]]:
         # Step 1: Perform data augmentation.

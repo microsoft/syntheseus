@@ -95,7 +95,7 @@ class MHNreactModel(ExternalBackwardReactionModel):
     def get_parameters(self):
         return self.model.parameters()
 
-    def __call__(
+    def _get_reactions(
         self, inputs: List[Molecule], num_results: int
     ) -> List[Sequence[SingleProductReaction]]:
         import pandas as pd

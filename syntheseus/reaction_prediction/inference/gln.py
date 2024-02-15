@@ -76,7 +76,7 @@ class GLNModel(ExternalBackwardReactionModel):
                 metadata_list=[{"probability": probability} for probability in result["scores"]],
             )
 
-    def __call__(
+    def _get_reactions(
         self, inputs: List[Molecule], num_results: int
     ) -> List[Sequence[SingleProductReaction]]:
         return [self._get_model_predictions(input, num_results=num_results) for input in inputs]

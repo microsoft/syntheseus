@@ -29,7 +29,7 @@ class DummyModel(BackwardReactionModel):
         Bag([Molecule("NC=O")]),
     ]
 
-    def __call__(
+    def _get_results(
         self, inputs: List[Molecule], num_results: int
     ) -> List[Sequence[SingleProductReaction]]:
         outputs: Iterable[Bag[Molecule]] = []
