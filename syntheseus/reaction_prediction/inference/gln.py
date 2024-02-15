@@ -10,10 +10,10 @@ import sys
 from pathlib import Path
 from typing import List, Sequence
 
-from syntheseus.interface.models import BackwardPrediction
 from syntheseus.interface.molecule import Molecule
+from syntheseus.interface.reaction import SingleProductReaction
 from syntheseus.reaction_prediction.inference.base import ExternalBackwardReactionModel
-from syntheseus.reaction_prediction.utils.inference import process_raw_smiles_outputs
+from syntheseus.reaction_prediction.utils.inference import process_raw_smiles_outputs_backwards
 from syntheseus.reaction_prediction.utils.misc import suppress_outputs
 
 
@@ -62,7 +62,7 @@ class GLNModel(ExternalBackwardReactionModel):
 
     def _get_model_predictions(
         self, input: Molecule, num_results: int
-    ) -> Sequence[BackwardPrediction]:
+    ) -> Sequence[SingleProductReaction]:
         with suppress_outputs():
             result = self.model.run(input.smiles, num_results, num_results)
 
@@ -70,13 +70,13 @@ class GLNModel(ExternalBackwardReactionModel):
             return []
         else:
             # `scores` are actually probabilities (produced by running `softmax`).
-            return process_raw_smiles_outputs(
+            return process_raw_smiles_outputs_backwards(
                 input=input,
                 output_list=result["reactants"],
-                kwargs_list=[{"probability": probability} for probability in result["scores"]],
+                metadata_list=[{"probability": probability} for probability in result["scores"]],
             )
 
     def __call__(
         self, inputs: List[Molecule], num_results: int
-    ) -> List[Sequence[BackwardPrediction]]:
+    ) -> List[Sequence[SingleProductReaction]]:
         return [self._get_model_predictions(input, num_results=num_results) for input in inputs]

@@ -6,7 +6,9 @@ the tests here are sparse and mainly check edge cases which won't come up in alg
 """
 import pytest
 
-from syntheseus.search.chem import BackwardReaction, Molecule
+from syntheseus.interface.bag import Bag
+from syntheseus.interface.molecule import Molecule
+from syntheseus.interface.reaction import SingleProductReaction
 from syntheseus.search.graph.molset import MolSetGraph, MolSetNode
 from syntheseus.search.graph.route import SynthesisGraph
 from syntheseus.tests.search.graph.test_base import BaseNodeTest
@@ -14,7 +16,7 @@ from syntheseus.tests.search.graph.test_base import BaseNodeTest
 
 class TestMolSetNode(BaseNodeTest):
     def get_node(self):
-        return MolSetNode(mols=frozenset([Molecule("CC")]))
+        return MolSetNode(mols=Bag([Molecule("CC")]))
 
     def test_nodes_not_frozen(self):
         node = self.get_node()
@@ -79,8 +81,8 @@ class TestMolSetGraph:
             child = list(graph.successors(graph.root_node))[0]
 
             # Set the reaction to a random incorrect reaction
-            graph._graph.edges[graph.root_node, child]["reaction"] = BackwardReaction(
-                reactants=frozenset([Molecule("OO")]), product=Molecule("CC")
+            graph._graph.edges[graph.root_node, child]["reaction"] = SingleProductReaction(
+                reactants=Bag([Molecule("OO")]), product=Molecule("CC")
             )
 
             # Not only should the graph not be valid below,
@@ -95,7 +97,10 @@ class TestMolSetGraph:
 
     @pytest.mark.parametrize("reason", ["already_expanded", "wrong_product"])
     def test_invalid_expansions(
-        self, molset_tree_non_minimal: MolSetGraph, rxn_cs_from_cc: BackwardReaction, reason: str
+        self,
+        molset_tree_non_minimal: MolSetGraph,
+        rxn_cs_from_cc: SingleProductReaction,
+        reason: str,
     ) -> None:
         """
         Test that invalid expansions raise an error.

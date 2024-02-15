@@ -9,7 +9,8 @@ from typing import Optional, Sequence
 
 import networkx as nx
 
-from syntheseus.search.chem import BackwardReaction, Molecule
+from syntheseus.interface.molecule import Molecule
+from syntheseus.interface.reaction import SingleProductReaction
 from syntheseus.search.graph.base_graph import RetrosynthesisSearchGraph
 from syntheseus.search.graph.node import BaseGraphNode
 from syntheseus.search.graph.route import SynthesisGraph
@@ -91,11 +92,11 @@ class MolSetGraph(RetrosynthesisSearchGraph[MolSetNode]):
                 edge_data = self._graph.get_edge_data(node, child_node)
                 assert "reaction" in edge_data
                 rxn = edge_data["reaction"]
-                assert ((set(node.mols) - {rxn.product}) | rxn.reactants) == child_node.mols
+                assert ((set(node.mols) - {rxn.product}) | rxn.unique_reactants) == child_node.mols
 
     def expand_with_reactions(
         self,
-        reactions: list[BackwardReaction],
+        reactions: list[SingleProductReaction],
         node: MolSetNode,
         ensure_tree: bool,
     ) -> Sequence[MolSetNode]:
@@ -119,7 +120,9 @@ class MolSetGraph(RetrosynthesisSearchGraph[MolSetNode]):
         new_nodes: list[MolSetNode] = list()
         node.is_expanded = True
         for reaction in reactions:
-            new_mol_set = frozenset((set(node.mols) - {reaction.product}) | reaction.reactants)
+            new_mol_set = frozenset(
+                (set(node.mols) - {reaction.product}) | reaction.unique_reactants
+            )
             if new_mol_set in self._molset_to_node:
                 new_node = self._molset_to_node[new_mol_set]
             else:

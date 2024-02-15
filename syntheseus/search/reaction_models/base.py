@@ -4,10 +4,13 @@ import abc
 import warnings
 from typing import Optional, Sequence
 
-from syntheseus.search.chem import BackwardReaction, Molecule
+from syntheseus.interface.molecule import Molecule
+from syntheseus.interface.reaction import SingleProductReaction
 
 
-def remove_duplicate_reactions(reaction_list: Sequence[BackwardReaction]) -> list[BackwardReaction]:
+def remove_duplicate_reactions(
+    reaction_list: Sequence[SingleProductReaction],
+) -> list[SingleProductReaction]:
     """
     Remove reactions with the same product/reactants, since these are effectively
     redundant. E.g., if the input is something like
@@ -25,8 +28,8 @@ def remove_duplicate_reactions(reaction_list: Sequence[BackwardReaction]) -> lis
         A list identical to `reaction_list`, except with the second + further
         copies of every reaction removed.
     """
-    seen_reactions: set[BackwardReaction] = set()
-    list_out: list[BackwardReaction] = list()
+    seen_reactions: set[SingleProductReaction] = set()
+    list_out: list[SingleProductReaction] = list()
     for rxn in reaction_list:
         if rxn not in seen_reactions:
             seen_reactions.add(rxn)
@@ -46,14 +49,14 @@ class BackwardReactionModel(abc.ABC):
         remove_duplicates: bool = True,
         use_cache: bool = True,
         count_cache_in_num_calls: bool = False,
-        initial_cache: Optional[dict[Molecule, Sequence[BackwardReaction]]] = None,
+        initial_cache: Optional[dict[Molecule, Sequence[SingleProductReaction]]] = None,
     ) -> None:
         self.count_cache_in_num_calls = count_cache_in_num_calls
 
         # These attributes should not be modified manually,
         # since doing so will likely make counts/etc inaccurate
         self._use_cache = use_cache
-        self._cache: dict[Molecule, Sequence[BackwardReaction]] = dict()
+        self._cache: dict[Molecule, Sequence[SingleProductReaction]] = dict()
         self._remove_duplicates = remove_duplicates
         self.reset()
 
@@ -101,8 +104,8 @@ class BackwardReactionModel(abc.ABC):
             return self._num_cache_misses
 
     def filter_reactions(
-        self, reaction_list: Sequence[BackwardReaction]
-    ) -> Sequence[BackwardReaction]:
+        self, reaction_list: Sequence[SingleProductReaction]
+    ) -> Sequence[SingleProductReaction]:
         """
         Filters a list of reactions. In the base version this just removes duplicates,
         but subclasses could add additional behaviour or override this.
@@ -112,7 +115,7 @@ class BackwardReactionModel(abc.ABC):
         else:
             return list(reaction_list)
 
-    def __call__(self, mols: list[Molecule]) -> list[Sequence[BackwardReaction]]:
+    def __call__(self, mols: list[Molecule]) -> list[Sequence[SingleProductReaction]]:
         """Return all backward reactions."""
 
         # Step 1: call underlying model for all mols not in the cache,
@@ -138,7 +141,9 @@ class BackwardReactionModel(abc.ABC):
         return output
 
     @abc.abstractmethod
-    def _get_backward_reactions(self, mols: list[Molecule]) -> list[Sequence[BackwardReaction]]:
+    def _get_backward_reactions(
+        self, mols: list[Molecule]
+    ) -> list[Sequence[SingleProductReaction]]:
         """
         Method to override which returns the underlying reactions.
         It is encouraged (but not mandatory) that the order of reactions is stable

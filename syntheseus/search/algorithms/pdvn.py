@@ -15,9 +15,10 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Callable, Sequence
 
+from syntheseus.interface.molecule import Molecule
+from syntheseus.interface.reaction import SingleProductReaction
 from syntheseus.search.algorithms.base import AndOrSearchAlgorithm
 from syntheseus.search.algorithms.mcts.base import BaseMCTS, pucb_bound
-from syntheseus.search.chem import BackwardReaction, Molecule
 from syntheseus.search.graph.and_or import ANDOR_NODE, AndNode, AndOrGraph, OrNode
 from syntheseus.search.graph.message_passing import (
     depth_update,
@@ -39,7 +40,7 @@ class PDVNSearchData:
 
     mol_to_synthesizability: dict[Molecule, SynthesizabilityOutcome]
     mol_to_min_syn_cost: dict[Molecule, float]
-    mol_to_reactions_for_min_syn: dict[Molecule, set[BackwardReaction]]
+    mol_to_reactions_for_min_syn: dict[Molecule, set[SingleProductReaction]]
 
 
 class PDVN_MCTS(BaseMCTS[AndOrGraph, OrNode, AndNode], AndOrSearchAlgorithm[int]):

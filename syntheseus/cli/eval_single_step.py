@@ -28,14 +28,14 @@ from more_itertools import batched
 from omegaconf import MISSING, OmegaConf
 from tqdm import tqdm
 
-from syntheseus.interface.bag import Bag
 from syntheseus.interface.models import (
+    ForwardReactionModel,
     InputType,
-    OutputType,
-    Prediction,
     ReactionModel,
+    ReactionType,
 )
 from syntheseus.interface.molecule import Molecule
+from syntheseus.interface.reaction import MultiProductReaction, Reaction
 from syntheseus.reaction_prediction.data.dataset import (
     DataFold,
     DiskReactionDataset,
@@ -53,6 +53,11 @@ from syntheseus.reaction_prediction.utils.misc import asdict_extended, set_rando
 from syntheseus.reaction_prediction.utils.model_loading import get_model
 
 logger = logging.getLogger(__file__)
+
+
+_RXN_WTIH_IDENTIFIER_ERROR = (
+    "Reactions with the `identifier` field currently not supported in evaluation"
+)
 
 
 @dataclass
@@ -89,8 +94,8 @@ class EvalConfig(BackwardModelConfig, BaseEvalConfig):
 
 
 @dataclass(frozen=True)
-class ModelResults(Generic[InputType, OutputType]):
-    results: List[Sequence[Prediction[InputType, OutputType]]]
+class ModelResults(Generic[ReactionType]):
+    results: List[Sequence[ReactionType]]
     model_timing_results: Optional[ModelTimingResults] = None
 
 
@@ -110,18 +115,18 @@ class EvalResults:
     model_time_total: ModelTimingResults
     back_translation_top_k: Optional[List[float]] = None
     back_translation_mrr: Optional[float] = None
-    predictions: Optional[List[Sequence[Prediction]]] = None
-    back_translation_predictions: Optional[List[List[Sequence[Prediction]]]] = None
+    predictions: Optional[List[Sequence[Reaction]]] = None
+    back_translation_predictions: Optional[List[List[Sequence[Reaction]]]] = None
     back_translation_time_total: Optional[ModelTimingResults] = None
 
 
 def get_results(
-    model: ReactionModel[InputType, OutputType],
+    model: ReactionModel[InputType, ReactionType],
     inputs: List[InputType],
     num_results: int,
     skip_repeats: bool = True,
     measure_time: bool = False,
-) -> ModelResults[InputType, OutputType]:
+) -> ModelResults[ReactionType]:
     """Given a batch of inputs to the reaction model, return a batch of (possibly filtered) results.
 
     Args:
@@ -136,6 +141,8 @@ def get_results(
     Returns:
         A dataclass containing the model outputs and (optionally) time measurements.
     """
+
+    # Handle case of empty inputs without calling the model.
     if not inputs:
         return ModelResults(
             results=[],
@@ -157,22 +164,24 @@ def get_results(
         time_model_call_end = time.time()
         timing_results["time_model_call"] = time_model_call_end - time_model_call_start
 
-    batch_outputs: List[Sequence[Prediction[InputType, OutputType]]] = []
+    batch_outputs: List[Sequence[ReactionType]] = []
 
     for outputs in raw_batch_outputs:
         if len(outputs) > num_results:
             raise ValueError(f"Requested {num_results} results, but model produced {len(outputs)}")
 
-        seen_outputs: Set[OutputType] = set()
-        selected_predictions: List[Prediction[InputType, OutputType]] = []
+        seen_outputs: Set[ReactionType] = set()
+        selected_predictions: List[ReactionType] = []
 
-        for prediction in outputs:
+        for reaction in outputs:
+            if reaction.identifier is not None:
+                raise NotImplementedError(_RXN_WTIH_IDENTIFIER_ERROR)
             if skip_repeats:
-                if prediction.output in seen_outputs:
+                if reaction in seen_outputs:
                     continue
-                seen_outputs.add(prediction.output)
+                seen_outputs.add(reaction)
 
-            selected_predictions.append(prediction)
+            selected_predictions.append(reaction)
 
         if len(selected_predictions) < num_results:
             logger.debug(
@@ -191,11 +200,11 @@ def get_results(
 
 
 def compute_metrics(
-    model: ReactionModel[InputType, OutputType],
+    model: ReactionModel[InputType, ReactionType],
     dataset: ReactionDataset,
     num_dataset_truncation: Optional[int],
     num_top_results: int,
-    back_translation_model: Optional[ReactionModel[OutputType, InputType]] = None,
+    back_translation_model: Optional[ForwardReactionModel] = None,
     back_translation_num_results: int = 1,
     fold: DataFold = DataFold.VALIDATION,
     batch_size: int = 16,
@@ -231,8 +240,8 @@ def compute_metrics(
 
     print(f"Testing model {model.__class__.__name__} with args {eval_args}")
 
-    all_predictions: List[Sequence[Prediction]] = []
-    all_back_translation_predictions: List[List[Sequence[Prediction]]] = []
+    all_predictions: List[Sequence[Reaction]] = []
+    all_back_translation_predictions: List[List[Sequence[MultiProductReaction]]] = []
 
     model_timing_results: List[ModelTimingResults] = []
     back_translation_timing_results: List[ModelTimingResults] = []
@@ -255,21 +264,20 @@ def compute_metrics(
         total=math.ceil(test_dataset_size / batch_size),
     ):
         inputs: List[InputType] = []
-        outputs: List[OutputType] = []
+        outputs: List[ReactionType] = []
 
         for sample in batch:
             if model.is_forward():
                 inputs.append(sample.reactants)
-                outputs.append(sample.products)
             else:
-                num_products = len(sample.products)
-                if num_products > 1:
-                    raise ValueError(
-                        f"Model expected a single target product, got {len(sample.products)}"
-                    )
+                single_product = sample.product
+                assert isinstance(
+                    single_product, Molecule
+                ), f"Model expected a single target product, got {len(sample.products)}"
 
-                inputs.append(list(sample.products)[0])
-                outputs.append(sample.reactants)
+                # casting is because links between types and reaction models is unclear to mypy
+                inputs.append(cast(InputType, single_product))
+            outputs.append(sample)
 
         results_with_timing = get_results(
             model,
@@ -282,26 +290,28 @@ def compute_metrics(
         assert results_with_timing.model_timing_results is not None
         model_timing_results.append(results_with_timing.model_timing_results)
 
-        batch_predictions: List[
-            Sequence[Prediction[InputType, OutputType]]
-        ] = results_with_timing.results
+        batch_predictions: List[Sequence[ReactionType]] = results_with_timing.results
 
-        batch_back_translation_predictions: List[List[Sequence[Prediction]]] = []
-        for input, output, prediction_list in zip(inputs, outputs, batch_predictions):
-            num_predictions.append(len(prediction_list))
+        batch_back_translation_predictions: List[List[Sequence[MultiProductReaction]]] = []
+        for input, output, reaction_list in zip(inputs, outputs, batch_predictions):
+            num_predictions.append(len(reaction_list))
 
-            ground_truth_matches = [prediction.output == output for prediction in prediction_list]
+            # Check that the identifier field is not used in the evaluation,
+            # otherwise `==` below will not work as intended.
+            if output.identifier is not None:
+                raise NotImplementedError(_RXN_WTIH_IDENTIFIER_ERROR)
+            ground_truth_matches = [rxn == output for rxn in reaction_list]
             ground_truth_match_metrics.add(ground_truth_matches)
 
-            for prediction, ground_truth_match in zip(prediction_list, ground_truth_matches):
-                prediction.metadata["ground_truth_match"] = ground_truth_match
+            for rxn, ground_truth_match in zip(reaction_list, ground_truth_matches):
+                rxn.metadata["ground_truth_match"] = ground_truth_match
 
             if back_translation_model is not None:
                 assert back_translation_metrics is not None
 
                 back_translation_results_with_timing = get_results(
                     back_translation_model,
-                    [prediction.output for prediction in prediction_list],
+                    [rxn.reactants for rxn in reaction_list],
                     num_results=back_translation_num_results,
                     skip_repeats=False,
                     measure_time=True,
@@ -320,7 +330,7 @@ def compute_metrics(
                 # Back translation is successful if any of the `back_translation_num_results` bags
                 # of products returned by the forward model contains the input.
                 back_translation_matches = [
-                    any(input in cast(Bag[Molecule], prediction.output) for prediction in result)
+                    any(input in rxn.product for rxn in result)
                     for result in back_translation_results
                 ]
 
@@ -365,9 +375,9 @@ def compute_metrics(
 
 
 def compute_metrics_from_config(
-    model: ReactionModel[InputType, OutputType],
+    model: ReactionModel[InputType, ReactionType],
     dataset: ReactionDataset,
-    back_translation_model: Optional[ReactionModel[OutputType, InputType]],
+    back_translation_model: Optional[ForwardReactionModel],
     config: BaseEvalConfig,
 ) -> EvalResults:
     """Variant of `compute_metrics` that uses an eval config instead of explicit arguments."""
@@ -432,7 +442,10 @@ def run_from_config(
     if OmegaConf.is_missing(config.back_translation_config, "model_class"):
         back_translation_model = None
     else:
-        back_translation_model = get_model_fn(config.back_translation_config)
+        # Back translation model must be a forward model (checked in `compute_metrics`).
+        back_translation_model = cast(
+            ForwardReactionModel, get_model_fn(config.back_translation_config)
+        )
 
     dataset = DiskReactionDataset(config.data_dir, sample_cls=ReactionSample)
     results = compute_metrics_from_config(

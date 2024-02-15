@@ -8,8 +8,9 @@ from collections.abc import Collection
 from datetime import datetime
 from typing import Generic, Optional, Sequence, TypeVar
 
+from syntheseus.interface.molecule import Molecule
+from syntheseus.interface.reaction import SingleProductReaction
 from syntheseus.search import INT_INF
-from syntheseus.search.chem import BackwardReaction, Molecule
 from syntheseus.search.graph.and_or import AndOrGraph, OrNode
 from syntheseus.search.graph.base_graph import RetrosynthesisSearchGraph
 from syntheseus.search.graph.message_passing import (
@@ -225,8 +226,8 @@ class SearchAlgorithm(MinimalSearchAlgorithm[GraphType, AlgReturnType]):
 
     @abc.abstractmethod
     def _filter_reactions(
-        self, reactions: Sequence[BackwardReaction], node: BaseGraphNode, graph: GraphType
-    ) -> list[BackwardReaction]:
+        self, reactions: Sequence[SingleProductReaction], node: BaseGraphNode, graph: GraphType
+    ) -> list[SingleProductReaction]:
         """Remove unwanted reactions from the list."""
         raise NotImplementedError
 
@@ -318,8 +319,8 @@ class AndOrSearchAlgorithm(SearchAlgorithm[AndOrGraph, AlgReturnType], Generic[A
         return mols
 
     def _filter_reactions(
-        self, reactions: Sequence[BackwardReaction], node: BaseGraphNode, graph: AndOrGraph
-    ) -> list[BackwardReaction]:
+        self, reactions: Sequence[SingleProductReaction], node: BaseGraphNode, graph: AndOrGraph
+    ) -> list[SingleProductReaction]:
         # Filter out any reactions that contain the root molecule
         reactions = [rxn for rxn in reactions if graph.root_node.mol not in rxn.reactants]
 
@@ -372,8 +373,8 @@ class MolSetSearchAlgorithm(SearchAlgorithm[MolSetGraph, AlgReturnType], Generic
         return molsets
 
     def _filter_reactions(
-        self, reactions: Sequence[BackwardReaction], node: BaseGraphNode, graph: MolSetGraph
-    ) -> list[BackwardReaction]:
+        self, reactions: Sequence[SingleProductReaction], node: BaseGraphNode, graph: MolSetGraph
+    ) -> list[SingleProductReaction]:
         # Filter out any reactions that contain the root molecule
         assert len(graph.root_node.mols) == 1
         root_mol = list(graph.root_node.mols)[0]
@@ -386,7 +387,8 @@ class MolSetSearchAlgorithm(SearchAlgorithm[MolSetGraph, AlgReturnType], Generic
             reactions = [
                 rxn
                 for rxn in reactions
-                if frozenset((node.mols - {rxn.product}) | rxn.reactants) not in ancestor_molsets
+                if frozenset((node.mols - {rxn.product}) | rxn.unique_reactants)
+                not in ancestor_molsets
             ]
 
         return reactions

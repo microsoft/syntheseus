@@ -55,7 +55,7 @@ def model(request) -> ExternalBackwardReactionModel:
 
 def test_call(model: ExternalBackwardReactionModel) -> None:
     [result] = model([Molecule("Cc1ccc(-c2ccc(C)cc2)cc1")], num_results=20)
-    model_predictions = [prediction.output for prediction in result]
+    model_predictions = [prediction.reactants for prediction in result]
 
     # Prepare some coupling reactions that are reasonable predictions for the product above.
     expected_predictions = [

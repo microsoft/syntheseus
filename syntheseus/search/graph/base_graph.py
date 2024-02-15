@@ -6,7 +6,8 @@ from typing import Generic, Sequence, TypeVar
 
 import networkx as nx
 
-from syntheseus.search.chem import BackwardReaction, Molecule
+from syntheseus.interface.molecule import Molecule
+from syntheseus.interface.reaction import SingleProductReaction
 from syntheseus.search.graph.node import BaseGraphNode
 
 NodeType = TypeVar(
@@ -101,7 +102,7 @@ class BaseReactionGraph(Container, Sized, Generic[NodeType], abc.ABC):
     @abc.abstractmethod
     def expand_with_reactions(
         self,
-        reactions: list[BackwardReaction],
+        reactions: list[SingleProductReaction],
         node: NodeType,
         ensure_tree: bool,
     ) -> Sequence[NodeType]:

@@ -2,7 +2,7 @@
 
 import pytest
 
-from syntheseus.search.chem import Molecule
+from syntheseus.interface.molecule import Molecule
 from syntheseus.search.mol_inventory import SmilesListInventory
 
 PURCHASABLE_SMILES = ["CC", "c1ccccc1", "CCO"]

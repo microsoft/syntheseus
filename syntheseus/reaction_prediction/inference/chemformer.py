@@ -9,21 +9,22 @@ The original Chemformer code is released under the Apache 2.0 license.
 import sys
 import warnings
 from pathlib import Path
-from typing import Any, Dict, List, Sequence, Tuple, cast
+from typing import Any, Callable, Dict, List, Sequence, Tuple, cast
 
 from syntheseus.interface.bag import Bag
-from syntheseus.interface.models import InputType, OutputType, Prediction
+from syntheseus.interface.models import InputType, ReactionType
 from syntheseus.interface.molecule import Molecule
 from syntheseus.reaction_prediction.inference.base import ExternalReactionModel
 from syntheseus.reaction_prediction.utils.inference import (
     get_module_path,
     get_unique_file_in_dir,
-    process_raw_smiles_outputs,
+    process_raw_smiles_outputs_backwards,
+    process_raw_smiles_outputs_forwards,
 )
 from syntheseus.reaction_prediction.utils.misc import suppress_outputs
 
 
-class ChemformerModel(ExternalReactionModel[InputType, OutputType]):
+class ChemformerModel(ExternalReactionModel[InputType, ReactionType]):
     def __init__(self, *args, is_forward: bool = False, **kwargs) -> None:
         """Initializes the Chemformer model wrapper.
 
@@ -105,9 +106,7 @@ class ChemformerModel(ExternalReactionModel[InputType, OutputType]):
             "encoder_pad_mask": torch.tensor(mask, dtype=torch.bool).transpose(0, 1),
         }
 
-    def __call__(
-        self, inputs: List[InputType], num_results: int
-    ) -> List[Sequence[Prediction[InputType, OutputType]]]:
+    def __call__(self, inputs: List[InputType], num_results: int) -> List[Sequence[ReactionType]]:
         import torch
 
         # Get the data in to the right form to call the sampling method on the model.
@@ -128,10 +127,18 @@ class ChemformerModel(ExternalReactionModel[InputType, OutputType]):
                 device_batch, sampling_alg="beam"
             )
 
+        # Choose processing function (controls reaction types).
+        # `type: ignore[assignment]` statements are because link between is_forward/is_backward
+        # and [InputType, ReactionType] is not visible to mypy.
+        if self.is_forward():
+            process_fn: Callable[
+                [InputType, List[str], List[Dict[str, Any]]], Sequence[ReactionType]
+            ] = process_raw_smiles_outputs_forwards  # type: ignore[assignment]
+        else:
+            process_fn = process_raw_smiles_outputs_backwards  # type: ignore[assignment]
+
         return [
-            process_raw_smiles_outputs(
-                input, outputs, [{"log_prob": log_prob} for log_prob in log_probs]
-            )
+            process_fn(input, outputs, [{"log_prob": log_prob} for log_prob in log_probs])
             for input, outputs, log_probs in zip(inputs, smiles_batch, batch_log_likelihoods)
         ]
 

@@ -5,13 +5,13 @@ from syntheseus.interface.models import (
     BackwardReactionModel,
     ForwardReactionModel,
     InputType,
-    OutputType,
     ReactionModel,
+    ReactionType,
 )
 from syntheseus.reaction_prediction.utils.downloading import get_default_model_dir_from_cache
 
 
-class ExternalReactionModel(ReactionModel[InputType, OutputType]):
+class ExternalReactionModel(ReactionModel[InputType, ReactionType]):
     """Base class for the external reaction models, abstracting out common functinality."""
 
     def __init__(
