@@ -50,7 +50,7 @@ class Graph2EditsModel(ExternalBackwardReactionModel):
         model.to(self.device)
         model.eval()
 
-        # We set the beam size to a placeholder value for now and override it in `_get_results`.
+        # We set the beam size to a placeholder value for now and override it in `_get_reactions`.
         self.model = BeamSearch(model=model, step_beam_size=10, beam_size=None, use_rxn_class=False)
         self._max_edit_steps = max_edit_steps
 
