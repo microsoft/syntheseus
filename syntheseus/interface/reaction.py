@@ -9,7 +9,6 @@ from syntheseus.interface.molecule import SMILES_SEPARATOR, Molecule
 from syntheseus.interface.typed_dict import TypedDict
 
 ReactantsType = TypeVar("ReactantsType")
-ProductType = TypeVar("ProductType")
 
 REACTION_SEPARATOR = ">"
 
