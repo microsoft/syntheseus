@@ -79,12 +79,13 @@ ignore_missing_imports = true
 [tool.ruff]
 line-length = 100
 # Check https://beta.ruff.rs/docs/rules/ for full list of rules
-select = [
+lint.select = [
   "E", "W",  # pycodestyle
   "F",  # Pyflakes
   "I",  # isort
+  "NPY201",  # check for functions/constants deprecated in numpy 2.*
 ]
-ignore = [
+lint.ignore = [
   # W605: invalid escape sequence -- triggered by pseudo-LaTeX in comments
   "W605",
   # E501: Line too long -- triggered by comments and such. black deals with shortening.
