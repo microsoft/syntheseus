@@ -261,7 +261,7 @@ def compute_metrics(
             output: Reaction
             if model.is_forward():
                 inputs.append(sample.reactants)
-                output = MultiProductReaction(reactants=sample.reactants, product=sample.products)
+                output = MultiProductReaction(reactants=sample.reactants, products=sample.products)
             else:
                 [single_product] = sample.products
                 assert isinstance(
@@ -323,7 +323,7 @@ def compute_metrics(
                 # Back translation is successful if any of the `back_translation_num_results` bags
                 # of products returned by the forward model contains the input.
                 back_translation_matches = [
-                    any(input in rxn.product for rxn in result)
+                    any(input in rxn.products for rxn in result)
                     for result in back_translation_results
                 ]
 

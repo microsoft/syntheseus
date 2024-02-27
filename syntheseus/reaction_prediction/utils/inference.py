@@ -65,7 +65,7 @@ def process_raw_smiles_outputs_forwards(
         if products is not None:
             predictions.append(
                 MultiProductReaction(
-                    product=products, reactants=input, metadata=cast(ReactionMetaData, metadata)
+                    products=products, reactants=input, metadata=cast(ReactionMetaData, metadata)
                 )
             )
 

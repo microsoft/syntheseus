@@ -30,12 +30,11 @@ class ReactionMetaData(TypedDict, total=False):
 
 
 @dataclass(frozen=True, order=False)
-class Reaction(Generic[ReactantsType, ProductType]):
+class Reaction(Generic[ReactantsType]):
     """General reaction class."""
 
     # The molecule that the prediction is for and the predicted output:
     reactants: ReactantsType = field(hash=True, compare=True)
-    product: ProductType = field(hash=True, compare=True)
     identifier: Optional[str] = field(default=None, hash=True, compare=True)
 
     # Dictionary to hold additional metadata.
@@ -72,12 +71,22 @@ def reaction_string(reactants_str: str, product_str: str) -> str:
 
 
 @dataclass(frozen=True, order=False)
-class MultiProductReaction(Reaction[Bag[Molecule], Bag[Molecule]]):
+class _MultiProductBase:
+    """Dummy class to avoid non-default argument following default argument"""
+
+    products: Bag[Molecule] = field(hash=True, compare=True)
+
+
+@dataclass(frozen=True, order=False)
+class MultiProductReaction(
+    Reaction[Bag[Molecule]],
+    _MultiProductBase,
+):
     @property
     def reaction_smiles(self) -> str:
         return reaction_string(
             reactants_str=combine_mols_to_string(self.reactants),
-            product_str=combine_mols_to_string(self.product),
+            product_str=combine_mols_to_string(self.products),
         )
 
     @property
@@ -86,11 +95,18 @@ class MultiProductReaction(Reaction[Bag[Molecule], Bag[Molecule]]):
 
     @property
     def unique_products(self) -> set[Molecule]:
-        return set(self.product)
+        return set(self.products)
 
 
 @dataclass(frozen=True, order=False)
-class SingleProductReaction(Reaction[Bag[Molecule], Molecule]):
+class _SingleProductBase:
+    """Dummy class to avoid non-default argument following default argument"""
+
+    product: Molecule = field(hash=True, compare=True)
+
+
+@dataclass(frozen=True, order=False)
+class SingleProductReaction(Reaction[Bag[Molecule]], _SingleProductBase):
     @property
     def reaction_smiles(self) -> str:
         return reaction_string(

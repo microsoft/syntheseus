@@ -26,7 +26,7 @@ def test_reaction_objects_basic():
     # Multi-product reaction
     rxn2 = MultiProductReaction(
         reactants=Bag([C5]),
-        product=Bag([C2, C3]),
+        products=Bag([C2, C3]),
     )
     assert rxn2.reaction_smiles == "CCCCC>>CC.CCC"
 
