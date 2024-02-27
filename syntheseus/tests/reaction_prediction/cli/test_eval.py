@@ -19,8 +19,8 @@ from syntheseus.reaction_prediction.utils.metrics import ModelTimingResults
 
 
 class DummyModel(BackwardReactionModel):
-    def __init__(self, repeat: bool) -> None:
-        super().__init__(remove_duplicates=False)  # because reactions repeat
+    def __init__(self, repeat: bool, **kwargs) -> None:
+        super().__init__(**kwargs)
         self._repeat = repeat
 
     RESULTS = [
@@ -51,9 +51,12 @@ class DummyModel(BackwardReactionModel):
 @pytest.mark.parametrize("repeat", [False, True])
 @pytest.mark.parametrize("measure_time", [False, True])
 def test_get_results(repeat: bool, measure_time: bool) -> None:
-    def get_model_results(**kwargs):
+    def get_model_results(remove_duplicates: bool = True, **kwargs):
         model_results = get_results(
-            model=DummyModel(repeat), inputs=[Molecule("C")], measure_time=measure_time, **kwargs
+            model=DummyModel(repeat, remove_duplicates=remove_duplicates),
+            inputs=[Molecule("C")],
+            measure_time=measure_time,
+            **kwargs,
         )
 
         assert (model_results.model_timing_results is not None) == measure_time
@@ -65,7 +68,7 @@ def test_get_results(repeat: bool, measure_time: bool) -> None:
             DummyModel.RESULTS[idx] for idx in [0, 1, 3] if idx < num_results
         ]
 
-    results_with_repeats = get_model_results(num_results=40, skip_repeats=False)
+    results_with_repeats = get_model_results(num_results=40, remove_duplicates=False)
 
     if repeat:
         # If single-step model repeats indefinitely, then we get as many results as we asked for...
