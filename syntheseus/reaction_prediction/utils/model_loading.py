@@ -8,11 +8,19 @@ logger = logging.getLogger(__file__)
 
 
 def get_model(
-    config: Union[BackwardModelConfig, ForwardModelConfig], batch_size: int, num_gpus: int
+    config: Union[BackwardModelConfig, ForwardModelConfig],
+    batch_size: int,
+    num_gpus: int,
+    **model_kwargs,
 ) -> ReactionModel:
+    # Check that model kwargs don't overlap
+    overlapping_kwargs = set(config.model_kwargs.keys()) & set(model_kwargs.keys())
+    if overlapping_kwargs:
+        raise ValueError(f"Model kwargs overlap: {overlapping_kwargs}")
+
     def model_fn(device):
         return config.model_class.value(
-            model_dir=config.model_dir, device=device, **config.model_kwargs
+            model_dir=config.model_dir, device=device, **config.model_kwargs, **model_kwargs
         )
 
     if num_gpus == 0:

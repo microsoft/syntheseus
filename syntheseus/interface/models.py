@@ -34,10 +34,10 @@ class ReactionModel(Generic[InputType, ReactionType]):
 
         # Attributes used in caching. They should not be modified manually
         # since doing so will likely make counts/etc inaccurate
-        self._use_cache = use_cache
+        self._use_cache = False  # dummy init, will be set in reset
         self._cache: dict[tuple[InputType, int], Sequence[ReactionType]] = dict()
         self._remove_duplicates = remove_duplicates
-        self.reset()
+        self.reset(use_cache=use_cache)
 
         # Add initial cache *after* reset is done so it is not cleared
         if self._use_cache:
@@ -50,9 +50,13 @@ class ReactionModel(Generic[InputType, ReactionType]):
                 category=UserWarning,
             )
 
-    def reset(self) -> None:
+    def reset(self, use_cache: Optional[bool] = None) -> None:
         """Reset counts, caches, etc for this model."""
         self._cache.clear()
+
+        # Potential reset of use_cache
+        if use_cache is not None:
+            self._use_cache = use_cache
 
         # Cache counts, using same terminology as LRU cache
         # hit = was in the cache

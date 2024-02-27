@@ -163,7 +163,13 @@ def run_from_config(config: SearchConfig) -> Path:
         )
 
     # Load the single-step model
-    search_rxn_model = get_model(config, batch_size=1, num_gpus=int(config.use_gpu))  # type: ignore
+    search_rxn_model = get_model(  # type: ignore
+        config,
+        batch_size=1,
+        num_gpus=int(config.use_gpu),
+        use_cache=config.reaction_model_use_cache,
+        default_num_results=config.num_top_results,
+    )
 
     # Set up the inventory
     with open(config.inventory_smiles_file, "rt") as f_inventory:
