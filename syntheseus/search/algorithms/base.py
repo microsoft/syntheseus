@@ -8,6 +8,7 @@ from collections.abc import Collection
 from datetime import datetime
 from typing import Generic, Optional, Sequence, TypeVar
 
+from syntheseus.interface.models import BackwardReactionModel
 from syntheseus.interface.molecule import Molecule
 from syntheseus.interface.reaction import SingleProductReaction
 from syntheseus.search import INT_INF
@@ -21,7 +22,6 @@ from syntheseus.search.graph.message_passing import (
 from syntheseus.search.graph.molset import MolSetGraph, MolSetNode
 from syntheseus.search.graph.node import BaseGraphNode
 from syntheseus.search.mol_inventory import BaseMolInventory
-from syntheseus.search.reaction_models import BackwardReactionModel
 
 AlgReturnType = TypeVar("AlgReturnType")
 GraphType = TypeVar("GraphType", bound=RetrosynthesisSearchGraph)
@@ -106,6 +106,13 @@ class SearchAlgorithm(MinimalSearchAlgorithm[GraphType, AlgReturnType]):
             warnings.warn(
                 "prevent_repeat_mol_in_trees=True when unique_nodes=True is redundant"
                 " since the graph will not be a tree and there will be no repeat mols."
+            )
+
+        # Warning about lack of caching in reaction model
+        if not self.reaction_model._use_cache:
+            warnings.warn(
+                "The reaction model does not use caching, which may result "
+                "in unnecessary duplicate calls with the same input molecule."
             )
 
     @property

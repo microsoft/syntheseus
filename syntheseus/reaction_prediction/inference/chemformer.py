@@ -106,7 +106,9 @@ class ChemformerModel(ExternalReactionModel[InputType, ReactionType]):
             "encoder_pad_mask": torch.tensor(mask, dtype=torch.bool).transpose(0, 1),
         }
 
-    def __call__(self, inputs: List[InputType], num_results: int) -> List[Sequence[ReactionType]]:
+    def _get_reactions(
+        self, inputs: List[InputType], num_results: int
+    ) -> List[Sequence[ReactionType]]:
         import torch
 
         # Get the data in to the right form to call the sampling method on the model.

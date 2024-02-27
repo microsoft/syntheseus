@@ -1,18 +1,15 @@
+"""Tests of models. Note that models are tested implicitly in a lot of other places,
+so tests are somewhat minimal here.
 """
-Test reaction models.
-
-Note that some testing is done implicitly in the algorithm tests
-(i.e. those tests will only pass if the reaction models are working properly).
-Therefore the tests here are not super exhaustive: instead they try to explicitly
-look for some behaviours which might be overlooked by the algorithm tests.
-"""
+from __future__ import annotations
 
 import pytest
 
 from syntheseus.interface.bag import Bag
+from syntheseus.interface.models import DEFAULT_NUM_RESULTS
 from syntheseus.interface.molecule import Molecule
 from syntheseus.interface.reaction import SingleProductReaction
-from syntheseus.search.reaction_models.toy import LinearMolecules, ListOfReactionsModel
+from syntheseus.reaction_prediction.inference.toy_models import LinearMoleculesToyModel
 
 
 @pytest.mark.parametrize("remove", [True, False])
@@ -33,7 +30,7 @@ def test_remove_duplicates(remove: bool) -> None:
     rxn_CS = SingleProductReaction(product=CC, reactants=Bag({Molecule("CS")}))
 
     # Call reaction model
-    rxn_model = LinearMolecules(remove_duplicates=remove)
+    rxn_model = LinearMoleculesToyModel(remove_duplicates=remove)
     output = rxn_model([CC])
 
     # Check that outputs are what is expected.
@@ -50,7 +47,7 @@ def test_caching(cocs_mol: Molecule, use_cache: bool) -> None:
     """Test all aspects of caching for reaction models."""
 
     # Call model twice on same molecule
-    rxn_model = LinearMolecules(use_cache=use_cache)
+    rxn_model = LinearMoleculesToyModel(use_cache=use_cache)
     output1 = rxn_model([cocs_mol])
     output2 = rxn_model([cocs_mol])
 
@@ -113,22 +110,25 @@ def test_initial_cache(
     # NOTE: this is *not* what the reaction model would actually output if called.
     # If the cache works correctly then it will output this reaction instead of calling the model.
     CC = Molecule("CC")
-    initial_cache = {cocs_mol: [rxn_cocs_from_co_cs], CC: []}
+    initial_cache = {
+        (cocs_mol, DEFAULT_NUM_RESULTS): [rxn_cocs_from_co_cs],
+        (CC, DEFAULT_NUM_RESULTS): [],
+    }
 
     # Create reaction model, potentially checking for warning
     if use_cache:
-        rxn_model = LinearMolecules(use_cache=use_cache, initial_cache=initial_cache)
+        rxn_model = LinearMoleculesToyModel(use_cache=use_cache, initial_cache=initial_cache)
     else:
         # If caching is off then providing an initial cache should raise a warning
         with pytest.warns(UserWarning):
-            rxn_model = LinearMolecules(use_cache=use_cache, initial_cache=initial_cache)
+            rxn_model = LinearMoleculesToyModel(use_cache=use_cache, initial_cache=initial_cache)
 
     # Call reaction model
     outputs = rxn_model([cocs_mol, CC, Molecule("CCC")])
     if use_cache:
         # outputs should reflect initial cache
-        assert outputs[0] == initial_cache[cocs_mol]
-        assert outputs[1] == initial_cache[CC]
+        assert outputs[0] == initial_cache[(cocs_mol, DEFAULT_NUM_RESULTS)]
+        assert outputs[1] == initial_cache[(CC, DEFAULT_NUM_RESULTS)]
         assert rxn_model.num_calls() == 1
     else:
         # outputs should ignore initial cache
@@ -142,28 +142,3 @@ def test_initial_cache(
     # In all cases, resetting should clear the cache
     rxn_model.reset()
     assert len(rxn_model._cache) == 0
-
-
-def test_linear_molecules_invalid_molecule() -> None:
-    """
-    The LinearMolecules model is only defined on the space of linear molecules.
-    If called on a non-linear molecule (e.g. with branching) it is currently set up to throw an error.
-    This test ensures that this happens.
-
-    NOTE: in the future the behaviour could be changed to just return an empty list,
-    but for a toy example I thought it would be best to alert the user with a warning.
-    """
-    rxn_model = LinearMolecules()
-    with pytest.raises(AssertionError):
-        rxn_model([Molecule("CC(C)C")])
-
-
-def test_list_of_reactions_model(
-    rxn_cocs_from_co_cs: SingleProductReaction,
-    rxn_cocs_from_cocc: SingleProductReaction,
-    rxn_cs_from_cc: SingleProductReaction,
-) -> None:
-    """Simple test of the ListOfReactionsModel class."""
-    model = ListOfReactionsModel([rxn_cocs_from_co_cs, rxn_cocs_from_cocc, rxn_cs_from_cc])
-    output = model([Molecule("COCS"), Molecule("CS"), Molecule("CO")])
-    assert output == [[rxn_cocs_from_co_cs, rxn_cocs_from_cocc], [rxn_cs_from_cc], []]

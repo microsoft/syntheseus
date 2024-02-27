@@ -140,7 +140,7 @@ class MEGANModel(ExternalBackwardReactionModel):
 
         return input_batch
 
-    def __call__(
+    def _get_reactions(
         self, inputs: list[Molecule], num_results: int
     ) -> list[Sequence[SingleProductReaction]]:
         import torch

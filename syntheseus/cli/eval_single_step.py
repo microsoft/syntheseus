@@ -22,7 +22,7 @@ from dataclasses import dataclass, field, fields
 from functools import partial
 from itertools import islice
 from statistics import mean, median
-from typing import Any, Callable, Dict, Generic, Iterable, List, Optional, Sequence, Set, cast
+from typing import Any, Callable, Dict, Generic, Iterable, List, Optional, Sequence, cast
 
 from more_itertools import batched
 from omegaconf import MISSING, OmegaConf
@@ -124,7 +124,6 @@ def get_results(
     model: ReactionModel[InputType, ReactionType],
     inputs: List[InputType],
     num_results: int,
-    skip_repeats: bool = True,
     measure_time: bool = False,
 ) -> ModelResults[ReactionType]:
     """Given a batch of inputs to the reaction model, return a batch of (possibly filtered) results.
@@ -134,8 +133,6 @@ def get_results(
         inputs: Batch of inputs to the reaction model, each either a molecule or a set of molecules,
             depending on directionality.
         num_results: Number of results we want to try to obtain for each input.
-        skip_repeats: Whether repeated results should be skipped and not count towards
-            `num_results`.
         measure_time: Whether to measure time taken by the different parts of the code.
 
     Returns:
@@ -170,25 +167,15 @@ def get_results(
         if len(outputs) > num_results:
             raise ValueError(f"Requested {num_results} results, but model produced {len(outputs)}")
 
-        seen_outputs: Set[ReactionType] = set()
-        selected_predictions: List[ReactionType] = []
+        # Check identifiers are not set
+        if any(reaction.identifier is not None for reaction in outputs):
+            raise NotImplementedError(_RXN_WTIH_IDENTIFIER_ERROR)
 
-        for reaction in outputs:
-            if reaction.identifier is not None:
-                raise NotImplementedError(_RXN_WTIH_IDENTIFIER_ERROR)
-            if skip_repeats:
-                if reaction in seen_outputs:
-                    continue
-                seen_outputs.add(reaction)
+        # Check for length
+        if len(outputs) < num_results:
+            logger.debug(f"Tried to get {num_results} results, but only got {len(outputs)}")
 
-            selected_predictions.append(reaction)
-
-        if len(selected_predictions) < num_results:
-            logger.debug(
-                f"Tried to get {num_results} results, but only got {len(selected_predictions)}"
-            )
-
-        batch_outputs.append(list(selected_predictions))
+        batch_outputs.append(list(outputs))
 
     if measure_time:
         timing_results["time_post_processing"] = time.time() - time_model_call_end
@@ -208,7 +195,6 @@ def compute_metrics(
     back_translation_num_results: int = 1,
     fold: DataFold = DataFold.VALIDATION,
     batch_size: int = 16,
-    skip_repeats: bool = True,
     include_predictions: bool = False,
 ) -> EvalResults:
     """Compute top-k accuracies and Mean Reciprocal Rank of a model on a given dataset."""
@@ -219,7 +205,6 @@ def compute_metrics(
         "num_top_results": num_top_results,
         "fold": fold.name,
         "batch_size": batch_size,
-        "skip_repeats": skip_repeats,
     }
 
     ground_truth_match_metrics = TopKMetricsAccumulator(max_num_results=num_top_results)
@@ -293,7 +278,6 @@ def compute_metrics(
             model,
             inputs=inputs,
             num_results=num_top_results,
-            skip_repeats=skip_repeats,
             measure_time=True,
         )
 
@@ -323,7 +307,6 @@ def compute_metrics(
                     back_translation_model,
                     [rxn.reactants for rxn in reaction_list],
                     num_results=back_translation_num_results,
-                    skip_repeats=False,
                     measure_time=True,
                 )
 
@@ -401,7 +384,6 @@ def compute_metrics_from_config(
         back_translation_num_results=config.back_translation_num_results,
         fold=config.fold,
         batch_size=config.batch_size,
-        skip_repeats=config.skip_repeats,
         include_predictions=config.include_predictions,
     )
 
@@ -447,7 +429,7 @@ def run_from_config(
     print(config)
 
     get_model_fn = partial(get_model, batch_size=config.batch_size, num_gpus=config.num_gpus)
-    model = get_model_fn(config)
+    model = get_model_fn(config, remove_duplicates=config.skip_repeats)
 
     if OmegaConf.is_missing(config.back_translation_config, "model_class"):
         back_translation_model = None

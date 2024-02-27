@@ -76,7 +76,7 @@ class RetroKNNModel(LocalRetroModel):
 
         return atom_outs, bond_outs, atom_feats, bond_feats
 
-    def __call__(
+    def _get_reactions(
         self, inputs: List[Molecule], num_results: int
     ) -> List[Sequence[SingleProductReaction]]:
         import torch

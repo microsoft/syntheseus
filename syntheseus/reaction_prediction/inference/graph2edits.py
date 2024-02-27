@@ -50,7 +50,7 @@ class Graph2EditsModel(ExternalBackwardReactionModel):
         model.to(self.device)
         model.eval()
 
-        # We set the beam size to a placeholder value for now and override it in `__call__`.
+        # We set the beam size to a placeholder value for now and override it in `_get_reactions`.
         self.model = BeamSearch(model=model, step_beam_size=10, beam_size=None, use_rxn_class=False)
         self._max_edit_steps = max_edit_steps
 
@@ -59,7 +59,7 @@ class Graph2EditsModel(ExternalBackwardReactionModel):
     def get_parameters(self):
         return self.model.model.parameters()
 
-    def __call__(
+    def _get_reactions(
         self, inputs: list[Molecule], num_results: int
     ) -> list[Sequence[SingleProductReaction]]:
         import torch

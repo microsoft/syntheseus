@@ -21,7 +21,9 @@ class ParallelReactionModel(ReactionModel[InputType, ReactionType]):
         self._devices = devices
         self._model_replicas = [model_fn(device=device) for device in devices]
 
-    def __call__(self, inputs: List[InputType], num_results: int) -> List[Sequence[ReactionType]]:
+    def _get_reactions(
+        self, inputs: List[InputType], num_results: int
+    ) -> List[Sequence[ReactionType]]:
         # Chunk up the inputs into (roughly) equal-sized chunks.
         chunk_size = math.ceil(len(inputs) / len(self._devices))
         input_chunks = list((input,) for input in chunked(inputs, chunk_size))

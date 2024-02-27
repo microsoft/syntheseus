@@ -7,8 +7,13 @@ from dataclasses import dataclass, field
 import pytest
 
 from syntheseus.interface.bag import Bag
+from syntheseus.interface.models import BackwardReactionModel
 from syntheseus.interface.molecule import Molecule
 from syntheseus.interface.reaction import SingleProductReaction
+from syntheseus.reaction_prediction.inference.toy_models import (
+    LinearMoleculesToyModel,
+    ListOfReactionsToyModel,
+)
 from syntheseus.search.algorithms.breadth_first import (
     AndOr_BreadthFirstSearch,
     MolSet_BreadthFirstSearch,
@@ -17,8 +22,6 @@ from syntheseus.search.graph.and_or import AndOrGraph
 from syntheseus.search.graph.molset import MolSetGraph
 from syntheseus.search.graph.route import SynthesisGraph
 from syntheseus.search.mol_inventory import BaseMolInventory, SmilesListInventory
-from syntheseus.search.reaction_models import BackwardReactionModel
-from syntheseus.search.reaction_models.toy import LinearMolecules, ListOfReactionsModel
 
 
 @dataclass
@@ -33,18 +36,8 @@ class RetrosynthesisTask:
 
 
 @pytest.fixture
-def rxn_cs_from_cc() -> SingleProductReaction:
-    return SingleProductReaction(product=Molecule("CS"), reactants=Bag([Molecule("CC")]))
-
-
-@pytest.fixture
 def rxn_cs_from_co() -> SingleProductReaction:
     return SingleProductReaction(product=Molecule("CS"), reactants=Bag([Molecule("CO")]))
-
-
-@pytest.fixture
-def rxn_cocs_from_cocc(cocs_mol: Molecule) -> SingleProductReaction:
-    return SingleProductReaction(product=cocs_mol, reactants=Bag([Molecule("COCC")]))
 
 
 @pytest.fixture
@@ -104,7 +97,7 @@ def retrosynthesis_task1(
 
     return RetrosynthesisTask(
         target_mol=cocs_mol,
-        reaction_model=LinearMolecules(),
+        reaction_model=LinearMoleculesToyModel(use_cache=True),
         inventory=SmilesListInventory(["CO", "CS"]),
         known_routes={"min-cost": best_route, "other": other_route},
     )
@@ -177,7 +170,7 @@ def retrosynthesis_task2(
 
     return RetrosynthesisTask(
         target_mol=cocs_mol,
-        reaction_model=LinearMolecules(),
+        reaction_model=LinearMoleculesToyModel(use_cache=True),
         inventory=SmilesListInventory(["CO", "CC"]),
         known_routes=known_routes,
         incorrect_routes=incorrect_routes,
@@ -195,7 +188,9 @@ def retrosynthesis_task3(cocs_mol: Molecule) -> RetrosynthesisTask:
     CO -> CC
     """
     return RetrosynthesisTask(
-        target_mol=cocs_mol, reaction_model=LinearMolecules(), inventory=SmilesListInventory(["CC"])
+        target_mol=cocs_mol,
+        reaction_model=LinearMoleculesToyModel(use_cache=True),
+        inventory=SmilesListInventory(["CC"]),
     )
 
 
@@ -212,7 +207,7 @@ def retrosynthesis_task4(cocs_mol: Molecule) -> RetrosynthesisTask:
     """
     return RetrosynthesisTask(
         target_mol=cocs_mol,
-        reaction_model=LinearMolecules(allow_substitution=False),
+        reaction_model=LinearMoleculesToyModel(allow_substitution=False, use_cache=True),
         inventory=SmilesListInventory(["C", "O", "S"]),
     )
 
@@ -223,9 +218,10 @@ def retrosynthesis_task5() -> RetrosynthesisTask:
     A very small, *infinite* retrosynthesis task which cannot be solved in 1 step.
     Good for testing full expansion of trees.
     """
+
     return RetrosynthesisTask(
         target_mol=Molecule("CC", make_rdkit_mol=False),
-        reaction_model=LinearMolecules(allow_substitution=True),
+        reaction_model=LinearMoleculesToyModel(allow_substitution=True, use_cache=True),
         inventory=SmilesListInventory(["O"]),
     )
 
@@ -250,7 +246,7 @@ def retrosynthesis_task6() -> RetrosynthesisTask:
     """
     return RetrosynthesisTask(
         target_mol=Molecule("CCCOC", make_rdkit_mol=False),
-        reaction_model=LinearMolecules(allow_substitution=True),
+        reaction_model=LinearMoleculesToyModel(allow_substitution=True, use_cache=True),
         inventory=SmilesListInventory(["CCCO", "CC", "COC", "O"]),
     )
 
@@ -260,7 +256,7 @@ def rxn_model_for_minimal_graphs(
     rxn_cocs_from_co_cs: SingleProductReaction,
     rxn_co_from_cc: SingleProductReaction,
     rxn_cs_from_co: SingleProductReaction,
-) -> ListOfReactionsModel:
+) -> ListOfReactionsToyModel:
     """
     Return a reaction model to help build the minimal graphs.
     Contains the following reactions:
@@ -269,12 +265,15 @@ def rxn_model_for_minimal_graphs(
     CO -> CC
     CS -> CO
     """
-    return ListOfReactionsModel(reaction_list=[rxn_cocs_from_co_cs, rxn_co_from_cc, rxn_cs_from_co])
+    return ListOfReactionsToyModel(
+        reaction_list=[rxn_cocs_from_co_cs, rxn_co_from_cc, rxn_cs_from_co],
+        use_cache=True,
+    )
 
 
 @pytest.fixture
 def rxn_model_for_non_minimal_graphs(
-    rxn_model_for_minimal_graphs: ListOfReactionsModel,
+    rxn_model_for_minimal_graphs: ListOfReactionsToyModel,
     rxn_cocs_from_cocc: SingleProductReaction,
     rxn_cocc_from_co_cc: SingleProductReaction,
 ) -> BackwardReactionModel:
