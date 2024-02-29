@@ -6,7 +6,7 @@ from typing import Any, Generic, Optional, Sequence, TypeVar
 
 from syntheseus.interface.bag import Bag
 from syntheseus.interface.molecule import Molecule
-from syntheseus.interface.reaction import MultiProductReaction, Reaction, SingleProductReaction
+from syntheseus.interface.reaction import Reaction, SingleProductReaction
 
 InputType = TypeVar("InputType")
 ReactionType = TypeVar("ReactionType", bound=Reaction)
@@ -175,6 +175,6 @@ class BackwardReactionModel(ReactionModel[Molecule, SingleProductReaction]):
         return False
 
 
-class ForwardReactionModel(ReactionModel[Bag[Molecule], MultiProductReaction]):
+class ForwardReactionModel(ReactionModel[Bag[Molecule], Reaction]):
     def is_forward(self) -> bool:
         return True

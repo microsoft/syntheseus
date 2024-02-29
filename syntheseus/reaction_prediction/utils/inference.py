@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Sequence, Union, cast
 from syntheseus.interface.bag import Bag
 from syntheseus.interface.molecule import Molecule
 from syntheseus.interface.reaction import (
-    MultiProductReaction,
+    Reaction,
     ReactionMetaData,
     SingleProductReaction,
 )
@@ -43,8 +43,8 @@ def process_raw_smiles_outputs_backwards(
 
 def process_raw_smiles_outputs_forwards(
     input: Bag[Molecule], output_list: List[str], metadata_list: List[Dict[str, Any]]
-) -> Sequence[MultiProductReaction]:
-    """Convert raw SMILES outputs into a list of `MultiProductReaction` objects.
+) -> Sequence[Reaction]:
+    """Convert raw SMILES outputs into a list of `Reaction` objects.
     Like method `process_raw_smiles_outputs_backwards`, but for forward models.
 
     Args:
@@ -53,10 +53,10 @@ def process_raw_smiles_outputs_forwards(
         metadata_list: Additional metadata to attach to the predictions (e.g. probability).
 
     Returns:
-        A list of `MultiProductReactions`s; may be shorter than `outputs` if some of the raw
+        A list of `Reaction`s; may be shorter than `outputs` if some of the raw
         SMILES could not be parsed into valid reactant bags.
     """
-    predictions: List[MultiProductReaction] = []
+    predictions: List[Reaction] = []
 
     for raw_output, metadata in zip(output_list, metadata_list):
         products = molecule_bag_from_smiles(raw_output)
@@ -64,7 +64,7 @@ def process_raw_smiles_outputs_forwards(
         # Only consider the prediction if the SMILES can be parsed.
         if products is not None:
             predictions.append(
-                MultiProductReaction(
+                Reaction(
                     products=products, reactants=input, metadata=cast(ReactionMetaData, metadata)
                 )
             )

@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from abc import abstractmethod
 from dataclasses import dataclass, field
-from typing import Collection, Generic, Optional, TypeVar
+from typing import Collection, Optional, TypeVar
 
 from syntheseus.interface.bag import Bag
 from syntheseus.interface.molecule import SMILES_SEPARATOR, Molecule
@@ -28,37 +27,6 @@ class ReactionMetaData(TypedDict, total=False):
     ground_truth_match: bool  # whether this reaction matches ground truth
 
 
-@dataclass(frozen=True, order=False)
-class Reaction(Generic[ReactantsType]):
-    """General reaction class."""
-
-    # The molecule that the prediction is for and the predicted output:
-    reactants: ReactantsType = field(hash=True, compare=True)
-    identifier: Optional[str] = field(default=None, hash=True, compare=True)
-
-    # Dictionary to hold additional metadata.
-    metadata: ReactionMetaData = field(
-        default_factory=lambda: ReactionMetaData(),
-        hash=False,
-        compare=False,
-    )
-
-    @property
-    @abstractmethod
-    def reaction_smiles(self) -> str:
-        pass
-
-    @property
-    @abstractmethod
-    def unique_reactants(self) -> set[Molecule]:
-        pass
-
-    @property
-    @abstractmethod
-    def unique_products(self) -> set[Molecule]:
-        pass
-
-
 def combine_mols_to_string(mols: Collection[Molecule]) -> str:
     """Produces a consistent string representation of a collection of molecules."""
     return SMILES_SEPARATOR.join([mol.smiles for mol in sorted(mols)])
@@ -70,23 +38,17 @@ def reaction_string(reactants_str: str, product_str: str) -> str:
 
 
 @dataclass(frozen=True, order=False)
-class _MultiProductBase:
-    """Dummy class to avoid non-default argument following default argument"""
-
+class Reaction:
+    reactants: Bag[Molecule] = field(hash=True, compare=True)
     products: Bag[Molecule] = field(hash=True, compare=True)
+    identifier: Optional[str] = field(default=None, hash=True, compare=True)
 
-
-@dataclass(frozen=True, order=False)
-class MultiProductReaction(
-    Reaction[Bag[Molecule]],
-    _MultiProductBase,
-):
-    @property
-    def reaction_smiles(self) -> str:
-        return reaction_string(
-            reactants_str=combine_mols_to_string(self.reactants),
-            product_str=combine_mols_to_string(self.products),
-        )
+    # Dictionary to hold additional metadata.
+    metadata: ReactionMetaData = field(
+        default_factory=lambda: ReactionMetaData(),
+        hash=False,
+        compare=False,
+    )
 
     @property
     def unique_reactants(self) -> set[Molecule]:
@@ -96,26 +58,27 @@ class MultiProductReaction(
     def unique_products(self) -> set[Molecule]:
         return set(self.products)
 
-
-@dataclass(frozen=True, order=False)
-class _SingleProductBase:
-    """Dummy class to avoid non-default argument following default argument"""
-
-    product: Molecule = field(hash=True, compare=True)
-
-
-@dataclass(frozen=True, order=False)
-class SingleProductReaction(Reaction[Bag[Molecule]], _SingleProductBase):
     @property
     def reaction_smiles(self) -> str:
         return reaction_string(
-            reactants_str=combine_mols_to_string(self.reactants), product_str=self.product.smiles
+            reactants_str=combine_mols_to_string(self.reactants),
+            product_str=combine_mols_to_string(self.products),
         )
 
-    @property
-    def unique_reactants(self) -> set[Molecule]:
-        return set(self.reactants)
+    def __str__(self) -> str:
+        output = self.reaction_smiles
+        if self.identifier is not None:
+            output += f" ({self.identifier})"
+        return output
+
+
+@dataclass(frozen=True, order=False)
+class SingleProductReaction(Reaction):
+    def __init__(self, *, reactants: Bag[Molecule], product: Molecule, **kwargs) -> None:
+        super().__init__(reactants=reactants, products=Bag([product]), **kwargs)
 
     @property
-    def unique_products(self) -> set[Molecule]:
-        return {self.product}
+    def product(self) -> Molecule:
+        """Handle for the single product of this reaction."""
+        assert len(self.products) == 1  # Guaranteed in `__init__`.
+        return next(iter(self.products))
