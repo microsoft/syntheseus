@@ -7,7 +7,7 @@ import pytest
 
 from syntheseus.interface.bag import Bag
 from syntheseus.interface.molecule import Molecule
-from syntheseus.interface.reaction import MultiProductReaction, SingleProductReaction
+from syntheseus.interface.reaction import Reaction, SingleProductReaction
 
 
 def test_reaction_objects_basic():
@@ -23,10 +23,10 @@ def test_reaction_objects_basic():
     )
     assert rxn1.reaction_smiles == "CC.CCC>>CCCCC"
 
-    # Multi-product reaction
-    rxn2 = MultiProductReaction(
+    # Standadr (multi-product) reaction
+    rxn2 = Reaction(
         reactants=Bag([C5]),
-        product=Bag([C2, C3]),
+        products=Bag([C2, C3]),
     )
     assert rxn2.reaction_smiles == "CCCCC>>CC.CCC"
 

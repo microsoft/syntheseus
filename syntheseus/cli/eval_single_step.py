@@ -35,7 +35,7 @@ from syntheseus.interface.models import (
     ReactionType,
 )
 from syntheseus.interface.molecule import Molecule
-from syntheseus.interface.reaction import MultiProductReaction, Reaction, SingleProductReaction
+from syntheseus.interface.reaction import Reaction, SingleProductReaction
 from syntheseus.reaction_prediction.data.dataset import (
     DataFold,
     DiskReactionDataset,
@@ -226,7 +226,7 @@ def compute_metrics(
     print(f"Testing model {model.__class__.__name__} with args {eval_args}")
 
     all_predictions: List[Sequence[Reaction]] = []
-    all_back_translation_predictions: List[List[Sequence[MultiProductReaction]]] = []
+    all_back_translation_predictions: List[List[Sequence[Reaction]]] = []
 
     model_timing_results: List[ModelTimingResults] = []
     back_translation_timing_results: List[ModelTimingResults] = []
@@ -261,7 +261,7 @@ def compute_metrics(
             output: Reaction
             if model.is_forward():
                 inputs.append(sample.reactants)
-                output = MultiProductReaction(reactants=sample.reactants, product=sample.products)
+                output = Reaction(reactants=sample.reactants, products=sample.products)
             else:
                 [single_product] = sample.products
                 assert isinstance(
@@ -286,7 +286,7 @@ def compute_metrics(
 
         batch_predictions: List[Sequence[ReactionType]] = results_with_timing.results
 
-        batch_back_translation_predictions: List[List[Sequence[MultiProductReaction]]] = []
+        batch_back_translation_predictions: List[List[Sequence[Reaction]]] = []
         for input, output, reaction_list in zip(inputs, outputs, batch_predictions):
             num_predictions.append(len(reaction_list))
 
@@ -323,7 +323,7 @@ def compute_metrics(
                 # Back translation is successful if any of the `back_translation_num_results` bags
                 # of products returned by the forward model contains the input.
                 back_translation_matches = [
-                    any(input in rxn.product for rxn in result)
+                    any(input in rxn.products for rxn in result)
                     for result in back_translation_results
                 ]
 
