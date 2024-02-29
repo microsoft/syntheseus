@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Collection, Optional, TypeVar
+from typing import Collection, Optional
 
 from syntheseus.interface.bag import Bag
 from syntheseus.interface.molecule import SMILES_SEPARATOR, Molecule
 from syntheseus.interface.typed_dict import TypedDict
-
-ReactantsType = TypeVar("ReactantsType")
 
 REACTION_SEPARATOR = ">"
 
