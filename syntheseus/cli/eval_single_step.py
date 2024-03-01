@@ -270,10 +270,10 @@ def compute_metrics(
                 inputs.append(sample.reactants)
                 output = Reaction(reactants=sample.reactants, products=sample.products)
             else:
-                [single_product] = sample.products
-                assert isinstance(
-                    single_product, Molecule
+                assert (
+                    len(sample.products) == 1
                 ), f"Model expected a single target product, got {len(sample.products)}"
+                [single_product] = sample.products
 
                 inputs.append(cast(InputType, single_product))
                 output = SingleProductReaction(reactants=sample.reactants, product=single_product)
