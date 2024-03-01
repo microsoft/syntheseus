@@ -34,7 +34,6 @@ from syntheseus.interface.models import (
     ReactionModel,
     ReactionType,
 )
-from syntheseus.interface.molecule import Molecule
 from syntheseus.interface.reaction import Reaction, SingleProductReaction
 from syntheseus.reaction_prediction.data.dataset import (
     DataFold,
@@ -49,6 +48,8 @@ from syntheseus.reaction_prediction.inference.config import (
 )
 from syntheseus.reaction_prediction.utils.config import (
     get_config as cli_get_config,
+)
+from syntheseus.reaction_prediction.utils.config import (
     get_error_message_for_missing_value,
 )
 from syntheseus.reaction_prediction.utils.metrics import (
@@ -436,7 +437,7 @@ def run_from_config(
     print(config)
 
     if OmegaConf.is_missing(config, "data_dir"):
-        raise ValueError(f"data_dir should be set to a directory containing a reaction dataset")
+        raise ValueError("data_dir should be set to a directory containing a reaction dataset")
 
     if OmegaConf.is_missing(config, "model_class"):
         raise ValueError(
