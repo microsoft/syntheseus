@@ -42,8 +42,15 @@ from syntheseus.reaction_prediction.data.dataset import (
     ReactionDataset,
 )
 from syntheseus.reaction_prediction.data.reaction_sample import ReactionSample
-from syntheseus.reaction_prediction.inference.config import BackwardModelConfig, ForwardModelConfig
-from syntheseus.reaction_prediction.utils.config import get_config as cli_get_config
+from syntheseus.reaction_prediction.inference.config import (
+    BackwardModelClass,
+    BackwardModelConfig,
+    ForwardModelConfig,
+)
+from syntheseus.reaction_prediction.utils.config import (
+    get_config as cli_get_config,
+    get_error_message_for_missing_value,
+)
 from syntheseus.reaction_prediction.utils.metrics import (
     ModelTimingResults,
     TopKMetricsAccumulator,
@@ -427,6 +434,14 @@ def run_from_config(
 
     print("Running eval with the following config:")
     print(config)
+
+    if OmegaConf.is_missing(config, "data_dir"):
+        raise ValueError(f"data_dir should be set to a directory containing a reaction dataset")
+
+    if OmegaConf.is_missing(config, "model_class"):
+        raise ValueError(
+            get_error_message_for_missing_value("model_class", [c.name for c in BackwardModelClass])
+        )
 
     get_model_fn = partial(get_model, batch_size=config.batch_size, num_gpus=config.num_gpus)
     model = get_model_fn(config, remove_duplicates=config.skip_repeats)
