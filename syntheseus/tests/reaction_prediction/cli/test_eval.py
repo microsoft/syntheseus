@@ -1,4 +1,3 @@
-import tempfile
 from itertools import cycle, islice
 from typing import Iterable, List, Sequence
 
@@ -77,8 +76,7 @@ def test_get_results(repeat: bool, measure_time: bool) -> None:
         # ...otherwise we get fewer.
         assert results_with_repeats == DummyModel.RESULTS
 
-
-def test_print_and_save():
+def test_print_and_save(tmp_path: Path) -> None:
     input_mol = Molecule("c1ccccc1N")
     output_mol_bag = Bag([Molecule("c1ccccc1"), Molecule("N")])
 
@@ -98,11 +96,10 @@ def test_print_and_save():
         predictions=[[SingleProductReaction(product=input_mol, reactants=output_mol_bag)]],
     )
 
-    with tempfile.TemporaryDirectory() as temp_dir:
-        config = EvalConfig(
-            data_dir=temp_dir,
-            model_class=BackwardModelClass.RetroKNN,
-            results_dir=temp_dir,
-        )
+    config = EvalConfig(
+        data_dir=tmp_path,
+        model_class=BackwardModelClass.RetroKNN,
+        results_dir=tmp_path,
+    )
 
-        print_and_save(results, config)
+    print_and_save(results, config)
