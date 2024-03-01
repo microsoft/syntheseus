@@ -22,7 +22,7 @@ from dataclasses import dataclass, field, fields
 from functools import partial
 from itertools import islice
 from statistics import mean, median
-from typing import Any, Callable, Dict, Generic, Iterable, List, Optional, Sequence, cast
+from typing import Any, Callable, Dict, Generic, Iterable, List, Optional, Sequence, Tuple, cast
 
 from more_itertools import batched
 from omegaconf import MISSING, OmegaConf
@@ -249,7 +249,7 @@ def compute_metrics(
         total=math.ceil(test_dataset_size / batch_size),
     ):
         # Tell mypy what the type of `batch` is as `batched` seems to lose it.
-        batch = cast(tuple[ReactionSample], batch)
+        batch = cast(Tuple[ReactionSample], batch)
 
         inputs: List[InputType] = []
         outputs: List[ReactionType] = []

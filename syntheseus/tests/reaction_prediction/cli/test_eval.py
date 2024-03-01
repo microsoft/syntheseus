@@ -1,4 +1,6 @@
+import math
 from itertools import cycle, islice
+from pathlib import Path
 from typing import Iterable, List, Sequence
 
 import pytest
@@ -6,20 +8,24 @@ import pytest
 from syntheseus.cli.eval_single_step import (
     EvalConfig,
     EvalResults,
+    compute_metrics,
     get_results,
     print_and_save,
 )
 from syntheseus.interface.bag import Bag
-from syntheseus.interface.models import BackwardReactionModel
+from syntheseus.interface.models import InputType, ReactionModel, ReactionType
 from syntheseus.interface.molecule import Molecule
-from syntheseus.interface.reaction import SingleProductReaction
+from syntheseus.interface.reaction import Reaction, SingleProductReaction
+from syntheseus.reaction_prediction.data.dataset import DataFold, DiskReactionDataset
+from syntheseus.reaction_prediction.data.reaction_sample import ReactionSample
 from syntheseus.reaction_prediction.inference.config import BackwardModelClass
 from syntheseus.reaction_prediction.utils.metrics import ModelTimingResults
 
 
-class DummyModel(BackwardReactionModel):
-    def __init__(self, repeat: bool, **kwargs) -> None:
+class DummyModel(ReactionModel):
+    def __init__(self, is_forward: bool, repeat: bool, **kwargs) -> None:
         super().__init__(**kwargs)
+        self._is_forward = is_forward
         self._repeat = repeat
 
     RESULTS = [
@@ -29,9 +35,15 @@ class DummyModel(BackwardReactionModel):
         Bag([Molecule("NC=O")]),
     ]
 
+    def is_forward(self) -> bool:
+        return self._is_forward
+
+    def get_parameters(self):
+        return []
+
     def _get_reactions(
-        self, inputs: List[Molecule], num_results: int
-    ) -> List[Sequence[SingleProductReaction]]:
+        self, inputs: List[InputType], num_results: int
+    ) -> List[Sequence[ReactionType]]:
         outputs: Iterable[Bag[Molecule]] = []
 
         if self._repeat:
@@ -41,10 +53,18 @@ class DummyModel(BackwardReactionModel):
             outputs = DummyModel.RESULTS[:num_results]
 
         # Return the same outputs for each input molecule.
-        return [
-            [SingleProductReaction(product=input, reactants=output) for output in outputs]
-            for input in inputs
-        ]
+        results: List[Sequence] = []
+        for input in inputs:
+            if self._is_forward:
+                assert isinstance(input, Bag)
+                results.append([Reaction(reactants=input, products=output) for output in outputs])
+            else:
+                assert isinstance(input, Molecule)
+                results.append(
+                    [SingleProductReaction(product=input, reactants=output) for output in outputs]
+                )
+
+        return results
 
 
 @pytest.mark.parametrize("repeat", [False, True])
@@ -52,7 +72,7 @@ class DummyModel(BackwardReactionModel):
 def test_get_results(repeat: bool, measure_time: bool) -> None:
     def get_model_results(remove_duplicates: bool = True, **kwargs):
         model_results = get_results(
-            model=DummyModel(repeat, remove_duplicates=remove_duplicates),
+            model=DummyModel(is_forward=False, repeat=repeat, remove_duplicates=remove_duplicates),
             inputs=[Molecule("C")],
             measure_time=measure_time,
             **kwargs,
@@ -76,6 +96,43 @@ def test_get_results(repeat: bool, measure_time: bool) -> None:
         # ...otherwise we get fewer.
         assert results_with_repeats == DummyModel.RESULTS
 
+
+@pytest.mark.parametrize("forward", [False, True])
+@pytest.mark.parametrize("num_dataset_truncation", [2, 3, 4])
+@pytest.mark.parametrize("num_top_results", [2, 3, 4, 5])
+def test_compute_metrics(
+    forward: bool, num_dataset_truncation: int, num_top_results: int, tmp_path: Path
+) -> None:
+    samples = []
+    for input, output in [("C.N", "CN"), ("NC=O", "CN"), ("C.C", "CC")]:
+        if forward:
+            input, output = output, input
+        samples.append(
+            ReactionSample.from_reaction_smiles_strict(f"{input}>>{output}", mapped=False)
+        )
+
+    for fold in DataFold:
+        DiskReactionDataset.save_samples_to_file(data_dir=tmp_path, fold=fold, samples=samples)
+
+    eval_results = compute_metrics(
+        model=DummyModel(is_forward=forward, repeat=False),
+        dataset=DiskReactionDataset(tmp_path, sample_cls=ReactionSample),
+        num_dataset_truncation=num_dataset_truncation,
+        num_top_results=num_top_results,
+    )
+
+    # Compute by hand what the resulting accuracy should be.
+    num_samples = min(num_dataset_truncation, 3)
+    is_correct_top_1 = [True, False, False][:num_samples]
+    is_correct_top_10 = [True, num_top_results >= 4, False][:num_samples]
+
+    expected_accuracy_top_1 = sum(is_correct_top_1) / num_samples
+    expected_accuracy_top_max = sum(is_correct_top_10) / num_samples
+
+    assert math.isclose(eval_results.top_k[0], expected_accuracy_top_1)
+    assert math.isclose(eval_results.top_k[-1], expected_accuracy_top_max)
+
+
 def test_print_and_save(tmp_path: Path) -> None:
     input_mol = Molecule("c1ccccc1N")
     output_mol_bag = Bag([Molecule("c1ccccc1"), Molecule("N")])
@@ -97,9 +154,9 @@ def test_print_and_save(tmp_path: Path) -> None:
     )
 
     config = EvalConfig(
-        data_dir=tmp_path,
+        data_dir=str(tmp_path),
         model_class=BackwardModelClass.RetroKNN,
-        results_dir=tmp_path,
+        results_dir=str(tmp_path),
     )
 
     print_and_save(results, config)
