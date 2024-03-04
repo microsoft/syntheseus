@@ -103,6 +103,12 @@ def test_get_results(repeat: bool, measure_time: bool) -> None:
 def test_compute_metrics(
     forward: bool, num_dataset_truncation: int, num_top_results: int, tmp_path: Path
 ) -> None:
+    """Test the `compute_metrics` function.
+
+    By extension this also tests `get_results` (and thus calls the model). As `compute_metrics` has
+    a slightly different behaviour depending on whether the model is forward or backward, this test
+    checks both cases.
+    """
     samples = []
     for input, output in [("C.N", "CN"), ("NC=O", "CN"), ("C.C", "CC")]:
         if forward:
