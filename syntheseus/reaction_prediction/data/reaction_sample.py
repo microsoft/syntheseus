@@ -19,7 +19,6 @@ class ReactionSample(Reaction):
 
     reagents: str = field(default="", hash=True, compare=True)
     mapped_reaction_smiles: Optional[str] = field(default=None, hash=False, compare=False)
-    template: Optional[str] = field(default=None, hash=False, compare=False)
 
     @property
     def reaction_smiles_with_reagents(self) -> str:
