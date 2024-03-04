@@ -23,9 +23,9 @@ class ReactionSample(Reaction):
     @property
     def reaction_smiles_with_reagents(self) -> str:
         return (
-            f"{self.reactants_combined}{REACTION_SEPARATOR}"
+            f"{self.reactants_str}{REACTION_SEPARATOR}"
             f"{self.reagents}{REACTION_SEPARATOR}"
-            f"{self.products_combined}"
+            f"{self.products_str}"
         )
 
     @classmethod

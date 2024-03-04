@@ -52,18 +52,16 @@ class Reaction:
         return set(self.products)
 
     @property
-    def reactants_combined(self) -> str:
+    def reactants_str(self) -> str:
         return molecule_bag_to_smiles(self.reactants)
 
     @property
-    def products_combined(self) -> str:
+    def products_str(self) -> str:
         return molecule_bag_to_smiles(self.products)
 
     @property
     def reaction_smiles(self) -> str:
-        return reaction_string(
-            reactants_str=self.reactants_combined, products_str=self.products_combined
-        )
+        return reaction_string(reactants_str=self.reactants_str, products_str=self.products_str)
 
     def __str__(self) -> str:
         output = self.reaction_smiles
