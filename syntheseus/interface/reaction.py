@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Collection, Optional
+from typing import Optional
 
 from syntheseus.interface.bag import Bag
-from syntheseus.interface.molecule import SMILES_SEPARATOR, Molecule
+from syntheseus.interface.molecule import Molecule, molecule_bag_to_smiles
 from syntheseus.interface.typed_dict import TypedDict
 
 REACTION_SEPARATOR = ">"
@@ -23,11 +23,6 @@ class ReactionMetaData(TypedDict, total=False):
     reaction_id: int  # template id or other kind of reaction id, if applicable
     reaction_smiles: str  # reaction smiles for this reaction
     ground_truth_match: bool  # whether this reaction matches ground truth
-
-
-def combine_mols_to_string(mols: Collection[Molecule]) -> str:
-    """Produces a consistent string representation of a collection of molecules."""
-    return SMILES_SEPARATOR.join([mol.smiles for mol in sorted(mols)])
 
 
 def reaction_string(reactants_str: str, product_str: str) -> str:
@@ -59,8 +54,8 @@ class Reaction:
     @property
     def reaction_smiles(self) -> str:
         return reaction_string(
-            reactants_str=combine_mols_to_string(self.reactants),
-            product_str=combine_mols_to_string(self.products),
+            reactants_str=molecule_bag_to_smiles(self.reactants),
+            product_str=molecule_bag_to_smiles(self.products),
         )
 
     def __str__(self) -> str:
