@@ -55,3 +55,7 @@ def get_config(
     config = OmegaConf.merge(schema, *conf_yamls, conf_cli)
     OmegaConf.set_readonly(config, True)  # should not be written to
     return cast(R, config)
+
+
+def get_error_message_for_missing_value(name: str, possible_values: List[str]) -> str:
+    return f"{name} should be set to one of [{', '.join(possible_values)}]"

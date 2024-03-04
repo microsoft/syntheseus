@@ -22,7 +22,7 @@ from dataclasses import dataclass, field, fields
 from functools import partial
 from itertools import islice
 from statistics import mean, median
-from typing import Any, Callable, Dict, Generic, Iterable, List, Optional, Sequence, cast
+from typing import Any, Callable, Dict, Generic, Iterable, List, Optional, Sequence, Tuple, cast
 
 from more_itertools import batched
 from omegaconf import MISSING, OmegaConf
@@ -34,7 +34,6 @@ from syntheseus.interface.models import (
     ReactionModel,
     ReactionType,
 )
-from syntheseus.interface.molecule import Molecule
 from syntheseus.interface.reaction import Reaction, SingleProductReaction
 from syntheseus.reaction_prediction.data.dataset import (
     DataFold,
@@ -42,8 +41,17 @@ from syntheseus.reaction_prediction.data.dataset import (
     ReactionDataset,
 )
 from syntheseus.reaction_prediction.data.reaction_sample import ReactionSample
-from syntheseus.reaction_prediction.inference.config import BackwardModelConfig, ForwardModelConfig
-from syntheseus.reaction_prediction.utils.config import get_config as cli_get_config
+from syntheseus.reaction_prediction.inference.config import (
+    BackwardModelClass,
+    BackwardModelConfig,
+    ForwardModelConfig,
+)
+from syntheseus.reaction_prediction.utils.config import (
+    get_config as cli_get_config,
+)
+from syntheseus.reaction_prediction.utils.config import (
+    get_error_message_for_missing_value,
+)
 from syntheseus.reaction_prediction.utils.metrics import (
     ModelTimingResults,
     TopKMetricsAccumulator,
@@ -249,7 +257,7 @@ def compute_metrics(
         total=math.ceil(test_dataset_size / batch_size),
     ):
         # Tell mypy what the type of `batch` is as `batched` seems to lose it.
-        batch = cast(tuple[ReactionSample], batch)
+        batch = cast(Tuple[ReactionSample], batch)
 
         inputs: List[InputType] = []
         outputs: List[ReactionType] = []
@@ -263,10 +271,10 @@ def compute_metrics(
                 inputs.append(sample.reactants)
                 output = Reaction(reactants=sample.reactants, products=sample.products)
             else:
-                [single_product] = sample.products
-                assert isinstance(
-                    single_product, Molecule
+                assert (
+                    len(sample.products) == 1
                 ), f"Model expected a single target product, got {len(sample.products)}"
+                [single_product] = sample.products
 
                 inputs.append(cast(InputType, single_product))
                 output = SingleProductReaction(reactants=sample.reactants, product=single_product)
@@ -397,7 +405,11 @@ def print_and_save(results: EvalResults, config: EvalConfig, suffix: str = "") -
         if f.name not in ("model_info", "top_k", "predictions", "back_translation_predictions"):
             print(f"{f.name}: {getattr(results, f.name)}")
 
-    print(f"top_k results {suffix}:")
+    if suffix:
+        print(f"top_k results {suffix}:")
+    else:
+        print("top_k results:")
+
     for k, result in chosen_topk_results.items():
         print(f"{k}: {result}", flush=True)
 
@@ -427,6 +439,14 @@ def run_from_config(
 
     print("Running eval with the following config:")
     print(config)
+
+    if OmegaConf.is_missing(config, "data_dir"):
+        raise ValueError("data_dir should be set to a directory containing a reaction dataset")
+
+    if OmegaConf.is_missing(config, "model_class"):
+        raise ValueError(
+            get_error_message_for_missing_value("model_class", [c.name for c in BackwardModelClass])
+        )
 
     get_model_fn = partial(get_model, batch_size=config.batch_size, num_gpus=config.num_gpus)
     model = get_model_fn(config, remove_duplicates=config.skip_repeats)
