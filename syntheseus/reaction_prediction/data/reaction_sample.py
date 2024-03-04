@@ -6,57 +6,26 @@ from typing import Any, Dict, Optional, Type, TypeVar
 
 from syntheseus.interface.bag import Bag
 from syntheseus.interface.molecule import SMILES_SEPARATOR, Molecule
-from syntheseus.interface.reaction import REACTION_SEPARATOR
-from syntheseus.reaction_prediction.chem.utils import (
-    molecule_bag_to_smiles,
-    remove_atom_mapping,
-)
+from syntheseus.interface.reaction import REACTION_SEPARATOR, Reaction
+from syntheseus.reaction_prediction.chem.utils import remove_atom_mapping
 from syntheseus.reaction_prediction.utils.misc import undictify_bag_of_molecules
 
 ReactionType = TypeVar("ReactionType", bound="ReactionSample")
 
 
 @dataclass(frozen=True, order=False)
-class ReactionSample:
-    """
-    Wraps around a reaction.
+class ReactionSample(Reaction):
+    """Extends a `Reaction` with fields and methods relevant to data loading and saving."""
 
-    It is frozen since it should not need to be edited,
-    and this will auto-implement __eq__ and __hash__ methods.
-    """
-
-    reactants: Bag[Molecule] = field(hash=True, compare=True)
-    products: Bag[Molecule] = field(hash=True, compare=True)
     reagents: str = field(default="", hash=True, compare=True)
-    identifier: Optional[str] = field(default=None, hash=True, compare=True)
-
     mapped_reaction_smiles: Optional[str] = field(default=None, hash=False, compare=False)
-    template: Optional[str] = field(default=None, hash=False, compare=False)
-
-    metadata: Dict[str, Any] = field(
-        default_factory=lambda: dict(),
-        hash=False,
-        compare=False,
-    )
-
-    @property
-    def reactants_combined(self) -> str:
-        return molecule_bag_to_smiles(self.reactants)
-
-    @property
-    def products_combined(self) -> str:
-        return molecule_bag_to_smiles(self.products)
-
-    @property
-    def reaction_smiles(self) -> str:
-        return f"{self.reactants_combined}{2 * REACTION_SEPARATOR}{self.products_combined}"
 
     @property
     def reaction_smiles_with_reagents(self) -> str:
         return (
-            f"{self.reactants_combined}{REACTION_SEPARATOR}"
+            f"{self.reactants_str}{REACTION_SEPARATOR}"
             f"{self.reagents}{REACTION_SEPARATOR}"
-            f"{self.products_combined}"
+            f"{self.products_str}"
         )
 
     @classmethod
