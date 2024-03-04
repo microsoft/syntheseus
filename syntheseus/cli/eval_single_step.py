@@ -405,7 +405,11 @@ def print_and_save(results: EvalResults, config: EvalConfig, suffix: str = "") -
         if f.name not in ("model_info", "top_k", "predictions", "back_translation_predictions"):
             print(f"{f.name}: {getattr(results, f.name)}")
 
-    print(" ".join(["top_k results", suffix]) + ":")
+    if suffix:
+        print(f"top_k results {suffix}:")
+    else:
+        print("top_k results:")
+
     for k, result in chosen_topk_results.items():
         print(f"{k}: {result}", flush=True)
 
