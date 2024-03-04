@@ -85,4 +85,9 @@ class Molecule:
 
 
 def molecule_bag_to_smiles(mols: Bag[Molecule]) -> str:
+    """Combine SMILES strings of molecules in a `Bag` into a single string.
+
+    For two bags that represent the same multiset of molecules this function will return the same
+    result, because iteration order over a `Bag` is deterministic (sorted using default comparator).
+    """
     return SMILES_SEPARATOR.join(mol.smiles for mol in mols)
