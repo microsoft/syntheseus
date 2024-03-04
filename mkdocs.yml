@@ -1,4 +1,5 @@
 site_name: Syntheseus
+site_url: https://microsoft.github.io/syntheseus/
 
 repo_name: microsoft/syntheseus
 repo_url: https://github.com/microsoft/syntheseus
@@ -46,3 +47,8 @@ markdown_extensions:
   - pymdownx.superfences
   - pymdownx.tabbed:
       alternate_style: true
+
+extra:
+  version:
+    default: stable
+    provider: mike
