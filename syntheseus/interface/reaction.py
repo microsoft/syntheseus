@@ -25,9 +25,9 @@ class ReactionMetaData(TypedDict, total=False):
     ground_truth_match: bool  # whether this reaction matches ground truth
 
 
-def reaction_string(reactants_str: str, product_str: str) -> str:
+def reaction_string(reactants_str: str, products_str: str) -> str:
     """Produces a consistent string representation of a reaction."""
-    return f"{reactants_str}{2*REACTION_SEPARATOR}{product_str}"
+    return f"{reactants_str}{2 * REACTION_SEPARATOR}{products_str}"
 
 
 @dataclass(frozen=True, order=False)
@@ -52,10 +52,17 @@ class Reaction:
         return set(self.products)
 
     @property
+    def reactants_combined(self) -> str:
+        return molecule_bag_to_smiles(self.reactants)
+
+    @property
+    def products_combined(self) -> str:
+        return molecule_bag_to_smiles(self.products)
+
+    @property
     def reaction_smiles(self) -> str:
         return reaction_string(
-            reactants_str=molecule_bag_to_smiles(self.reactants),
-            product_str=molecule_bag_to_smiles(self.products),
+            reactants_str=self.reactants_combined, products_str=self.products_combined
         )
 
     def __str__(self) -> str:
