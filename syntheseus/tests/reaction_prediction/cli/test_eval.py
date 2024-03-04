@@ -155,7 +155,7 @@ def test_print_and_save(tmp_path: Path) -> None:
 
     config = EvalConfig(
         data_dir=str(tmp_path),
-        model_class=BackwardModelClass.RetroKNN,
+        model_class=BackwardModelClass.RetroKNN,  # Model choice is arbitrary here.
         results_dir=str(tmp_path),
     )
 
