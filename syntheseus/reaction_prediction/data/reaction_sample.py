@@ -5,12 +5,9 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, Optional, Type, TypeVar
 
 from syntheseus.interface.bag import Bag
-from syntheseus.interface.molecule import SMILES_SEPARATOR, Molecule
+from syntheseus.interface.molecule import SMILES_SEPARATOR, Molecule, molecule_bag_to_smiles
 from syntheseus.interface.reaction import REACTION_SEPARATOR
-from syntheseus.reaction_prediction.chem.utils import (
-    molecule_bag_to_smiles,
-    remove_atom_mapping,
-)
+from syntheseus.reaction_prediction.chem.utils import remove_atom_mapping
 from syntheseus.reaction_prediction.utils.misc import undictify_bag_of_molecules
 
 ReactionType = TypeVar("ReactionType", bound="ReactionSample")

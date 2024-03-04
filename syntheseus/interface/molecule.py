@@ -7,6 +7,7 @@ from typing import Optional, Union
 
 from rdkit import Chem
 
+from syntheseus.interface.bag import Bag
 from syntheseus.interface.typed_dict import TypedDict
 
 SMILES_SEPARATOR = "."
@@ -81,3 +82,7 @@ class Molecule:
         if "rdkit_mol" not in self.metadata:
             self.metadata["rdkit_mol"] = Chem.MolFromSmiles(self.smiles)
         return self.metadata["rdkit_mol"]
+
+
+def molecule_bag_to_smiles(mols: Bag[Molecule]) -> str:
+    return SMILES_SEPARATOR.join(mol.smiles for mol in mols)

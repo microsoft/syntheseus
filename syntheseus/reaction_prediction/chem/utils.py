@@ -39,7 +39,3 @@ def molecule_bag_from_smiles(smiles: str) -> Optional[Bag[Molecule]]:
     except ValueError:
         # If any of the components ends up invalid we return `None` instead.
         return None
-
-
-def molecule_bag_to_smiles(mols: Bag[Molecule]) -> str:
-    return SMILES_SEPARATOR.join(mol.smiles for mol in mols)
