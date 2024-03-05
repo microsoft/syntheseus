@@ -16,7 +16,7 @@ Both the search targets and the purchasable molecules inventory are expected to 
 The `search` command accepts further arguments to configure the search algorithm; see `SearchConfig` in `cli/search.py` for the complete list.
 
 !!! info
-    When using one of the natively supported single-step models you can omit `model_dir`, which will cause `syntheseus` to use a default checkpoint trained on USPTO-50K (see [here](../../single_step) for details).
+    When using one of the natively supported single-step models you can omit `model_dir`, which will cause `syntheseus` to use a default checkpoint trained on USPTO-50K (see [here](../single_step.md) for details).
 
 ## Configuring the search algorithm
 
