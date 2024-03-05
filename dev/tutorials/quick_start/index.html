@@ -11,7 +11,7 @@
         <link rel="canonical" href="https://microsoft.github.io/syntheseus/dev/tutorials/quick_start/">
       
       
-        <link rel="prev" href="../../cli/eval_single_step/">
+        <link rel="prev" href="../../cli/search/">
       
       
       
@@ -434,6 +434,27 @@
   
   <span class="md-ellipsis">
     Single-Step Evaluation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/search/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Running Search
   </span>
   
 
@@ -1214,7 +1235,7 @@ model = LocalRetroModel()</div>
 
 <span class="k">def</span> <span class="nf">print_results</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">prediction</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">results</span><span class="p">):</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">: "</span> <span class="o">+</span> <span class="n">mols_to_str</span><span class="p">(</span><span class="n">prediction</span><span class="o">.</span><span class="n">output</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">: "</span> <span class="o">+</span> <span class="n">mols_to_str</span><span class="p">(</span><span class="n">prediction</span><span class="o">.</span><span class="n">reactants</span><span class="p">))</span>
 
 <span class="p">[</span><span class="n">results</span><span class="p">]</span> <span class="o">=</span> <span class="n">model</span><span class="p">([</span><span class="n">test_mol</span><span class="p">],</span> <span class="n">num_results</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 <span class="n">print_results</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
@@ -1224,7 +1245,7 @@ model = LocalRetroModel()</div>
 
 def print_results(results) -&gt; None:
     for idx, prediction in enumerate(results):
-        print(f"{idx + 1}: " + mols_to_str(prediction.output))
+        print(f"{idx + 1}: " + mols_to_str(prediction.reactants))
 
 [results] = model([test_mol], num_results=5)
 print_results(results)</div>
@@ -1241,9 +1262,7 @@ print_results(results)</div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>1: Cc1ccc(B(O)O)cc1 + Cc1ccc(Br)cc1
 2: Cc1ccc(B(O)O)cc1 + Cc1ccc(I)cc1
-3: Cc1ccc(B(O)O)cc1 + Cc1ccc(Br)cc1
-4: Cc1ccc(B(O)O)cc1 + Cc1ccc(I)cc1
-5: Cc1ccc(Br)cc1 + Cc1ccc([Mg+])cc1
+3: Cc1ccc(Br)cc1 + Cc1ccc([Mg+])cc1
 </pre>
 </div>
 </div>
@@ -1257,7 +1276,8 @@ print_results(results)</div>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>The outputs from the underlying model contain duplicates. We can use a higher-level utility function to get unique outputs as well as timing.</p>
+<p>We only got 3 results (despite requesting 5) as <code>syntheseus</code> automatically deduplicates the model outputs.</p>
+<p>As all single-step models are set up in a consistent way, it's easy to run several models and compare their outputs.</p>
 </div>
 </div>
 </div>
@@ -1271,79 +1291,6 @@ print_results(results)</div>
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy for="cell-4">
-<div>
-<span class="notice" hidden="">Copied!</span>
-<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
-<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-</svg>
-</div>
-</clipboard-copy>
-</div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">syntheseus.cli.eval_single_step</span> <span class="kn">import</span> <span class="n">get_results</span>
-
-<span class="n">results_with_timing</span> <span class="o">=</span> <span class="n">get_results</span><span class="p">(</span>
-    <span class="n">model</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="n">test_mol</span><span class="p">],</span> <span class="n">num_results</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">measure_time</span><span class="o">=</span><span class="kc">True</span>
-<span class="p">)</span>
-
-<span class="n">print_results</span><span class="p">(</span><span class="n">results_with_timing</span><span class="o">.</span><span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-
-<span class="n">time_taken</span> <span class="o">=</span> <span class="n">results_with_timing</span><span class="o">.</span><span class="n">model_timing_results</span><span class="o">.</span><span class="n">time_model_call</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Time taken by model call: </span><span class="si">{</span><span class="n">time_taken</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">s"</span><span class="p">)</span>
-</pre></div>
-<div class="clipboard-copy-txt" id="cell-4">from syntheseus.cli.eval_single_step import get_results
-
-results_with_timing = get_results(
-    model, inputs=[test_mol], num_results=5, measure_time=True
-)
-
-print_results(results_with_timing.results[0])
-
-time_taken = results_with_timing.model_timing_results.time_model_call
-print(f"\nTime taken by model call: {time_taken:.2f}s")</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>1: Cc1ccc(B(O)O)cc1 + Cc1ccc(Br)cc1
-2: Cc1ccc(B(O)O)cc1 + Cc1ccc(I)cc1
-3: Cc1ccc(Br)cc1 + Cc1ccc([Mg+])cc1
-
-Time taken by model call: 0.04s
-</pre>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>As <code>syntheseus</code> sets up all single-step models in a consistent way, it's easy to run several models and compare their outputs.</p>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [5]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="CodeMirror cm-s-jupyter">
-<div class="zeroclipboard-container">
-<clipboard-copy for="cell-5">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -1369,12 +1316,12 @@ Time taken by model call: 0.04s
     <span class="c1"># When interested in very few predictions (e.g. one), it may be</span>
     <span class="c1"># useful to set `num_results &gt; 1`, as this will cause e.g.</span>
     <span class="c1"># larger beam size for models based on beam search.</span>
-    <span class="p">[</span><span class="n">results</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_results</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="p">[</span><span class="n">test_mol</span><span class="p">],</span> <span class="n">num_results</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">results</span>
+    <span class="p">[</span><span class="n">results</span><span class="p">]</span> <span class="o">=</span> <span class="n">model</span><span class="p">([</span><span class="n">test_mol</span><span class="p">],</span> <span class="n">num_results</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 
-    <span class="n">top_prediction</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">output</span>
+    <span class="n">top_prediction</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">reactants</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">name</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s1">':'</span><span class="si">:</span><span class="s2">12</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">mols_to_str</span><span class="p">(</span><span class="n">top_prediction</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-5">from syntheseus.reaction_prediction.inference import *
+<div class="clipboard-copy-txt" id="cell-4">from syntheseus.reaction_prediction.inference import *
 
 models = [
     ChemformerModel(),
@@ -1390,9 +1337,9 @@ for model in models:
     # When interested in very few predictions (e.g. one), it may be
     # useful to set `num_results &gt; 1`, as this will cause e.g.
     # larger beam size for models based on beam search.
-    [results] = get_results(model, [test_mol], num_results=5).results
+    [results] = model([test_mol], num_results=5)
 
-    top_prediction = results[0].output
+    top_prediction = results[0].reactants
     print(f"{model.name + ':':12} {mols_to_str(top_prediction)}")</div>
 </div>
 </div>
@@ -1442,7 +1389,75 @@ RootAligned: Cc1ccc(Br)cc1 + Cc1ccc([Mg+])cc1
 <li>an inventory of purchasable (building block) molecules</li>
 <li>a search algorithm</li>
 </ul>
-<p>We can use any of the single-step models shown above, but they need to be wrapped to make them usable in search.</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [5]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy for="cell-5">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">syntheseus.search.mol_inventory</span> <span class="kn">import</span> <span class="n">SmilesListInventory</span>
+<span class="kn">from</span> <span class="nn">syntheseus.search.algorithms.breadth_first</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AndOr_BreadthFirstSearch</span>
+<span class="p">)</span>
+
+<span class="c1"># Set up a reaction model with caching enabled. Number of reactions</span>
+<span class="c1"># to request from the model at each step of the search needs to be</span>
+<span class="c1"># provided at construction time.</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">LocalRetroModel</span><span class="p">(</span><span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default_num_results</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+<span class="c1"># Dummy inventory with just two purchasable molecules.</span>
+<span class="n">inventory</span> <span class="o">=</span> <span class="n">SmilesListInventory</span><span class="p">(</span>
+    <span class="n">smiles_list</span><span class="o">=</span><span class="p">[</span><span class="s2">"Cc1ccc(B(O)O)cc1"</span><span class="p">,</span> <span class="s2">"O=Cc1ccc(I)cc1"</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="n">search_algorithm</span> <span class="o">=</span> <span class="n">AndOr_BreadthFirstSearch</span><span class="p">(</span>
+    <span class="n">reaction_model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+    <span class="n">mol_inventory</span><span class="o">=</span><span class="n">inventory</span><span class="p">,</span>
+    <span class="n">limit_iterations</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>  <span class="c1"># max number of algorithm iterations</span>
+    <span class="n">limit_reaction_model_calls</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>  <span class="c1"># max number of model calls</span>
+    <span class="n">time_limit_s</span><span class="o">=</span><span class="mf">60.0</span>  <span class="c1"># max runtime in seconds</span>
+<span class="p">)</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-5">from syntheseus.search.mol_inventory import SmilesListInventory
+from syntheseus.search.algorithms.breadth_first import (
+    AndOr_BreadthFirstSearch
+)
+
+# Set up a reaction model with caching enabled. Number of reactions
+# to request from the model at each step of the search needs to be
+# provided at construction time.
+model = LocalRetroModel(use_cache=True, default_num_results=10)
+
+# Dummy inventory with just two purchasable molecules.
+inventory = SmilesListInventory(
+    smiles_list=["Cc1ccc(B(O)O)cc1", "O=Cc1ccc(I)cc1"]
+)
+
+search_algorithm = AndOr_BreadthFirstSearch(
+    reaction_model=model,
+    mol_inventory=inventory,
+    limit_iterations=100,  # max number of algorithm iterations
+    limit_reaction_model_calls=100,  # max number of model calls
+    time_limit_s=60.0  # max runtime in seconds
+)</div>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -1465,28 +1480,16 @@ RootAligned: Cc1ccc(Br)cc1 + Cc1ccc([Mg+])cc1
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">syntheseus.reaction_prediction.utils.syntheseus_wrapper</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">SyntheseusBackwardReactionModel</span><span class="p">,</span>
-<span class="p">)</span>
-
-<span class="n">search_model</span> <span class="o">=</span> <span class="n">SyntheseusBackwardReactionModel</span><span class="p">(</span>
-    <span class="n">model</span><span class="o">=</span><span class="n">LocalRetroModel</span><span class="p">(),</span> <span class="n">num_results</span><span class="o">=</span><span class="mi">10</span>
-<span class="p">)</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">output_graph</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">search_algorithm</span><span class="o">.</span><span class="n">run_from_mol</span><span class="p">(</span><span class="n">test_mol</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-6">from syntheseus.reaction_prediction.utils.syntheseus_wrapper import (
-    SyntheseusBackwardReactionModel,
-)
-
-search_model = SyntheseusBackwardReactionModel(
-    model=LocalRetroModel(), num_results=10
-)</div>
+<div class="clipboard-copy-txt" id="cell-6">output_graph, _ = search_algorithm.run_from_mol(test_mol)</div>
 </div>
 </div>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -1504,95 +1507,9 @@ search_model = SyntheseusBackwardReactionModel(
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">syntheseus.search.mol_inventory</span> <span class="kn">import</span> <span class="n">SmilesListInventory</span>
-<span class="kn">from</span> <span class="nn">syntheseus.search.algorithms.breadth_first</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">AndOr_BreadthFirstSearch</span>
-<span class="p">)</span>
-
-<span class="c1"># Dummy inventory with just two purchasable molecules.</span>
-<span class="n">inventory</span> <span class="o">=</span> <span class="n">SmilesListInventory</span><span class="p">(</span>
-    <span class="n">smiles_list</span><span class="o">=</span><span class="p">[</span><span class="s2">"Cc1ccc(B(O)O)cc1"</span><span class="p">,</span> <span class="s2">"O=Cc1ccc(I)cc1"</span><span class="p">]</span>
-<span class="p">)</span>
-
-<span class="n">search_algorithm</span> <span class="o">=</span> <span class="n">AndOr_BreadthFirstSearch</span><span class="p">(</span>
-    <span class="n">reaction_model</span><span class="o">=</span><span class="n">search_model</span><span class="p">,</span>
-    <span class="n">mol_inventory</span><span class="o">=</span><span class="n">inventory</span><span class="p">,</span>
-    <span class="n">limit_iterations</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>  <span class="c1"># max number of algorithm iterations</span>
-    <span class="n">limit_reaction_model_calls</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>  <span class="c1"># max number of model calls</span>
-    <span class="n">time_limit_s</span><span class="o">=</span><span class="mf">60.0</span>  <span class="c1"># max runtime in seconds</span>
-<span class="p">)</span>
-</pre></div>
-<div class="clipboard-copy-txt" id="cell-7">from syntheseus.search.mol_inventory import SmilesListInventory
-from syntheseus.search.algorithms.breadth_first import (
-    AndOr_BreadthFirstSearch
-)
-
-# Dummy inventory with just two purchasable molecules.
-inventory = SmilesListInventory(
-    smiles_list=["Cc1ccc(B(O)O)cc1", "O=Cc1ccc(I)cc1"]
-)
-
-search_algorithm = AndOr_BreadthFirstSearch(
-    reaction_model=search_model,
-    mol_inventory=inventory,
-    limit_iterations=100,  # max number of algorithm iterations
-    limit_reaction_model_calls=100,  # max number of model calls
-    time_limit_s=60.0  # max runtime in seconds
-)</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="CodeMirror cm-s-jupyter">
-<div class="zeroclipboard-container">
-<clipboard-copy for="cell-8">
-<div>
-<span class="notice" hidden="">Copied!</span>
-<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
-<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-</svg>
-</div>
-</clipboard-copy>
-</div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">output_graph</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">search_algorithm</span><span class="o">.</span><span class="n">run_from_mol</span><span class="p">(</span><span class="n">test_mol</span><span class="p">)</span>
-</pre></div>
-<div class="clipboard-copy-txt" id="cell-8">output_graph, _ = search_algorithm.run_from_mol(test_mol)</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [9]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="CodeMirror cm-s-jupyter">
-<div class="zeroclipboard-container">
-<clipboard-copy for="cell-9">
-<div>
-<span class="notice" hidden="">Copied!</span>
-<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
-<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-</svg>
-</div>
-</clipboard-copy>
-</div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Explored </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">output_graph</span><span class="p">)</span><span class="si">}</span><span class="s2"> nodes"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-9">print(f"Explored {len(output_graph)} nodes")</div>
+<div class="clipboard-copy-txt" id="cell-7">print(f"Explored {len(output_graph)} nodes")</div>
 </div>
 </div>
 </div>
@@ -1628,10 +1545,10 @@ search_algorithm = AndOr_BreadthFirstSearch(
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [10]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-10">
+<clipboard-copy for="cell-8">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -1653,7 +1570,7 @@ search_algorithm = AndOr_BreadthFirstSearch(
     <span class="n">num_reactions</span> <span class="o">=</span> <span class="nb">len</span><span class="p">({</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">route</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">AndNode</span><span class="p">)})</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Route </span><span class="si">{</span><span class="n">idx</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> consists of </span><span class="si">{</span><span class="n">num_reactions</span><span class="si">}</span><span class="s2"> reactions"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-10">from syntheseus.search.analysis.route_extraction import (
+<div class="clipboard-copy-txt" id="cell-8">from syntheseus.search.analysis.route_extraction import (
     iter_routes_time_order,
 )
 from syntheseus.search.graph.and_or import AndNode
@@ -1700,10 +1617,10 @@ Route 2 consists of 3 reactions
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [11]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [9]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy for="cell-11">
+<clipboard-copy for="cell-9">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -1720,7 +1637,7 @@ Route 2 consists of 3 reactions
         <span class="n">output_graph</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="sa">f</span><span class="s2">"route_</span><span class="si">{</span><span class="n">idx</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">.pdf"</span><span class="p">,</span> <span class="n">nodes</span><span class="o">=</span><span class="n">route</span>
     <span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-11">from syntheseus.search.visualization import visualize_andor
+<div class="clipboard-copy-txt" id="cell-9">from syntheseus.search.visualization import visualize_andor
 
 for idx, route in enumerate(routes):
     visualize_andor(

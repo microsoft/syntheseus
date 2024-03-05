@@ -21,6 +21,11 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>https://microsoft.github.io/syntheseus/dev/cli/search/</loc>
+         <lastmod>2024-03-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>https://microsoft.github.io/syntheseus/dev/tutorials/quick_start/</loc>
          <lastmod>2024-03-05</lastmod>
          <changefreq>daily</changefreq>

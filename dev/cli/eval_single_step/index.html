@@ -14,7 +14,7 @@
         <link rel="prev" href="../../single_step/">
       
       
-        <link rel="next" href="../../tutorials/quick_start/">
+        <link rel="next" href="../search/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -541,6 +541,27 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../search/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Running Search
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -711,13 +732,13 @@
 
 <h1 id="single-step-evaluation">Single-step Evaluation</h1>
 <h2 id="usage">Usage</h2>
-<p>To run single-step model evaluation, run</p>
 <div class="highlight"><pre><span></span><code>syntheseus eval-single-step \
     data_dir=[DATA_DIR] \
+    fold=[TRAIN, VAL or TEST] \
     model_class=[MODEL_CLASS] \
     model_dir=[MODEL_DIR]
 </code></pre></div>
-<p>The script accepts further arguments to customize the evaluation such as which data fold to use; see <code>BaseEvalConfig</code> for the complete list.</p>
+<p>The <code>eval-single-step</code> command accepts further arguments to customize the evaluation; see <code>BaseEvalConfig</code> in <code>cli/eval_single_step.py</code> for the complete list.</p>
 <p>The code will scan <code>data_dir</code> looking for files matching <code>*{train, val, test}.{jsonl, csv, smi}</code> and select the right data format based on the file extension. An error will be raised in case of ambiguity. Only the fold that was selected for evaluation has to be present.</p>
 <h2 id="data-format">Data format</h2>
 <p>The single-step evaluation script supports reaction data in one of three formats.</p>
