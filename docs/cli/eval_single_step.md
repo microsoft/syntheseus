@@ -2,16 +2,15 @@
 
 ## Usage
 
-To run single-step model evaluation, run
-
 ```
 syntheseus eval-single-step \
     data_dir=[DATA_DIR] \
+    fold=[TRAIN, VAL or TEST] \
     model_class=[MODEL_CLASS] \
     model_dir=[MODEL_DIR]
 ```
 
-The script accepts further arguments to customize the evaluation such as which data fold to use; see `BaseEvalConfig` for the complete list.
+The `eval-single-step` command accepts further arguments to customize the evaluation; see `BaseEvalConfig` in `cli/eval_single_step.py` for the complete list.
 
 The code will scan `data_dir` looking for files matching `*{train, val, test}.{jsonl, csv, smi}` and select the right data format based on the file extension. An error will be raised in case of ambiguity. Only the fold that was selected for evaluation has to be present.
 
