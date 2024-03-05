@@ -48,7 +48,7 @@ There are also two installation sources:
 !!! note
 
     Make sure you are viewing the version of the docs matching your `syntheseus` installation.
-    Select the `x.y.z` version you installed (go [here](https://microsoft.github.io/syntheseus/stable/) for the latest one) if you used `pip`,
+    Select the `x.y.z` version you installed if you used `pip` (go [here](https://microsoft.github.io/syntheseus/stable/) for the latest one),
     or [dev](https://microsoft.github.io/syntheseus/dev/) if you installed `syntheseus` directly from GitHub.
 
 Core installation includes only minimal dependencies (no ML libraries), while full installation includes all supported models and also dependencies for visualization/development.
