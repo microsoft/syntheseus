@@ -8,13 +8,11 @@
       
       
       
-        <link rel="canonical" href="https://microsoft.github.io/syntheseus/dev/tutorials/quick_start/">
+        <link rel="canonical" href="https://microsoft.github.io/syntheseus/dev/tutorials/custom_model/">
       
       
-        <link rel="prev" href="../../cli/search/">
+        <link rel="prev" href="../quick_start/">
       
-      
-        <link rel="next" href="../custom_model/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -22,7 +20,7 @@
     
     
       
-        <title>Quick Start - Syntheseus</title>
+        <title>Integrating a Custom Model - Syntheseus</title>
       
     
     
@@ -74,7 +72,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#setting-up-a-single-step-model" class="md-skip">
+        <a href="#implementing-the-model-wrapper" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Quick Start
+              Integrating a Custom Model
             
           </span>
         </div>
@@ -222,7 +220,7 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="./" class="md-tabs__link">
+        <a href="../quick_start/" class="md-tabs__link">
           
   
   Tutorials
@@ -520,6 +518,27 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../quick_start/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quick Start
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -534,7 +553,7 @@
           
   
   <span class="md-ellipsis">
-    Quick Start
+    Integrating a Custom Model
   </span>
   
 
@@ -545,7 +564,7 @@
         
   
   <span class="md-ellipsis">
-    Quick Start
+    Integrating a Custom Model
   </span>
   
 
@@ -565,9 +584,9 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#setting-up-a-single-step-model" class="md-nav__link">
+  <a href="#implementing-the-model-wrapper" class="md-nav__link">
     <span class="md-ellipsis">
-      Setting up a single-step model
+      Implementing the model wrapper
     </span>
   </a>
   
@@ -586,27 +605,6 @@
   
 </nav>
       
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../custom_model/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Integrating a Custom Model
-  </span>
-  
-
-      </a>
     </li>
   
 
@@ -644,9 +642,9 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#setting-up-a-single-step-model" class="md-nav__link">
+  <a href="#implementing-the-model-wrapper" class="md-nav__link">
     <span class="md-ellipsis">
-      Setting up a single-step model
+      Implementing the model wrapper
     </span>
   </a>
   
@@ -679,7 +677,7 @@
   
 
 
-  <h1>Quick Start</h1>
+  <h1>Integrating a Custom Model</h1>
 
 <script>
 (function (global, factory) {
@@ -1122,7 +1120,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="setting-up-a-single-step-model">Setting up a single-step model<a class="anchor-link" href="#setting-up-a-single-step-model">¶</a></h2>
+<h2 id="implementing-the-model-wrapper">Implementing the model wrapper<a class="anchor-link" href="#implementing-the-model-wrapper">¶</a></h2>
 </div>
 </div>
 </div>
@@ -1133,7 +1131,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>Let's start by creating a test molecule and querying LocalRetro for proposed reactions.</p>
+<p>To integrate a custom model we need to wrap it into the shared model interface.</p>
 </div>
 </div>
 </div>
@@ -1156,17 +1154,9 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">syntheseus.interface.molecule</span> <span class="kn">import</span> <span class="n">Molecule</span>
-<span class="kn">from</span> <span class="nn">syntheseus.reaction_prediction.inference</span> <span class="kn">import</span> <span class="n">LocalRetroModel</span>
-
-<span class="n">test_mol</span> <span class="o">=</span> <span class="n">Molecule</span><span class="p">(</span><span class="s2">"Cc1ccc(-c2ccc(C)cc2)cc1"</span><span class="p">)</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">LocalRetroModel</span><span class="p">()</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">syntheseus.interface.models</span> <span class="kn">import</span> <span class="n">BackwardReactionModel</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-1">from syntheseus.interface.molecule import Molecule
-from syntheseus.reaction_prediction.inference import LocalRetroModel
-
-test_mol = Molecule("Cc1ccc(-c2ccc(C)cc2)cc1")
-model = LocalRetroModel()</div>
+<div class="clipboard-copy-txt" id="cell-1">from syntheseus.interface.models import BackwardReactionModel</div>
 </div>
 </div>
 </div>
@@ -1179,12 +1169,12 @@ model = LocalRetroModel()</div>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>Note that we didn't provide a path to the model checkpoint, so <code>syntheseus</code> will download a default checkpoint trained on USPTO-50K and cache it for later use. This behaviour can be overriden by providing a <code>model_dir</code> argument.</p>
+<p>As a demonstration we'll integrate a dummy model which only accepts molecules that are chains of carbon atoms <code>CC...C</code> and predicts "reactions" that split that chain into two parts. The <em>only</em> method we need to implement is <code>_get_reactions</code>; we split it into a few helper methods below for readability.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -1202,22 +1192,107 @@ model = LocalRetroModel()</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">model_dir</span><span class="p">)</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Sequence</span>
+<span class="kn">from</span> <span class="nn">syntheseus.interface.bag</span> <span class="kn">import</span> <span class="n">Bag</span>
+<span class="kn">from</span> <span class="nn">syntheseus.interface.molecule</span> <span class="kn">import</span> <span class="n">Molecule</span>
+<span class="kn">from</span> <span class="nn">syntheseus.interface.reaction</span> <span class="kn">import</span> <span class="n">SingleProductReaction</span>
+
+
+<span class="k">class</span> <span class="nc">ToyModel</span><span class="p">(</span><span class="n">BackwardReactionModel</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_get_reactions</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Molecule</span><span class="p">],</span> <span class="n">num_results</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">SingleProductReaction</span><span class="p">]]:</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_get_reactions_single</span><span class="p">(</span><span class="n">mol</span><span class="p">)[:</span><span class="n">num_results</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">mol</span> <span class="ow">in</span> <span class="n">inputs</span>
+        <span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_get_reaction_score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_atoms</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="c1"># Give higher score to reactions which break the input into</span>
+        <span class="c1"># equal-sized pieces.</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">n_atoms</span> <span class="o">-</span> <span class="n">i</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_get_reactions_single</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">mol</span><span class="p">:</span> <span class="n">Molecule</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">SingleProductReaction</span><span class="p">]:</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">mol</span><span class="o">.</span><span class="n">smiles</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">mol</span><span class="o">.</span><span class="n">smiles</span> <span class="o">!=</span> <span class="n">n</span> <span class="o">*</span> <span class="s2">"C"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="n">scores</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_reaction_score</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">)]</span>
+        <span class="n">score_total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span>
+
+        <span class="n">probs</span> <span class="o">=</span> <span class="p">[</span><span class="n">score</span> <span class="o">/</span> <span class="n">score_total</span> <span class="k">for</span> <span class="n">score</span> <span class="ow">in</span> <span class="n">scores</span><span class="p">]</span>
+
+        <span class="n">reactions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">prob</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="n">probs</span><span class="p">):</span>
+            <span class="n">reactant_1</span> <span class="o">=</span> <span class="n">Molecule</span><span class="p">(</span><span class="n">i</span> <span class="o">*</span> <span class="s2">"C"</span><span class="p">)</span>
+            <span class="n">reactant_2</span> <span class="o">=</span> <span class="n">Molecule</span><span class="p">((</span><span class="n">n</span> <span class="o">-</span> <span class="n">i</span><span class="p">)</span> <span class="o">*</span> <span class="s2">"C"</span><span class="p">)</span>
+
+            <span class="n">reactions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SingleProductReaction</span><span class="p">(</span>
+                    <span class="n">reactants</span><span class="o">=</span><span class="n">Bag</span><span class="p">([</span><span class="n">reactant_1</span><span class="p">,</span> <span class="n">reactant_2</span><span class="p">]),</span>
+                    <span class="n">product</span><span class="o">=</span><span class="n">mol</span><span class="p">,</span>
+                    <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"probability"</span><span class="p">:</span> <span class="n">prob</span><span class="p">},</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+    
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="n">reactions</span><span class="p">,</span>
+            <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"probability"</span><span class="p">],</span>
+            <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-2">print(model.model_dir)</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>/home/krmaziar/.cache/torch/syntheseus/LocalRetro_backward
-</pre>
+<div class="clipboard-copy-txt" id="cell-2">from typing import Sequence
+from syntheseus.interface.bag import Bag
+from syntheseus.interface.molecule import Molecule
+from syntheseus.interface.reaction import SingleProductReaction
+
+
+class ToyModel(BackwardReactionModel):
+    def _get_reactions(
+        self, inputs: list[Molecule], num_results: int
+    ) -&gt; list[Sequence[SingleProductReaction]]:
+        return [
+            self._get_reactions_single(mol)[:num_results]
+            for mol in inputs
+        ]
+
+    def _get_reaction_score(self, i: int, n_atoms: int) -&gt; float:
+        # Give higher score to reactions which break the input into
+        # equal-sized pieces.
+        return float(min(i, n_atoms - i))
+
+    def _get_reactions_single(
+        self, mol: Molecule
+    ) -&gt; Sequence[SingleProductReaction]:
+        n = len(mol.smiles)
+        if mol.smiles != n * "C":
+            return []
+
+        scores = [self._get_reaction_score(i, n) for i in range(1, n)]
+        score_total = sum(scores)
+
+        probs = [score / score_total for score in scores]
+
+        reactions = []
+        for i, prob in zip(range(1, n), probs):
+            reactant_1 = Molecule(i * "C")
+            reactant_2 = Molecule((n - i) * "C")
+
+            reactions.append(
+                SingleProductReaction(
+                    reactants=Bag([reactant_1, reactant_2]),
+                    product=mol,
+                    metadata={"probability": prob},
+                )
+            )
+    
+        return sorted(
+            reactions,
+            key=lambda r: r.metadata["probability"],
+            reverse=True,
+        )</div>
 </div>
 </div>
 </div>
@@ -1230,12 +1305,12 @@ model = LocalRetroModel()</div>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>Now let's print the top 5 predictions for our test molecule.</p>
+<p>Let's make sure this works. Note that we implement <code>_get_reactions</code> but call the models using <code>__call__</code>; this allows <code>syntheseus</code> to inject extra processing such as deduplication or caching.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -1253,54 +1328,11 @@ model = LocalRetroModel()</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="k">def</span> <span class="nf">mols_to_str</span><span class="p">(</span><span class="n">mols</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-    <span class="k">return</span> <span class="s2">" + "</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">mol</span><span class="o">.</span><span class="n">smiles</span> <span class="k">for</span> <span class="n">mol</span> <span class="ow">in</span> <span class="n">mols</span><span class="p">])</span>
-
-<span class="k">def</span> <span class="nf">print_results</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">prediction</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">results</span><span class="p">):</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">: "</span> <span class="o">+</span> <span class="n">mols_to_str</span><span class="p">(</span><span class="n">prediction</span><span class="o">.</span><span class="n">reactants</span><span class="p">))</span>
-
-<span class="p">[</span><span class="n">results</span><span class="p">]</span> <span class="o">=</span> <span class="n">model</span><span class="p">([</span><span class="n">test_mol</span><span class="p">],</span> <span class="n">num_results</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
-<span class="n">print_results</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">ToyModel</span><span class="p">()</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-3">def mols_to_str(mols) -&gt; str:
-    return " + ".join([mol.smiles for mol in mols])
-
-def print_results(results) -&gt; None:
-    for idx, prediction in enumerate(results):
-        print(f"{idx + 1}: " + mols_to_str(prediction.reactants))
-
-[results] = model([test_mol], num_results=5)
-print_results(results)</div>
+<div class="clipboard-copy-txt" id="cell-3">model = ToyModel()</div>
 </div>
 </div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>1: Cc1ccc(B(O)O)cc1 + Cc1ccc(Br)cc1
-2: Cc1ccc(B(O)O)cc1 + Cc1ccc(I)cc1
-3: Cc1ccc(Br)cc1 + Cc1ccc([Mg+])cc1
-</pre>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>We only got 3 results (despite requesting 5) as <code>syntheseus</code> automatically deduplicates the model outputs.</p>
-<p>As all single-step models are set up in a consistent way, it's easy to run several models and compare their outputs.</p>
 </div>
 </div>
 </div>
@@ -1323,47 +1355,23 @@ print_results(results)</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">syntheseus.reaction_prediction.inference</span> <span class="kn">import</span> <span class="o">*</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="k">def</span> <span class="nf">print_predictions</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">smiles</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="p">[</span><span class="n">reactions</span><span class="p">]</span> <span class="o">=</span> <span class="n">model</span><span class="p">([</span><span class="n">Molecule</span><span class="p">(</span><span class="n">smiles</span><span class="p">)])</span>
 
-<span class="n">models</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="n">ChemformerModel</span><span class="p">(),</span>
-    <span class="n">Graph2EditsModel</span><span class="p">(),</span>
-    <span class="n">LocalRetroModel</span><span class="p">(),</span>
-    <span class="n">MEGANModel</span><span class="p">(),</span>
-    <span class="n">MHNreactModel</span><span class="p">(),</span>
-    <span class="n">RetroKNNModel</span><span class="p">(),</span>
-    <span class="n">RootAlignedModel</span><span class="p">(),</span>
-<span class="p">]</span>
+    <span class="k">for</span> <span class="n">reaction</span> <span class="ow">in</span> <span class="n">reactions</span><span class="p">:</span>
+        <span class="n">probability</span> <span class="o">=</span> <span class="n">reaction</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"probability"</span><span class="p">]</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">reaction</span><span class="si">}</span><span class="s2"> (probability: </span><span class="si">{</span><span class="n">probability</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
 
-<span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">models</span><span class="p">:</span>
-    <span class="c1"># When interested in very few predictions (e.g. one), it may be</span>
-    <span class="c1"># useful to set `num_results &gt; 1`, as this will cause e.g.</span>
-    <span class="c1"># larger beam size for models based on beam search.</span>
-    <span class="p">[</span><span class="n">results</span><span class="p">]</span> <span class="o">=</span> <span class="n">model</span><span class="p">([</span><span class="n">test_mol</span><span class="p">],</span> <span class="n">num_results</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
-
-    <span class="n">top_prediction</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">reactants</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">name</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s1">':'</span><span class="si">:</span><span class="s2">12</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">mols_to_str</span><span class="p">(</span><span class="n">top_prediction</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">print_predictions</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"CCCC"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-4">from syntheseus.reaction_prediction.inference import *
+<div class="clipboard-copy-txt" id="cell-4">def print_predictions(model, smiles: str):
+    [reactions] = model([Molecule(smiles)])
 
-models = [
-    ChemformerModel(),
-    Graph2EditsModel(),
-    LocalRetroModel(),
-    MEGANModel(),
-    MHNreactModel(),
-    RetroKNNModel(),
-    RootAlignedModel(),
-]
+    for reaction in reactions:
+        probability = reaction.metadata["probability"]
+        print(f"{reaction} (probability: {probability:.3f})")
 
-for model in models:
-    # When interested in very few predictions (e.g. one), it may be
-    # useful to set `num_results &gt; 1`, as this will cause e.g.
-    # larger beam size for models based on beam search.
-    [results] = model([test_mol], num_results=5)
-
-    top_prediction = results[0].reactants
-    print(f"{model.name + ':':12} {mols_to_str(top_prediction)}")</div>
+print_predictions(model, "CCCC")</div>
 </div>
 </div>
 </div>
@@ -1375,16 +1383,22 @@ for model in models:
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Chemformer:  Cc1ccc(Br)cc1 + Cc1ccc(Br)cc1
-Graph2Edits: Cc1ccc(Br)cc1 + Cc1ccc([Sn](C)(C)C)cc1
-LocalRetro:  Cc1ccc(B(O)O)cc1 + Cc1ccc(Br)cc1
-MEGAN:       Cc1ccc(Br)cc1 + Cc1ccc([Mg+])cc1
-MHNreact:    Cc1ccc(Br)cc1 + Cc1ccc([Mg+])cc1
-RetroKNN:    Cc1ccc(B(O)O)cc1 + Cc1ccc(Br)cc1
-RootAligned: Cc1ccc(Br)cc1 + Cc1ccc([Mg+])cc1
+<pre>CC.CC&gt;&gt;CCCC (probability: 0.500)
+C.CCC&gt;&gt;CCCC (probability: 0.250)
 </pre>
 </div>
 </div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p>The model is working as expected. <code>CCC.C&gt;&gt;CCCC</code> is not returned, as order of reactants in a <code>Bag</code> doesn't matter, and thus it's the same as <code>C.CCC&gt;&gt;CCCC</code>. However, note that currently <code>syntheseus</code> only removes duplicated reactions but does <em>not</em> add the probabilities of all duplicates together (and search algorithms generally do not depend on all the probabilities summing up to 1). If you prefer to instead sum the probabilities of duplicate reactions, you can implement this behaviour yourself by overriding <code>filter_reactions</code> (or even in <code>_get_reactions</code> directly).</p>
 </div>
 </div>
 </div>
@@ -1406,12 +1420,7 @@ RootAligned: Cc1ccc(Br)cc1 + Cc1ccc([Mg+])cc1
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>To run multi-step search we need three things:</p>
-<ul>
-<li>a reaction model</li>
-<li>an inventory of purchasable (building block) molecules</li>
-<li>a search algorithm</li>
-</ul>
+<p>As in the "Quick Start" tutorial, we will now proceed to running multi-step search using our newly integrated model. This time we will use a proper search algorithm (Retro*) instead of BFS, so that it takes into account the single-step probabilities.</p>
 </div>
 </div>
 </div>
@@ -1434,58 +1443,80 @@ RootAligned: Cc1ccc(Br)cc1 + Cc1ccc([Mg+])cc1
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">syntheseus.search.mol_inventory</span> <span class="kn">import</span> <span class="n">SmilesListInventory</span>
-<span class="kn">from</span> <span class="nn">syntheseus.search.algorithms.breadth_first</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">AndOr_BreadthFirstSearch</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">syntheseus.search.analysis.route_extraction</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">iter_routes_time_order</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="c1"># Set up a reaction model with caching enabled. Number of reactions</span>
-<span class="c1"># to request from the model at each step of the search needs to be</span>
-<span class="c1"># provided at construction time.</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">LocalRetroModel</span><span class="p">(</span><span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default_num_results</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
-
-<span class="c1"># Dummy inventory with just two purchasable molecules.</span>
-<span class="n">inventory</span> <span class="o">=</span> <span class="n">SmilesListInventory</span><span class="p">(</span>
-    <span class="n">smiles_list</span><span class="o">=</span><span class="p">[</span><span class="s2">"Cc1ccc(B(O)O)cc1"</span><span class="p">,</span> <span class="s2">"O=Cc1ccc(I)cc1"</span><span class="p">]</span>
+<span class="kn">from</span> <span class="nn">syntheseus.search.mol_inventory</span> <span class="kn">import</span> <span class="n">SmilesListInventory</span>
+<span class="kn">from</span> <span class="nn">syntheseus.search.algorithms.best_first.retro_star</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">RetroStarSearch</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">syntheseus.search.node_evaluation.common</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ConstantNodeEvaluator</span><span class="p">,</span>
+    <span class="n">ReactionModelLogProbCost</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="n">search_algorithm</span> <span class="o">=</span> <span class="n">AndOr_BreadthFirstSearch</span><span class="p">(</span>
-    <span class="n">reaction_model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
-    <span class="n">mol_inventory</span><span class="o">=</span><span class="n">inventory</span><span class="p">,</span>
-    <span class="n">limit_iterations</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>  <span class="c1"># max number of algorithm iterations</span>
-    <span class="n">limit_reaction_model_calls</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>  <span class="c1"># max number of model calls</span>
-    <span class="n">time_limit_s</span><span class="o">=</span><span class="mf">60.0</span>  <span class="c1"># max runtime in seconds</span>
-<span class="p">)</span>
+<span class="k">def</span> <span class="nf">get_routes</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="n">search_algorithm</span> <span class="o">=</span> <span class="n">RetroStarSearch</span><span class="p">(</span>
+        <span class="n">reaction_model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">mol_inventory</span><span class="o">=</span><span class="n">SmilesListInventory</span><span class="p">(</span><span class="n">smiles_list</span><span class="o">=</span><span class="p">[</span><span class="s2">"C"</span><span class="p">]),</span>
+        <span class="n">limit_iterations</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>  <span class="c1"># max number of algorithm iterations</span>
+        <span class="n">limit_reaction_model_calls</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>  <span class="c1"># max number of model calls</span>
+        <span class="n">time_limit_s</span><span class="o">=</span><span class="mf">60.0</span><span class="p">,</span>  <span class="c1"># max runtime in seconds</span>
+        <span class="n">value_function</span><span class="o">=</span><span class="n">ConstantNodeEvaluator</span><span class="p">(</span><span class="mf">0.0</span><span class="p">),</span>
+        <span class="n">and_node_cost_fn</span><span class="o">=</span><span class="n">ReactionModelLogProbCost</span><span class="p">(),</span>
+    <span class="p">)</span>
+
+    <span class="n">output_graph</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">search_algorithm</span><span class="o">.</span><span class="n">run_from_mol</span><span class="p">(</span>
+        <span class="n">Molecule</span><span class="p">(</span><span class="s2">"CCCCCCCC"</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">routes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+        <span class="n">iter_routes_time_order</span><span class="p">(</span><span class="n">output_graph</span><span class="p">,</span> <span class="n">max_routes</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">routes</span><span class="p">)</span><span class="si">}</span><span class="s2"> routes"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">output_graph</span><span class="p">,</span> <span class="n">routes</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-5">from syntheseus.search.mol_inventory import SmilesListInventory
-from syntheseus.search.algorithms.breadth_first import (
-    AndOr_BreadthFirstSearch
+<div class="clipboard-copy-txt" id="cell-5">from syntheseus.search.analysis.route_extraction import (
+    iter_routes_time_order,
 )
 
-# Set up a reaction model with caching enabled. Number of reactions
-# to request from the model at each step of the search needs to be
-# provided at construction time.
-model = LocalRetroModel(use_cache=True, default_num_results=10)
-
-# Dummy inventory with just two purchasable molecules.
-inventory = SmilesListInventory(
-    smiles_list=["Cc1ccc(B(O)O)cc1", "O=Cc1ccc(I)cc1"]
+from syntheseus.search.mol_inventory import SmilesListInventory
+from syntheseus.search.algorithms.best_first.retro_star import (
+    RetroStarSearch
+)
+from syntheseus.search.node_evaluation.common import (
+    ConstantNodeEvaluator,
+    ReactionModelLogProbCost,
 )
 
-search_algorithm = AndOr_BreadthFirstSearch(
-    reaction_model=model,
-    mol_inventory=inventory,
-    limit_iterations=100,  # max number of algorithm iterations
-    limit_reaction_model_calls=100,  # max number of model calls
-    time_limit_s=60.0  # max runtime in seconds
-)</div>
+def get_routes(model):
+    search_algorithm = RetroStarSearch(
+        reaction_model=model,
+        mol_inventory=SmilesListInventory(smiles_list=["C"]),
+        limit_iterations=100,  # max number of algorithm iterations
+        limit_reaction_model_calls=100,  # max number of model calls
+        time_limit_s=60.0,  # max runtime in seconds
+        value_function=ConstantNodeEvaluator(0.0),
+        and_node_cost_fn=ReactionModelLogProbCost(),
+    )
+
+    output_graph, _ = search_algorithm.run_from_mol(
+        Molecule("CCCCCCCC")
+    )
+    routes = list(
+        iter_routes_time_order(output_graph, max_routes=100)
+    )
+
+    print(f"Found {len(routes)} routes")
+    return output_graph, routes</div>
 </div>
 </div>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -1503,11 +1534,38 @@ search_algorithm = AndOr_BreadthFirstSearch(
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">output_graph</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">search_algorithm</span><span class="o">.</span><span class="n">run_from_mol</span><span class="p">(</span><span class="n">test_mol</span><span class="p">)</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">ToyModel</span><span class="p">(</span><span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">output_graph</span><span class="p">,</span> <span class="n">routes</span> <span class="o">=</span> <span class="n">get_routes</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-6">output_graph, _ = search_algorithm.run_from_mol(test_mol)</div>
+<div class="clipboard-copy-txt" id="cell-6">model = ToyModel(use_cache=True)
+output_graph, routes = get_routes(model)
 </div>
 </div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>Found 22 routes
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p>Let's see how many times the reaction model was actually called.</p>
 </div>
 </div>
 </div>
@@ -1530,9 +1588,9 @@ search_algorithm = AndOr_BreadthFirstSearch(
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Explored </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">output_graph</span><span class="p">)</span><span class="si">}</span><span class="s2"> nodes"</span><span class="p">)</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">num_calls</span><span class="p">()</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-7">print(f"Explored {len(output_graph)} nodes")</div>
+<div class="clipboard-copy-txt" id="cell-7">model.num_calls()</div>
 </div>
 </div>
 </div>
@@ -1541,11 +1599,10 @@ search_algorithm = AndOr_BreadthFirstSearch(
 <div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Explored 1256 nodes
-</pre>
+<div class="jp-OutputArea-child jp-OutputArea-executeResult">
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[7]:</div>
+<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
+<pre>7</pre>
 </div>
 </div>
 </div>
@@ -1558,7 +1615,7 @@ search_algorithm = AndOr_BreadthFirstSearch(
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>The resulting graph contains all the explored molecules and reactions, some of which might have led to complete routes while others remained unsolved. From that we can extract complete routes.</p>
+<p>This makes sense: even though there are many more nodes in the search graph, the search only enountered 7 unique non-purchasable products (chains with lengths between 2 and 8); as we set <code>use_cache=True</code> the model was called on each of these products exactly once. We can pass <code>count_cache=True</code> to get the number of calls <em>including</em> those for which the answer was already cached.</p>
 </div>
 </div>
 </div>
@@ -1581,29 +1638,9 @@ search_algorithm = AndOr_BreadthFirstSearch(
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">syntheseus.search.analysis.route_extraction</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">iter_routes_time_order</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="kn">from</span> <span class="nn">syntheseus.search.graph.and_or</span> <span class="kn">import</span> <span class="n">AndNode</span>
-
-<span class="c1"># Extract the routes simply in the order they were found.</span>
-<span class="n">routes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">iter_routes_time_order</span><span class="p">(</span><span class="n">output_graph</span><span class="p">,</span> <span class="n">max_routes</span><span class="o">=</span><span class="mi">10</span><span class="p">))</span>
-
-<span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">route</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">routes</span><span class="p">):</span>
-    <span class="n">num_reactions</span> <span class="o">=</span> <span class="nb">len</span><span class="p">({</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">route</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">AndNode</span><span class="p">)})</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Route </span><span class="si">{</span><span class="n">idx</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> consists of </span><span class="si">{</span><span class="n">num_reactions</span><span class="si">}</span><span class="s2"> reactions"</span><span class="p">)</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">num_calls</span><span class="p">(</span><span class="n">count_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-8">from syntheseus.search.analysis.route_extraction import (
-    iter_routes_time_order,
-)
-from syntheseus.search.graph.and_or import AndNode
-
-# Extract the routes simply in the order they were found.
-routes = list(iter_routes_time_order(output_graph, max_routes=10))
-
-for idx, route in enumerate(routes):
-    num_reactions = len({n for n in route if isinstance(n, AndNode)})
-    print(f"Route {idx + 1} consists of {num_reactions} reactions")</div>
+<div class="clipboard-copy-txt" id="cell-8">model.num_calls(count_cache=True)</div>
 </div>
 </div>
 </div>
@@ -1612,12 +1649,10 @@ for idx, route in enumerate(routes):
 <div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Route 1 consists of 2 reactions
-Route 2 consists of 3 reactions
-</pre>
+<div class="jp-OutputArea-child jp-OutputArea-executeResult">
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[8]:</div>
+<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
+<pre>64</pre>
 </div>
 </div>
 </div>
@@ -1630,7 +1665,7 @@ Route 2 consists of 3 reactions
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>We can use visualization utilities to get a quick look at the routes found.</p>
+<p>Let's take a look at the routes that were found. To make sure they were explored starting with higher probability steps, we plot the first and last route found.</p>
 </div>
 </div>
 </div>
@@ -1655,16 +1690,16 @@ Route 2 consists of 3 reactions
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">syntheseus.search.visualization</span> <span class="kn">import</span> <span class="n">visualize_andor</span>
 
-<span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">route</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">routes</span><span class="p">):</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">idx</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">"first"</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="s2">"last"</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)]:</span>
     <span class="n">visualize_andor</span><span class="p">(</span>
-        <span class="n">output_graph</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="sa">f</span><span class="s2">"route_</span><span class="si">{</span><span class="n">idx</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">.pdf"</span><span class="p">,</span> <span class="n">nodes</span><span class="o">=</span><span class="n">route</span>
+        <span class="n">output_graph</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="sa">f</span><span class="s2">"route_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.pdf"</span><span class="p">,</span> <span class="n">nodes</span><span class="o">=</span><span class="n">routes</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
     <span class="p">)</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-9">from syntheseus.search.visualization import visualize_andor
 
-for idx, route in enumerate(routes):
+for name, idx in [("first", 0), ("last", -1)]:
     visualize_andor(
-        output_graph, filename=f"route_{idx + 1}.pdf", nodes=route
+        output_graph, filename=f"route_{name}.pdf", nodes=routes[idx]
     )</div>
 </div>
 </div>
@@ -1678,9 +1713,140 @@ for idx, route in enumerate(routes):
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>The contents of the files <code>route_{1, 2}.pdf</code> should look roughly like the below.</p>
-<img align="top" alt="No description has been provided for this image" src="https://github.com/microsoft/syntheseus/assets/61470923/f3d93324-9920-43b1-9d61-a4386e20a654" width="320px"/>
-<img align="top" alt="No description has been provided for this image" src="https://github.com/microsoft/syntheseus/assets/61470923/e12489b4-e129-4d7e-822f-75da5aaf7af5" width="320px"/>
+<p>The contents of the files <code>route_{first, last}.pdf</code> should look like the below. Search only considers <em>unique</em> reactants for a given reaction step; even though our model always returns two reactants, if these are the same then search will create a reaction with only a single child node. Given that our probabilities were set up to prefer splitting the input into equal-sized chunks, the first route found halves the input SMILES in each reaction step, while the last route always splits out a single atom.</p>
+<img align="top" alt="No description has been provided for this image" src="https://github.com/microsoft/syntheseus/assets/61470923/d755250e-0973-45c2-9d32-479426f71a05" width="142px"/>
+<img align="top" alt="No description has been provided for this image" src="https://github.com/microsoft/syntheseus/assets/61470923/6a2cae70-d527-428c-a3c9-d5b0ab13db0b" width="500px"/>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p>In the case above search had an easy job finding the best route as the higher probability steps also led to reaching building block molecules sooner. In general, algorithms will be implicitly biased towards not only higher probability steps but also taking less steps overall. However, we can modify our toy model to strongly prefer unbalanced splits, and verify that then the order of routes is roughly reversed.</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [10]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy for="cell-10">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="k">class</span> <span class="nc">ToyModelUnbalanced</span><span class="p">(</span><span class="n">ToyModel</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_get_reaction_score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_atoms</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="n">score</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_get_reaction_score</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">n_atoms</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">score</span><span class="p">)</span> <span class="o">**</span> <span class="mf">4.0</span>
+
+<span class="n">print_predictions</span><span class="p">(</span><span class="n">ToyModelUnbalanced</span><span class="p">(),</span> <span class="s2">"CCCCCCCC"</span><span class="p">)</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-10">class ToyModelUnbalanced(ToyModel):
+    def _get_reaction_score(self, i: int, n_atoms: int) -&gt; float:
+        score = super()._get_reaction_score(i, n_atoms)
+        return (1.0 / score) ** 4.0
+
+print_predictions(ToyModelUnbalanced(), "CCCCCCCC")</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>C.CCCCCCC&gt;&gt;CCCCCCCC (probability: 0.464)
+CC.CCCCCC&gt;&gt;CCCCCCCC (probability: 0.029)
+CCC.CCCCC&gt;&gt;CCCCCCCC (probability: 0.006)
+CCCC.CCCC&gt;&gt;CCCCCCCC (probability: 0.002)
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [11]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy for="cell-11">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">output_graph</span><span class="p">,</span> <span class="n">routes</span> <span class="o">=</span> <span class="n">get_routes</span><span class="p">(</span>
+    <span class="n">ToyModelUnbalanced</span><span class="p">(</span><span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="n">visualize_andor</span><span class="p">(</span>
+    <span class="n">output_graph</span><span class="p">,</span>
+    <span class="n">filename</span><span class="o">=</span><span class="sa">f</span><span class="s2">"route_first_unbalanced.pdf"</span><span class="p">,</span>
+    <span class="n">nodes</span><span class="o">=</span><span class="n">routes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+<span class="p">)</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-11">output_graph, routes = get_routes(
+    ToyModelUnbalanced(use_cache=True)
+)
+
+visualize_andor(
+    output_graph,
+    filename=f"route_first_unbalanced.pdf",
+    nodes=routes[0],
+)</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>Found 22 routes
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p>Indeed, the first route found during this search is the "maximally unbalanced" one, which was the last route found previously.</p>
 </div>
 </div>
 </div>
