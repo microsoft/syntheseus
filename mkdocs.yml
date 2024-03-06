@@ -36,6 +36,7 @@ nav:
   - Running Search: cli/search.md
 - Tutorials:
   - Quick Start: tutorials/quick_start.ipynb
+  - Integrating a Custom Model: tutorials/custom_model.ipynb
 
 plugins:
   - mkdocs-jupyter
