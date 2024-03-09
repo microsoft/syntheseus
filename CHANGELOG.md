@@ -14,6 +14,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 - Suppress the remaining noisy logs and warnings coming from single-step models ([#53](https://github.com/microsoft/syntheseus/pull/53)) ([@kmaziarz])
 - Improve efficiency and logging of retro* algorithm ([#62](https://github.com/microsoft/syntheseus/pull/62)) ([@austint])
 - Improve error handling in single-step evaluation and allow CLI to use the default checkpoints ([#75](https://github.com/microsoft/syntheseus/pull/75)) ([@kmaziarz])
+- Make basic classes from `interface` importable from top-level ([#81](https://github.com/microsoft/syntheseus/pull/81)) ([@austint])
 
 ### Added
 
