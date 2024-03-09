@@ -1154,9 +1154,9 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">syntheseus.interface.models</span> <span class="kn">import</span> <span class="n">BackwardReactionModel</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">syntheseus</span> <span class="kn">import</span> <span class="n">BackwardReactionModel</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-1">from syntheseus.interface.models import BackwardReactionModel</div>
+<div class="clipboard-copy-txt" id="cell-1">from syntheseus import BackwardReactionModel</div>
 </div>
 </div>
 </div>
@@ -1193,9 +1193,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </clipboard-copy>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Sequence</span>
-<span class="kn">from</span> <span class="nn">syntheseus.interface.bag</span> <span class="kn">import</span> <span class="n">Bag</span>
-<span class="kn">from</span> <span class="nn">syntheseus.interface.molecule</span> <span class="kn">import</span> <span class="n">Molecule</span>
-<span class="kn">from</span> <span class="nn">syntheseus.interface.reaction</span> <span class="kn">import</span> <span class="n">SingleProductReaction</span>
+<span class="kn">from</span> <span class="nn">syntheseus</span> <span class="kn">import</span> <span class="n">Bag</span><span class="p">,</span> <span class="n">Molecule</span><span class="p">,</span> <span class="n">SingleProductReaction</span>
 
 
 <span class="k">class</span> <span class="nc">ToyModel</span><span class="p">(</span><span class="n">BackwardReactionModel</span><span class="p">):</span>
@@ -1244,9 +1242,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
         <span class="p">)</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-2">from typing import Sequence
-from syntheseus.interface.bag import Bag
-from syntheseus.interface.molecule import Molecule
-from syntheseus.interface.reaction import SingleProductReaction
+from syntheseus import Bag, Molecule, SingleProductReaction
 
 
 class ToyModel(BackwardReactionModel):

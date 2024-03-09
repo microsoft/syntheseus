@@ -1156,13 +1156,13 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">syntheseus.interface.molecule</span> <span class="kn">import</span> <span class="n">Molecule</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">syntheseus</span> <span class="kn">import</span> <span class="n">Molecule</span>
 <span class="kn">from</span> <span class="nn">syntheseus.reaction_prediction.inference</span> <span class="kn">import</span> <span class="n">LocalRetroModel</span>
 
 <span class="n">test_mol</span> <span class="o">=</span> <span class="n">Molecule</span><span class="p">(</span><span class="s2">"Cc1ccc(-c2ccc(C)cc2)cc1"</span><span class="p">)</span>
 <span class="n">model</span> <span class="o">=</span> <span class="n">LocalRetroModel</span><span class="p">()</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-1">from syntheseus.interface.molecule import Molecule
+<div class="clipboard-copy-txt" id="cell-1">from syntheseus import Molecule
 from syntheseus.reaction_prediction.inference import LocalRetroModel
 
 test_mol = Molecule("Cc1ccc(-c2ccc(C)cc2)cc1")
