@@ -33,8 +33,10 @@ nav:
   - Single-Step Models: single_step.md
 - CLI:
   - Single-Step Evaluation: cli/eval_single_step.md
+  - Running Search: cli/search.md
 - Tutorials:
   - Quick Start: tutorials/quick_start.ipynb
+  - Integrating a Custom Model: tutorials/custom_model.ipynb
 
 plugins:
   - mkdocs-jupyter

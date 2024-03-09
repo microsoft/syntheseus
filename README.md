@@ -1,9 +1,15 @@
 <div align="center">
     <img src="https://github.com/microsoft/syntheseus/assets/61470923/f01a9939-61fa-4461-a124-c13eddcdd75a" height="50px">
     <h3><i>Navigating the labyrinth of synthesis planning</i></h3>
-</div>
 
 ---
+
+<p align="center">
+  <a href="https://microsoft.github.io/syntheseus/stable">Docs</a> •
+  <a href="https://microsoft.github.io/syntheseus/stable/cli/eval_single_step/">CLI</a> •
+  <a href="https://microsoft.github.io/syntheseus/stable/tutorials/quick_start/">Tutorials</a> •
+  <a href="https://arxiv.org/abs/2310.19796">Paper</a>
+</p>
 
 [![CI](https://github.com/microsoft/syntheseus/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/microsoft/syntheseus/actions/workflows/ci.yml)
 [![Python Version](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
@@ -11,14 +17,16 @@
 [![code style](https://img.shields.io/badge/code%20style-black-202020.svg)](https://github.com/ambv/black)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/microsoft/syntheseus/blob/main/LICENSE)
 
+</div>
+
+## Overview
+
 Syntheseus is a package for end-to-end retrosynthetic planning.
 - ⚒️ Combines search algorithms and reaction models in a standardized way
 - 🧭 Includes implementations of common search algorithms
 - 🧪 Includes wrappers for state-of-the-art reaction models
 - ⚙️ Exposes a simple API to plug in custom models and algorithms
 - 📈 Can be used to benchmark components of a retrosynthesis pipeline
-
-To learn about `syntheseus`'s features and API visit [microsoft.github.io/syntheseus](https://microsoft.github.io/syntheseus).
 
 ## Quick Start
 
@@ -31,7 +39,7 @@ conda activate syntheseus-full
 pip install "syntheseus[all]"
 ```
 
-See [documentation](https://microsoft.github.io/syntheseus/installation) if you prefer a more lightweight installation that only includes the parts you actually need.
+See [here](https://microsoft.github.io/syntheseus/installation) if you prefer a more lightweight installation that only includes the parts you actually need.
 
 ## Development
 
