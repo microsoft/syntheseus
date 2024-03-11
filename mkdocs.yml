@@ -37,7 +37,7 @@ nav:
 - Tutorials:
   - Quick Start: tutorials/quick_start.ipynb
   - Integrating a Custom Model: tutorials/custom_model.ipynb
-  - Multi-step search on PaRoutes benchmark: tutorials/paroutes_benchmark.ipynb
+  - Multi-step Search on PaRoutes: tutorials/paroutes_benchmark.ipynb
 
 plugins:
   - mkdocs-jupyter
