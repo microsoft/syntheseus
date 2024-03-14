@@ -1,0 +1,3 @@
+# Ignore files created as outputs from the tutorials
+*.pdf
+*.pkl
