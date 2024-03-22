@@ -51,6 +51,12 @@ class MEGANModel(ExternalBackwardReactionModel):
 
         import gin
         import megan
+        import torch
+
+        if self.device == "cpu" and torch.cuda.is_available():
+            raise ValueError(
+                "MEGAN currently does not support running on CPU if a GPU is available"
+            )
 
         # Extract the path to the `megan` module.
         module_path = Path(get_module_path(megan))

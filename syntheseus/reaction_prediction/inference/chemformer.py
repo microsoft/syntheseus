@@ -6,6 +6,7 @@ Code: https://github.com/MolecularAI/Chemformer
 The original Chemformer code is released under the Apache 2.0 license.
 """
 
+import math
 import sys
 import warnings
 from pathlib import Path
@@ -140,7 +141,14 @@ class ChemformerModel(ExternalReactionModel[InputType, ReactionType]):
             process_fn = process_raw_smiles_outputs_backwards  # type: ignore[assignment]
 
         return [
-            process_fn(input, outputs, [{"log_prob": log_prob} for log_prob in log_probs])
+            process_fn(
+                input,
+                outputs,
+                [
+                    {"log_probability": log_prob, "probability": math.exp(log_prob)}
+                    for log_prob in log_probs
+                ],
+            )
             for input, outputs, log_probs in zip(inputs, smiles_batch, batch_log_likelihoods)
         ]
 

@@ -8,13 +8,11 @@ def main() -> None:
     supported_command_names = ", ".join(supported_commands.keys())
 
     if len(sys.argv) == 1:
-        print(f"Please choose a command from: {supported_command_names}")
-        return
+        raise ValueError(f"Please choose a command from: {supported_command_names}")
 
     command = sys.argv[1]
     if command not in supported_commands:
-        print(f"Command {command} not supported; choose from: {supported_command_names}")
-        return
+        raise ValueError(f"Command {command} not supported; choose from: {supported_command_names}")
 
     # Drop the subcommand name and let the chosen command parse the rest of the arguments.
     del sys.argv[1]
