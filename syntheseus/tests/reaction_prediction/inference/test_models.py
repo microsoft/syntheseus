@@ -76,8 +76,7 @@ def data_dir() -> Generator[Path, None, None]:
         # Download the raw USPTO-50K data released by the authors of GLN.
         uspto50k_zip_path = tempdir / "uspto50k.zip"
         urllib.request.urlretrieve(
-            "https://www.dropbox.com/sh/6ideflxcakrak10/AADN-TNZnuGjvwZYiLk7zvwra/schneider50k?dl=1",
-            uspto50k_zip_path,
+            "https://figshare.com/ndownloader/files/45206101", uspto50k_zip_path
         )
 
         with zipfile.ZipFile(uspto50k_zip_path, "r") as f_zip:
