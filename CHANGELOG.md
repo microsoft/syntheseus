@@ -23,6 +23,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ### Fixed
 
+- Fix small issues in Chemformer, MEGAN and RootAligned ([#80](https://github.com/microsoft/syntheseus/pull/80)) ([@kmaziarz])
 - Get all single-step models to work on CPU ([#57](https://github.com/microsoft/syntheseus/pull/57)) ([@kmaziarz])
 - Make the data loader class work with relative paths ([#69](https://github.com/microsoft/syntheseus/pull/69)) ([@kmaziarz])
 
