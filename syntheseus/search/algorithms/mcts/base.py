@@ -137,15 +137,18 @@ class BaseMCTS(
         no_limit_iter = self.limit_iterations >= INT_INF
         no_limit_rxn = self.limit_reaction_model_calls >= INT_INF
         no_limit_time = self.time_limit_s >= math.inf
+        no_limit_nodes = self.limit_graph_nodes >= INT_INF
 
-        if no_limit_iter and no_limit_rxn and no_limit_time:
+        if no_limit_iter and no_limit_rxn and no_limit_time and no_limit_nodes:
             warnings.warn(
                 "No kind of run limit set. This algorithm will almost certainty run forever."
             )
         elif no_limit_iter and no_limit_time:
             warnings.warn(
-                "No iteration or time limit set. It is possible (but not certain) that MCTS "
-                "will run forever with these settings. At the very least, it could run for a very long time."
+                "No iteration or time limit set (although a reaction model call and/or graph node limit was set)."
+                " Under these conditions, it is possible (but not certain) that MCTS "
+                "will run forever (for example if there are no leaf nodes eligible for expansion in the graph)."
+                " At the very least, it could run for an unexpectedly long time."
                 " It is recommended to set either an iteration limit or a time limit."
             )
 

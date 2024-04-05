@@ -157,6 +157,45 @@ class BaseAlgorithmTest(abc.ABC):
             # Default case is to match exactly
             assert alg.reaction_model.num_calls() == limit
 
+    @pytest.mark.parametrize("limit", [0, 1, 2, 25, 100])
+    def test_limit_graph_nodes(
+        self,
+        retrosynthesis_task6: RetrosynthesisTask,
+        limit: int,
+    ) -> None:
+        """
+        Test that limiting the number of nodes in the graph works as intended.
+        The algorithm should run until the node limit is reached, and then stop
+        (without adding *too many* extra nodes).
+
+        retrosynthesis_task6 is chosen because it can create a very large graph.
+        """
+
+        # Run algorithm
+        alg = self.setup_algorithm(
+            reaction_model=retrosynthesis_task6.reaction_model,
+            mol_inventory=retrosynthesis_task6.inventory,
+            limit_graph_nodes=limit,
+            limit_iterations=int(1e6),  # a very high limit, but avoids MCTS warnings
+        )
+        output_graph, _ = alg.run_from_mol(retrosynthesis_task6.target_mol)
+
+        # The algorithm will stop running when the graph size meets or exceeds the limit.
+        # HOWEVER, since multiple nodes are added during each expansion, the node count might
+        # not exactly equal the limit. Therefore, we choose a variable tolerance.
+        # "Tolerance" here is len(graph) - limit
+        if limit == 0:
+            tolerance = 1  # will stop search immediately with only the root node
+        elif limit == 1:
+            tolerance = 0  # should not expand root node
+        elif limit == 2:
+            tolerance = 19  # a very high number, since first expansion brings node count to 21 for AND/OR graphs
+        else:
+            tolerance = 15  # a fairly high tolerance (enough for one expansion)
+
+        # The actual test
+        assert limit <= len(output_graph) <= tolerance + limit
+
     @pytest.mark.parametrize("limit", [0, 1, 2, 100])
     def test_limit_iterations(
         self,
