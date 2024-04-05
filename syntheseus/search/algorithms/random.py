@@ -47,7 +47,7 @@ class BaseRandomSearch(SearchAlgorithm[GraphType, int], Generic[GraphType]):
                 logger.log(
                     log_level,
                     f"Step {step}: node {node} expanded, created {len(new_nodes)} new nodes. "
-                    f"Num expandable nodes: {len(expandable_nodes)}",
+                    f"Num expandable nodes: {len(expandable_nodes)}.",
                 )
 
         return step
