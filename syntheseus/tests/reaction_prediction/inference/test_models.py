@@ -2,54 +2,22 @@ import pytest
 
 from syntheseus.interface.bag import Bag
 from syntheseus.interface.molecule import Molecule
-from syntheseus.reaction_prediction.inference import (
-    ChemformerModel,
-    Graph2EditsModel,
-    LocalRetroModel,
-    MEGANModel,
-    MHNreactModel,
-    RetroKNNModel,
-    RootAlignedModel,
-)
 from syntheseus.reaction_prediction.inference.base import ExternalBackwardReactionModel
-
-try:
-    # Try to import the single-step model repositories to check if they are installed. Technically,
-    # it could be the case that these are installed but their dependencies are not, in which case
-    # the tests will fail; nevertheless the check below is good enough for our usecase.
-
-    import chemformer  # noqa: F401
-    import graph2edits  # noqa: F401
-    import local_retro  # noqa: F401
-    import megan  # noqa: F401
-    import mhnreact  # noqa: F401
-    import root_aligned  # noqa: F401
-
-    MODELS_INSTALLED = True
-except ModuleNotFoundError:
-    MODELS_INSTALLED = False
-
+from syntheseus.reaction_prediction.inference.config import BackwardModelClass
+from syntheseus.reaction_prediction.utils.testing import are_single_step_models_installed
 
 pytestmark = pytest.mark.skipif(
-    not MODELS_INSTALLED, reason="Model tests require all single-step models to be installed"
+    not are_single_step_models_installed(),
+    reason="Model tests require all single-step models to be installed",
 )
 
 
-@pytest.fixture(
-    scope="module",
-    params=[
-        ChemformerModel,
-        Graph2EditsModel,
-        LocalRetroModel,
-        MEGANModel,
-        MHNreactModel,
-        RetroKNNModel,
-        RootAlignedModel,
-    ]
-    * 2,
-)
+MODEL_CLASSES_TO_TEST = set(BackwardModelClass) - {BackwardModelClass.GLN}
+
+
+@pytest.fixture(scope="module", params=list(MODEL_CLASSES_TO_TEST) * 2)
 def model(request) -> ExternalBackwardReactionModel:
-    model_cls = request.param
+    model_cls = request.param.value
     return model_cls()
 
 

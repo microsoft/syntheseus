@@ -60,10 +60,13 @@ jobs:
         environment-file: environment_full.yml
     - name: Install syntheseus with all single-step models
       run: |
+        sudo apt install graphviz
         pip install .[all]
     - name: Run single-step model tests
       run: |
-        coverage run -p -m pytest ./syntheseus/tests/reaction_prediction/inference/test_models.py
+        coverage run -p -m pytest \
+          ./syntheseus/tests/cli/test_cli.py \
+          ./syntheseus/tests/reaction_prediction/inference/test_models.py
         coverage report --data-file .coverage.*
     - name: Upload coverage report
       uses: actions/upload-artifact@v4

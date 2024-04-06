@@ -141,7 +141,7 @@ class RootAlignedModel(ExternalBackwardReactionModel):
             ]
             probabilities = torch.nn.functional.softmax(torch.as_tensor(scaled_scores), dim=-1)
 
-            for kwargs, probability in zip(kwargs_list, probabilities):
+            for kwargs, probability in zip(kwargs_list, probabilities.numpy().tolist()):
                 kwargs["probability"] = probability
 
         return kwargs_list

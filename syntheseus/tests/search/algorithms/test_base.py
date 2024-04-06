@@ -192,7 +192,7 @@ class BaseAlgorithmTest(abc.ABC):
             assert tasks_solved[0]
             assert not tasks_solved[2]
 
-        elif limit == 100:
+        elif limit >= 100:
             # With this high number of iterations all tasks should be solved
             assert tasks_solved == [True, True, True]
 
