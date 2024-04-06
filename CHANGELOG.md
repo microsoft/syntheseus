@@ -19,7 +19,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ### Added
 
 - Integrate the Graph2Edits model ([#65](https://github.com/microsoft/syntheseus/pull/65), [#66](https://github.com/microsoft/syntheseus/pull/66)) ([@kmaziarz])
-- Improve the docs and add tutorials ([#54](https://github.com/microsoft/syntheseus/pull/54), [#77](https://github.com/microsoft/syntheseus/pull/77), [#78](https://github.com/microsoft/syntheseus/pull/78), [#79](https://github.com/microsoft/syntheseus/pull/79)) ([@kmaziarz])
+- Improve the docs and add tutorials ([#54](https://github.com/microsoft/syntheseus/pull/54), [#77](https://github.com/microsoft/syntheseus/pull/77), [#78](https://github.com/microsoft/syntheseus/pull/78), [#79](https://github.com/microsoft/syntheseus/pull/79), [#82](https://github.com/microsoft/syntheseus/pull/82)) ([@kmaziarz], [@austint])
 
 ### Fixed
 
