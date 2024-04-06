@@ -19,11 +19,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ### Added
 
 - Integrate the Graph2Edits model ([#65](https://github.com/microsoft/syntheseus/pull/65), [#66](https://github.com/microsoft/syntheseus/pull/66)) ([@kmaziarz])
-- Improve the docs and add tutorials ([#54](https://github.com/microsoft/syntheseus/pull/54), [#77](https://github.com/microsoft/syntheseus/pull/77), [#78](https://github.com/microsoft/syntheseus/pull/78), [#79](https://github.com/microsoft/syntheseus/pull/79)) ([@kmaziarz])
+- Improve the docs and add tutorials ([#54](https://github.com/microsoft/syntheseus/pull/54), [#77](https://github.com/microsoft/syntheseus/pull/77), [#78](https://github.com/microsoft/syntheseus/pull/78), [#79](https://github.com/microsoft/syntheseus/pull/79), [#82](https://github.com/microsoft/syntheseus/pull/82)) ([@kmaziarz], [@austint])
 - Add random search algorithm as a simple baseline ([#83](https://github.com/microsoft/syntheseus/pull/83)) ([@austint])
 
 ### Fixed
 
+- Fix small issues in Chemformer, MEGAN and RootAligned ([#80](https://github.com/microsoft/syntheseus/pull/80)) ([@kmaziarz])
 - Get all single-step models to work on CPU ([#57](https://github.com/microsoft/syntheseus/pull/57)) ([@kmaziarz])
 - Make the data loader class work with relative paths ([#69](https://github.com/microsoft/syntheseus/pull/69)) ([@kmaziarz])
 
