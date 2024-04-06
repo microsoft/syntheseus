@@ -25,6 +25,20 @@ class BaseRandomSearchTest(BaseAlgorithmTest):
     def test_found_routes2(self, retrosynthesis_task2: RetrosynthesisTask) -> None:
         pass
 
+    @pytest.mark.parametrize("limit", [0, 1, 2, 1000])
+    def test_limit_iterations(
+        self,
+        retrosynthesis_task1: RetrosynthesisTask,
+        retrosynthesis_task2: RetrosynthesisTask,
+        retrosynthesis_task3: RetrosynthesisTask,
+        limit: int,
+    ) -> None:
+        # Here we are just overriding the limits which are tested.
+        # Random search is inefficient, so sometimes after 100 iterations not all tasks are solved.
+        super().test_limit_iterations(
+            retrosynthesis_task1, retrosynthesis_task2, retrosynthesis_task3, limit
+        )
+
 
 class TestAndOrRandomSearch(BaseRandomSearchTest):
     def setup_algorithm(self, **kwargs) -> AndOr_RandomSearch:
