@@ -168,7 +168,7 @@ class BaseAlgorithmTest(abc.ABC):
         The algorithm should run until the node limit is reached, and then stop
         (without adding *too many* extra nodes).
 
-        retrosynthesis_task6 is chosen because it can create a very large graph.
+        `retrosynthesis_task6` is chosen because it can create a very large graph.
         """
 
         # Run algorithm
@@ -181,7 +181,7 @@ class BaseAlgorithmTest(abc.ABC):
         output_graph, _ = alg.run_from_mol(retrosynthesis_task6.target_mol)
 
         # The algorithm will stop running when the graph size meets or exceeds the limit.
-        # HOWEVER, since multiple nodes are added during each expansion, the node count might
+        # However, since multiple nodes are added during each expansion, the node count might
         # not exactly equal the limit. Therefore, we choose a variable tolerance.
         # "Tolerance" here is len(graph) - limit
         if limit == 0:
