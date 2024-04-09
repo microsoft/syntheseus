@@ -188,8 +188,8 @@ def run_from_config(config: SearchConfig) -> Path:
                 "time_limit_s",
                 "limit_reaction_model_calls",
                 "limit_iterations",
-                "prevent_repeat_mol_in_trees",
                 "limit_graph_nodes",
+                "prevent_repeat_mol_in_trees",
             ]
         }
     )
