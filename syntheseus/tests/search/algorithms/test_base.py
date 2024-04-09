@@ -191,7 +191,7 @@ class BaseAlgorithmTest(abc.ABC):
         elif limit == 2:
             tolerance = 19  # a very high number, since first expansion brings node count to 21 for AND/OR graphs
         else:
-            tolerance = 15  # a fairly high tolerance (enough for one expansion)
+            tolerance = 20  # a fairly high tolerance (should always be enough for one expansion)
 
         # The actual test
         assert limit <= len(output_graph) <= tolerance + limit
