@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, List, Sequence, Union, cast
+from typing import Any, List, Sequence, Union
 
 from syntheseus.interface.bag import Bag
 from syntheseus.interface.molecule import Molecule
@@ -12,7 +12,7 @@ from syntheseus.reaction_prediction.chem.utils import molecule_bag_from_smiles
 
 
 def process_raw_smiles_outputs_backwards(
-    input: Molecule, output_list: List[str], metadata_list: List[Dict[str, Any]]
+    input: Molecule, output_list: List[str], metadata_list: List[ReactionMetaData]
 ) -> Sequence[SingleProductReaction]:
     """Convert raw SMILES outputs into a list of `SingleProductReaction` objects.
 
@@ -33,16 +33,14 @@ def process_raw_smiles_outputs_backwards(
         # Only consider the prediction if the SMILES can be parsed.
         if reactants is not None:
             predictions.append(
-                SingleProductReaction(
-                    product=input, reactants=reactants, metadata=cast(ReactionMetaData, metadata)
-                )
+                SingleProductReaction(product=input, reactants=reactants, metadata=metadata)
             )
 
     return predictions
 
 
 def process_raw_smiles_outputs_forwards(
-    input: Bag[Molecule], output_list: List[str], metadata_list: List[Dict[str, Any]]
+    input: Bag[Molecule], output_list: List[str], metadata_list: List[ReactionMetaData]
 ) -> Sequence[Reaction]:
     """Convert raw SMILES outputs into a list of `Reaction` objects.
     Like method `process_raw_smiles_outputs_backwards`, but for forward models.
@@ -63,11 +61,7 @@ def process_raw_smiles_outputs_forwards(
 
         # Only consider the prediction if the SMILES can be parsed.
         if products is not None:
-            predictions.append(
-                Reaction(
-                    products=products, reactants=input, metadata=cast(ReactionMetaData, metadata)
-                )
-            )
+            predictions.append(Reaction(products=products, reactants=input, metadata=metadata))
 
     return predictions
 
