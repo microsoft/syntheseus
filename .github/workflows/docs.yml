@@ -3,6 +3,11 @@ name: Docs
 on:
   push:
     branches: [ main ]
+  workflow_call:
+    inputs:
+      versions:
+        required: true
+        type: string
   workflow_dispatch:
 
 permissions:
@@ -29,4 +34,4 @@ jobs:
           restore-keys: |
             mkdocs-material-
       - run: pip install mkdocs-material mkdocs-jupyter mike
-      - run: mike deploy --push --update-aliases dev
+      - run: mike deploy --push --update-aliases ${{ inputs.versions != '' && inputs.versions || 'dev' }}
