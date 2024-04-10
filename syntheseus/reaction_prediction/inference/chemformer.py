@@ -15,6 +15,7 @@ from typing import Any, Callable, Dict, List, Sequence, Tuple, cast
 from syntheseus.interface.bag import Bag
 from syntheseus.interface.models import InputType, ReactionType
 from syntheseus.interface.molecule import Molecule
+from syntheseus.interface.reaction import ReactionMetaData
 from syntheseus.reaction_prediction.inference.base import ExternalReactionModel
 from syntheseus.reaction_prediction.utils.inference import (
     get_module_path,
@@ -135,7 +136,7 @@ class ChemformerModel(ExternalReactionModel[InputType, ReactionType]):
         # and [InputType, ReactionType] is not visible to mypy.
         if self.is_forward():
             process_fn: Callable[
-                [InputType, List[str], List[Dict[str, Any]]], Sequence[ReactionType]
+                [InputType, List[str], List[ReactionMetaData]], Sequence[ReactionType]
             ] = process_raw_smiles_outputs_forwards  # type: ignore[assignment]
         else:
             process_fn = process_raw_smiles_outputs_backwards  # type: ignore[assignment]

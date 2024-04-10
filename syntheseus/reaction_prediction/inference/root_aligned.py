@@ -13,13 +13,13 @@ import multiprocessing
 import random
 import warnings
 from collections import defaultdict
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, List, Optional, Sequence
 
 import yaml
 from rdkit import Chem
 
 from syntheseus.interface.molecule import Molecule
-from syntheseus.interface.reaction import SingleProductReaction
+from syntheseus.interface.reaction import ReactionMetaData, SingleProductReaction
 from syntheseus.reaction_prediction.inference.base import ExternalBackwardReactionModel
 from syntheseus.reaction_prediction.utils.inference import (
     get_unique_file_in_dir,
@@ -85,7 +85,7 @@ class RootAlignedModel(ExternalBackwardReactionModel):
         # Example outcome: b'C C ( = O ) c 1 c c c 2 c ( c c n 2 C ( = O ) O C ( C ) ( C ) C ) c 1\n'.
         return [bytes(smi_tokenizer(input.smiles) + "\n", "utf-8") for input in inputs]
 
-    def _build_kwargs_from_scores(self, scores: List[float]) -> List[Dict[str, Any]]:
+    def _build_kwargs_from_scores(self, scores: List[float]) -> List[ReactionMetaData]:
         """Compute kwargs to save in the predictions given raw scores from the RootAligned model.
 
         The scores we get from the model cannot be directly interpreted as a (log) probability.
@@ -111,7 +111,7 @@ class RootAlignedModel(ExternalBackwardReactionModel):
             1.0 / (k + 1) for k in range(self.beam_size)
         )
 
-        kwargs_list: List[Dict[str, Any]] = []
+        kwargs_list: List[ReactionMetaData] = []
         for score in scores:
             best_pos = -math.floor(score / 1e8)
             total_rr = score + best_pos * 1e8
@@ -121,14 +121,15 @@ class RootAlignedModel(ExternalBackwardReactionModel):
 
             new_score = total_rr - (best_pos + 1) * max_possible_total_rr
             assert new_score <= 0.0
-            metadata = {
-                "original_score": score,
-                "best_pos": best_pos,
-                "total_rr": total_rr,
-                "score": new_score,
-            }
 
-            kwargs_list.append(metadata)
+            kwargs_list.append(
+                {  # type: ignore[typeddict-unknown-key]
+                    "original_score": score,
+                    "best_pos": best_pos,
+                    "total_rr": total_rr,
+                    "score": new_score,
+                }
+            )
 
         # Make sure the new scores produce the same ranking.
         for kwargs, next_kwargs in zip(kwargs_list, kwargs_list[1:]):
