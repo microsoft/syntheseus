@@ -7,6 +7,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.4.0] - 2024-04-10
+
 ### Changed
 
 - Merge reaction and reaction model base classes in `search` and `reaction_predction` ([#63](https://github.com/microsoft/syntheseus/pull/63), [#67](https://github.com/microsoft/syntheseus/pull/67), [#73](https://github.com/microsoft/syntheseus/pull/73), [#74](https://github.com/microsoft/syntheseus/pull/74), [#76](https://github.com/microsoft/syntheseus/pull/76), [#84](https://github.com/microsoft/syntheseus/pull/84)) ([@austint], [@kmaziarz])
@@ -78,10 +80,11 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 :seedling: Initial public release, containing several multi-step search algorithms and a minimal interface for single-step models.
 
-[Unreleased]: https://github.com/microsoft/syntheseus/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/microsoft/syntheseus/compare/v0.4.0...HEAD
 [0.1.0]: https://github.com/microsoft/syntheseus/releases/tag/v0.1.0
 [0.2.0]: https://github.com/microsoft/syntheseus/releases/tag/v0.2.0
 [0.3.0]: https://github.com/microsoft/syntheseus/releases/tag/v0.3.0
+[0.4.0]: https://github.com/microsoft/syntheseus/releases/tag/v0.4.0
 
 [@austint]: https://github.com/AustinT
 [@kmaziarz]: https://github.com/kmaziarz
