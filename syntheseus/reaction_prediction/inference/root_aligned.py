@@ -123,10 +123,10 @@ class RootAlignedModel(ExternalBackwardReactionModel):
             assert new_score <= 0.0
 
             kwargs_list.append(
-                {
-                    "original_score": score,  # type: ignore[typeddict-unknown-key]
-                    "best_pos": best_pos,  # type: ignore[typeddict-unknown-key]
-                    "total_rr": total_rr,  # type: ignore[typeddict-unknown-key]
+                {  # type: ignore[typeddict-unknown-key]
+                    "original_score": score,
+                    "best_pos": best_pos,
+                    "total_rr": total_rr,
                     "score": new_score,
                 }
             )
