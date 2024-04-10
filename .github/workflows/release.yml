@@ -1,0 +1,22 @@
+name: Release Stable Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  push-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - run: git tag -a ${{ inputs.version }} -m "Release ${{ inputs.version }}"
+      - run: git push origin ${{ inputs.version }}
+  build-docs:
+    uses: ./.github/workflows/docs.yml
+    with:
+      versions: ${{ inputs.version }} stable
