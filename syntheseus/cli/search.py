@@ -34,6 +34,7 @@ from syntheseus.reaction_prediction.inference.config import BackwardModelConfig
 from syntheseus.reaction_prediction.utils.config import get_config as cli_get_config
 from syntheseus.reaction_prediction.utils.misc import set_random_seed
 from syntheseus.reaction_prediction.utils.model_loading import get_model
+from syntheseus.search import INT_INF
 from syntheseus.search.algorithms.best_first.retro_star import RetroStarSearch
 from syntheseus.search.algorithms.mcts import base as mcts_base
 from syntheseus.search.algorithms.mcts.molset import MolSetMCTS
@@ -114,6 +115,7 @@ class SearchConfig(BackwardModelConfig):
     time_limit_s: float = 600
     limit_reaction_model_calls: int = 1_000_000
     limit_iterations: int = 1_000_000
+    limit_graph_nodes: int = INT_INF
     prevent_repeat_mol_in_trees: bool = True
 
     use_gpu: bool = True  # Whether to use a GPU
@@ -186,6 +188,7 @@ def run_from_config(config: SearchConfig) -> Path:
                 "time_limit_s",
                 "limit_reaction_model_calls",
                 "limit_iterations",
+                "limit_graph_nodes",
                 "prevent_repeat_mol_in_trees",
             ]
         }

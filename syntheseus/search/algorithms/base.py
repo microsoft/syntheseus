@@ -70,6 +70,7 @@ class SearchAlgorithm(MinimalSearchAlgorithm[GraphType, AlgReturnType]):
         self,
         limit_iterations: int = INT_INF,
         limit_reaction_model_calls: int = INT_INF,
+        limit_graph_nodes: int = INT_INF,
         time_limit_s: float = math.inf,
         max_expansion_depth: int = 50,
         expand_purchasable_mols: bool = False,
@@ -85,6 +86,7 @@ class SearchAlgorithm(MinimalSearchAlgorithm[GraphType, AlgReturnType]):
 
         self.limit_iterations = limit_iterations
         self.limit_reaction_model_calls = limit_reaction_model_calls
+        self.limit_graph_nodes = limit_graph_nodes
         self.time_limit_s = time_limit_s
         self.max_expansion_depth = max_expansion_depth
         self.expand_purchasable_mols = expand_purchasable_mols
@@ -176,6 +178,7 @@ class SearchAlgorithm(MinimalSearchAlgorithm[GraphType, AlgReturnType]):
         return (
             (elapsed_time >= self.time_limit_s)
             or (self.reaction_model.num_calls() >= self.limit_reaction_model_calls)
+            or (len(graph) >= self.limit_graph_nodes)
             or (self.stop_on_first_solution and graph.root_node.has_solution)
         )
 
