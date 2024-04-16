@@ -13,7 +13,7 @@ See table below for the links to the default checkpoints.
 | [LocalRetro](https://figshare.com/ndownloader/files/42287319)  | trained by us |
 | [MEGAN](https://figshare.com/ndownloader/files/42012732)       | trained by us |
 | [MHNreact](https://figshare.com/ndownloader/files/42012777)    | trained by us |
-| [RetroKNN](https://figshare.com/ndownloader/files/43636584)    | trained by us |
+| [RetroKNN](https://figshare.com/ndownloader/files/45662430)    | trained by us |
 | [RootAligned](https://figshare.com/ndownloader/files/42012792) | released by authors |
 
 ??? note "More advanced datasets"
