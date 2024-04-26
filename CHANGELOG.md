@@ -10,6 +10,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ### Fixed
 
 - Fix incorrectly uploaded RetroKNN weights ([#91](https://github.com/microsoft/syntheseus/pull/91)) ([@kmaziarz])
+- Fix GLN weights and issues in its model wrapper ([#92](https://github.com/microsoft/syntheseus/pull/92)) ([@kmaziarz])
 
 ## [0.4.0] - 2024-04-10
 
