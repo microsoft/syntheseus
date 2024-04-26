@@ -8,7 +8,7 @@ See table below for the links to the default checkpoints.
 | Model checkpoint link                                          | Source |
 |----------------------------------------------------------------|--------|
 | [Chemformer](https://figshare.com/ndownloader/files/42009888)  | finetuned by us starting from checkpoint released by authors |
-| [GLN](https://figshare.com/ndownloader/files/42012720)         | released by authors |
+| [GLN](https://figshare.com/ndownloader/files/45882867)         | released by authors |
 | [Graph2Edits](https://figshare.com/ndownloader/files/44194301) | released by authors |
 | [LocalRetro](https://figshare.com/ndownloader/files/42287319)  | trained by us |
 | [MEGAN](https://figshare.com/ndownloader/files/42012732)       | trained by us |
