@@ -57,6 +57,10 @@ class GLNModel(ExternalBackwardReactionModel):
 
             self.model = RetroGLN(self.model_dir, chkpt_path)
 
+    @property
+    def name(self) -> str:
+        return "GLN"
+
     def get_parameters(self):
         return self.model.gln.parameters()
 
@@ -73,7 +77,9 @@ class GLNModel(ExternalBackwardReactionModel):
             return process_raw_smiles_outputs_backwards(
                 input=input,
                 output_list=result["reactants"],
-                metadata_list=[{"probability": probability} for probability in result["scores"]],
+                metadata_list=[
+                    {"probability": probability.item()} for probability in result["scores"]
+                ],
             )
 
     def _get_reactions(
