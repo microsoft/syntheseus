@@ -7,6 +7,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.4.1] - 2024-05-04
+
 ### Fixed
 
 - Fix incorrectly uploaded RetroKNN weights ([#91](https://github.com/microsoft/syntheseus/pull/91)) ([@kmaziarz])
@@ -16,7 +18,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ### Changed
 
-- Merge reaction and reaction model base classes in `search` and `reaction_predction` ([#63](https://github.com/microsoft/syntheseus/pull/63), [#67](https://github.com/microsoft/syntheseus/pull/67), [#73](https://github.com/microsoft/syntheseus/pull/73), [#74](https://github.com/microsoft/syntheseus/pull/74), [#76](https://github.com/microsoft/syntheseus/pull/76), [#84](https://github.com/microsoft/syntheseus/pull/84)) ([@austint], [@kmaziarz])
+- Merge reaction and reaction model base classes in `search` and `reaction_prediction` ([#63](https://github.com/microsoft/syntheseus/pull/63), [#67](https://github.com/microsoft/syntheseus/pull/67), [#73](https://github.com/microsoft/syntheseus/pull/73), [#74](https://github.com/microsoft/syntheseus/pull/74), [#76](https://github.com/microsoft/syntheseus/pull/76), [#84](https://github.com/microsoft/syntheseus/pull/84)) ([@austint], [@kmaziarz])
 - Make reaction models return `Sequence[Reaction]` instead of `PredictionList` objects ([#61](https://github.com/microsoft/syntheseus/pull/61)) ([@austint])
 - Suppress the remaining noisy logs and warnings coming from single-step models ([#53](https://github.com/microsoft/syntheseus/pull/53)) ([@kmaziarz])
 - Improve efficiency and logging of retro* algorithm ([#62](https://github.com/microsoft/syntheseus/pull/62)) ([@austint])
@@ -85,11 +87,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 :seedling: Initial public release, containing several multi-step search algorithms and a minimal interface for single-step models.
 
-[Unreleased]: https://github.com/microsoft/syntheseus/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/microsoft/syntheseus/compare/v0.4.1...HEAD
 [0.1.0]: https://github.com/microsoft/syntheseus/releases/tag/v0.1.0
 [0.2.0]: https://github.com/microsoft/syntheseus/releases/tag/v0.2.0
 [0.3.0]: https://github.com/microsoft/syntheseus/releases/tag/v0.3.0
 [0.4.0]: https://github.com/microsoft/syntheseus/releases/tag/v0.4.0
+[0.4.1]: https://github.com/microsoft/syntheseus/releases/tag/v0.4.1
 
 [@austint]: https://github.com/AustinT
 [@kmaziarz]: https://github.com/kmaziarz
