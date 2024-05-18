@@ -23,8 +23,12 @@ from syntheseus.reaction_prediction.utils.metrics import ModelTimingResults
 
 
 class DummyModel(ReactionModel):
-    def __init__(self, is_forward: bool, repeat: bool, **kwargs) -> None:
+    def __init__(
+        self, device: str = "cpu", is_forward: bool = False, repeat: bool = False, **kwargs
+    ) -> None:
         super().__init__(**kwargs)
+
+        self.device = device
         self._is_forward = is_forward
         self._repeat = repeat
 
