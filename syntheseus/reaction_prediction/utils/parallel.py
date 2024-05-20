@@ -17,7 +17,9 @@ class ParallelReactionModel(ReactionModel[InputType, ReactionType]):
     appropriately), whereas other approaches usually only work with tensors.
     """
 
-    def __init__(self, model_fn: Callable, devices: List) -> None:
+    def __init__(self, *args, model_fn: Callable, devices: List, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+
         self._devices = devices
         self._model_replicas = [model_fn(device=device) for device in devices]
 
