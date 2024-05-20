@@ -46,4 +46,6 @@ def get_model(
         except ModuleNotFoundError:
             raise ValueError("Multi-GPU evaluation is only supported for torch-based models")
 
-        return ParallelReactionModel(model_fn, devices=[f"cuda:{idx}" for idx in range(num_gpus)])
+        return ParallelReactionModel(
+            model_fn=model_fn, devices=[f"cuda:{idx}" for idx in range(num_gpus)]
+        )
