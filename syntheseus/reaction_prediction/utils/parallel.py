@@ -1,10 +1,24 @@
 import math
-from typing import Callable, List, Sequence
+from typing import Callable, List, Optional, Sequence
 
 import torch
 from more_itertools import chunked
+from torch import nn
 
 from syntheseus.interface.models import InputType, ReactionModel, ReactionType
+
+
+class ChunkedModel(nn.Module):
+    def __init__(self, model: ReactionModel[InputType, ReactionType], batch_size: int) -> None:
+        self.model = model
+        self.batch_size = batch_size
+
+    def __call__(
+        self, inputs: list[InputType], num_results: Optional[int] = None
+    ) -> list[Sequence[ReactionType]]:
+        return sum(
+            [self.model(batch, num_results) for batch in chunked(inputs, self.batch_size)], []
+        )
 
 
 class ParallelReactionModel(ReactionModel[InputType, ReactionType]):
@@ -17,10 +31,21 @@ class ParallelReactionModel(ReactionModel[InputType, ReactionType]):
     appropriately), whereas other approaches usually only work with tensors.
     """
 
-    def __init__(self, *args, model_fn: Callable, devices: List, **kwargs) -> None:
+    def __init__(
+        self, *args, model_fn: Callable, devices: List, batch_size: Optional[int] = None, **kwargs
+    ) -> None:
         super().__init__(*args, **kwargs)
 
         self._devices = devices
+
+        if batch_size is not None:
+            # If `batch_size` is set, this means that batches provided to `ParallelReactionModel`
+            # should not be passed to the replicas directly, but they should be further chunked into
+            # chunks of size at most `batch_size`. We override `__call__` of the models below, so
+            # that `torch.nn.parallel.parallel_apply` can be agnostic to the extra chunking.
+            orig_model_fn = model_fn
+            model_fn = lambda device: ChunkedModel(orig_model_fn(device=device), batch_size)
+
         self._model_replicas = [model_fn(device=device) for device in devices]
 
     def _get_reactions(
@@ -44,4 +69,9 @@ class ParallelReactionModel(ReactionModel[InputType, ReactionType]):
         return sum(outputs, [])
 
     def is_forward(self) -> bool:
-        return self._model_replicas[0].is_forward()
+        first_model = self._model_replicas[0]
+
+        if isinstance(first_model, ChunkedModel):
+            first_model = first_model.model
+
+        return first_model.is_forward()

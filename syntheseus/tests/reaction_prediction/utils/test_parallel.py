@@ -32,8 +32,9 @@ def test_parallel_reaction_model_cpu() -> None:
 def test_parallel_reaction_model_gpu() -> None:
     model = DummyModel()
     parallel_model: ParallelReactionModel = ParallelReactionModel(
-        model_fn=DummyModel, devices=["cuda:0"] * 4
+        model_fn=DummyModel, devices=["cuda:0"] * 4, batch_size=4
     )
 
-    inputs = [Molecule("C" * length) for length in range(1, 6)]
+    inputs = [Molecule("C" * length) for length in range(1, 40)]
     assert parallel_model(inputs) == model(inputs)
+    assert parallel_model.is_forward() == model.is_forward()
