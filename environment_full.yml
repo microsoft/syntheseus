@@ -8,7 +8,6 @@ dependencies:
   - dgl-cuda11.3  # LocalRetro, RetroKNN
   - faiss-gpu     # RetroKNN
   - numpy
-  - pandas
   - pip
   - python==3.9.7
   - pytorch=1.10.2=py3.9_cuda11.3_cudnn8.2.0_0
