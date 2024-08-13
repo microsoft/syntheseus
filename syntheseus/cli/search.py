@@ -348,8 +348,8 @@ def run_from_config(config: SearchConfig) -> Path:
     return results_dir_current_run
 
 
-def main(argv: Optional[List[str]] = None) -> Path:
-    config: SearchConfig = cli_get_config(argv=argv, config_cls=SearchConfig)
+def main(argv: Optional[List[str]] = None, config_cls: Any = SearchConfig) -> Path:
+    config = cli_get_config(argv=argv, config_cls=config_cls)
 
     def _warn_will_not_use_defaults(message: str) -> None:
         logger.warning(f"{message}; no model-specific search hyperparameters will be used")
@@ -383,7 +383,7 @@ def main(argv: Optional[List[str]] = None) -> Path:
                 # we did not know the search algorithm and model class before the first parsing).
                 config = cli_get_config(
                     argv=argv,
-                    config_cls=SearchConfig,
+                    config_cls=config_cls,
                     defaults={f"{config.search_algorithm}_config": relevant_defaults},
                 )
 
