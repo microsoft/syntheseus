@@ -10,6 +10,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ### Fixed
 
 - Shift the `pandas` dependency to the external model packages ([#94](https://github.com/microsoft/syntheseus/pull/94)) ([@kmaziarz])
+- Fix constructor arguments in `ParallelReactionModel` ([#96](https://github.com/microsoft/syntheseus/pull/96)) ([@kmaziarz])
 
 ## [0.4.1] - 2024-05-04
 
