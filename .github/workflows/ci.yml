@@ -66,7 +66,8 @@ jobs:
       run: |
         coverage run -p -m pytest \
           ./syntheseus/tests/cli/test_cli.py \
-          ./syntheseus/tests/reaction_prediction/inference/test_models.py
+          ./syntheseus/tests/reaction_prediction/inference/test_models.py \
+          ./syntheseus/tests/reaction_prediction/utils/test_parallel.py
         coverage report --data-file .coverage.*
     - name: Upload coverage report
       uses: actions/upload-artifact@v4
