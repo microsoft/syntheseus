@@ -101,9 +101,7 @@ class PDVNConfig:
 
 
 @dataclass
-class SearchConfig(BackwardModelConfig):
-    """Config for running search for given search targets."""
-
+class BaseSearchConfig:
     # Molecule(s) to search for (either as a single explicit SMILES or a file)
     search_target: str = MISSING
     search_targets_file: str = MISSING
@@ -134,6 +132,13 @@ class SearchConfig(BackwardModelConfig):
     # Fields configuring what to save after the run
     save_graph: bool = True  # Whether to save the full reaction graph (can be large)
     num_routes_to_plot: int = 5  # Number of routes to extract and plot for a quick check
+
+
+@dataclass
+class SearchConfig(BackwardModelConfig, BaseSearchConfig):
+    """Config for running search for given search targets."""
+
+    pass
 
 
 def run_from_config(config: SearchConfig) -> Path:
