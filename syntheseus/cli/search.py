@@ -101,9 +101,7 @@ class PDVNConfig:
 
 
 @dataclass
-class SearchConfig(BackwardModelConfig):
-    """Config for running search for given search targets."""
-
+class BaseSearchConfig:
     # Molecule(s) to search for (either as a single explicit SMILES or a file)
     search_target: str = MISSING
     search_targets_file: str = MISSING
@@ -134,6 +132,13 @@ class SearchConfig(BackwardModelConfig):
     # Fields configuring what to save after the run
     save_graph: bool = True  # Whether to save the full reaction graph (can be large)
     num_routes_to_plot: int = 5  # Number of routes to extract and plot for a quick check
+
+
+@dataclass
+class SearchConfig(BackwardModelConfig, BaseSearchConfig):
+    """Config for running search for given search targets."""
+
+    pass
 
 
 def run_from_config(config: SearchConfig) -> Path:
@@ -343,8 +348,8 @@ def run_from_config(config: SearchConfig) -> Path:
     return results_dir_current_run
 
 
-def main(argv: Optional[List[str]] = None) -> Path:
-    config: SearchConfig = cli_get_config(argv=argv, config_cls=SearchConfig)
+def main(argv: Optional[List[str]] = None, config_cls: Any = SearchConfig) -> Path:
+    config = cli_get_config(argv=argv, config_cls=config_cls)
 
     def _warn_will_not_use_defaults(message: str) -> None:
         logger.warning(f"{message}; no model-specific search hyperparameters will be used")
@@ -378,7 +383,7 @@ def main(argv: Optional[List[str]] = None) -> Path:
                 # we did not know the search algorithm and model class before the first parsing).
                 config = cli_get_config(
                     argv=argv,
-                    config_cls=SearchConfig,
+                    config_cls=config_cls,
                     defaults={f"{config.search_algorithm}_config": relevant_defaults},
                 )
 
