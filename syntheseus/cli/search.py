@@ -46,7 +46,12 @@ from syntheseus.search.graph.molset import MolSetGraph
 from syntheseus.search.mol_inventory import SmilesListInventory
 from syntheseus.search.node_evaluation import common as node_evaluation_common
 from syntheseus.search.utils.misc import lookup_by_name
-from syntheseus.search.visualization import visualize_andor, visualize_molset
+
+try:
+    # Try to import the visualization code, which will work only if `graphviz` is installed.
+    from syntheseus.search.visualization import visualize_andor, visualize_molset
+except ModuleNotFoundError:
+    pass
 
 logger = logging.getLogger(__file__)
 
