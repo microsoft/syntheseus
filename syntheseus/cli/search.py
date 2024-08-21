@@ -108,6 +108,7 @@ class BaseSearchConfig:
 
     inventory_smiles_file: str = MISSING  # Purchasable molecules
     results_dir: str = "."  # Directory to save the results in
+    append_timestamp_to_dir: bool = True  # Whether to append the current time to directory name
 
     # By default limit search time (but set very high iteration limits just in case)
     time_limit_s: float = 600
@@ -242,8 +243,13 @@ def run_from_config(config: SearchConfig) -> Path:
 
     # Prepare the output directory
     results_dir_top_level = Path(config.results_dir)
-    timestamp = datetime.datetime.now().isoformat(timespec="seconds")
-    results_dir_current_run = results_dir_top_level / f"{config.model_class.name}_{str(timestamp)}"
+
+    dirname = config.model_class.name
+    if config.append_timestamp_to_dir:
+        timestamp = datetime.datetime.now().isoformat(timespec="seconds")
+        dirname += f"_{str(timestamp)}"
+
+    results_dir_current_run = results_dir_top_level / dirname
 
     logger.info("Setup completed")
     num_targets = len(search_targets)
