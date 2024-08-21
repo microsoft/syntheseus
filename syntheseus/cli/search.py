@@ -266,6 +266,32 @@ def run_from_config(config: SearchConfig) -> Path:
         results_dir.mkdir(parents=True, exist_ok=True)
         logger.info(f"Outputs will be saved under {results_dir}")
 
+        results_lock_path = results_dir / ".lock"
+        results_stats_path = results_dir / "stats.json"
+
+        if results_lock_path.exists():
+            paths = [path for path in results_dir.iterdir() if path.is_file()]
+            logger.warning(
+                f"Lockfile was found which means the last run failed, purging {len(paths)} files"
+            )
+
+            for path in paths:
+                path.unlink()
+        elif results_stats_path.exists():
+            with open(results_stats_path, "rt") as f_stats:
+                stats = json.load(f_stats)
+                if stats.get("index") != idx or stats.get("smiles") != smiles:
+                    raise RuntimeError(
+                        f"Data present under {results_dir} does not match the current run"
+                    )
+
+                all_stats.append(stats)
+
+            logger.info("Search results already exist, skipping")
+            continue
+
+        results_lock_path.touch()
+
         alg.reset()
         output_graph, _ = alg.run_from_mol(Molecule(smiles))
         logger.info(f"Finished search for target {smiles}")
@@ -294,7 +320,7 @@ def run_from_config(config: SearchConfig) -> Path:
         all_stats.append(stats)
         logger.info(pformat(stats))
 
-        with open(results_dir / "stats.json", "wt") as f_stats:
+        with open(results_stats_path, "wt") as f_stats:
             f_stats.write(json.dumps(stats, indent=2))
 
         if config.save_graph:
@@ -327,6 +353,7 @@ def run_from_config(config: SearchConfig) -> Path:
                 else:
                     assert False
 
+        results_lock_path.unlink()
         del results_dir
 
     if num_targets > 1:
