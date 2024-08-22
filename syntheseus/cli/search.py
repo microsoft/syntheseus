@@ -29,7 +29,7 @@ import yaml
 from omegaconf import MISSING, DictConfig, OmegaConf
 from tqdm import tqdm
 
-from syntheseus.interface.molecule import Molecule
+from syntheseus import Molecule
 from syntheseus.reaction_prediction.inference.config import BackwardModelConfig
 from syntheseus.reaction_prediction.utils.config import get_config as cli_get_config
 from syntheseus.reaction_prediction.utils.misc import set_random_seed
