@@ -29,7 +29,7 @@ import yaml
 from omegaconf import MISSING, DictConfig, OmegaConf
 from tqdm import tqdm
 
-from syntheseus.interface.molecule import Molecule
+from syntheseus import Molecule
 from syntheseus.reaction_prediction.inference.config import BackwardModelConfig
 from syntheseus.reaction_prediction.utils.config import get_config as cli_get_config
 from syntheseus.reaction_prediction.utils.misc import set_random_seed
@@ -46,7 +46,14 @@ from syntheseus.search.graph.molset import MolSetGraph
 from syntheseus.search.mol_inventory import SmilesListInventory
 from syntheseus.search.node_evaluation import common as node_evaluation_common
 from syntheseus.search.utils.misc import lookup_by_name
-from syntheseus.search.visualization import visualize_andor, visualize_molset
+
+try:
+    # Try to import the visualization code, which will work only if `graphviz` is installed.
+    from syntheseus.search.visualization import visualize_andor, visualize_molset
+
+    VISUALIZATION_CODE_IMPORTED = True
+except ModuleNotFoundError:
+    VISUALIZATION_CODE_IMPORTED = False
 
 logger = logging.getLogger(__file__)
 
@@ -108,6 +115,7 @@ class BaseSearchConfig:
 
     inventory_smiles_file: str = MISSING  # Purchasable molecules
     results_dir: str = "."  # Directory to save the results in
+    append_timestamp_to_dir: bool = True  # Whether to append the current time to directory name
 
     # By default limit search time (but set very high iteration limits just in case)
     time_limit_s: float = 600
@@ -146,6 +154,12 @@ def run_from_config(config: SearchConfig) -> Path:
 
     print("Running search with the following config:")
     print(config)
+
+    if config.num_routes_to_plot > 0 and not VISUALIZATION_CODE_IMPORTED:
+        raise ValueError(
+            "Could not import visualization code (likely `viz` dependencies are not installed); "
+            "please install missing dependencies or set `num_routes_to_plot=0`"
+        )
 
     search_target, search_targets_file = [
         cast(DictConfig, config).get(key) for key in ["search_target", "search_targets_file"]
@@ -242,8 +256,13 @@ def run_from_config(config: SearchConfig) -> Path:
 
     # Prepare the output directory
     results_dir_top_level = Path(config.results_dir)
-    timestamp = datetime.datetime.now().isoformat(timespec="seconds")
-    results_dir_current_run = results_dir_top_level / f"{config.model_class.name}_{str(timestamp)}"
+
+    dirname = config.model_class.name
+    if config.append_timestamp_to_dir:
+        timestamp = datetime.datetime.now().isoformat(timespec="seconds")
+        dirname += f"_{str(timestamp)}"
+
+    results_dir_current_run = results_dir_top_level / dirname
 
     logger.info("Setup completed")
     num_targets = len(search_targets)
@@ -259,6 +278,32 @@ def run_from_config(config: SearchConfig) -> Path:
 
         results_dir.mkdir(parents=True, exist_ok=True)
         logger.info(f"Outputs will be saved under {results_dir}")
+
+        results_lock_path = results_dir / ".lock"
+        results_stats_path = results_dir / "stats.json"
+
+        if results_lock_path.exists():
+            paths = [path for path in results_dir.iterdir() if path.is_file()]
+            logger.warning(
+                f"Lockfile was found which means the last run failed, purging {len(paths)} files"
+            )
+
+            for path in paths:
+                path.unlink()
+        elif results_stats_path.exists():
+            with open(results_stats_path, "rt") as f_stats:
+                stats = json.load(f_stats)
+                if stats.get("index") != idx or stats.get("smiles") != smiles:
+                    raise RuntimeError(
+                        f"Data present under {results_dir} does not match the current run"
+                    )
+
+                all_stats.append(stats)
+
+            logger.info("Search results already exist, skipping")
+            continue
+
+        results_lock_path.touch()
 
         alg.reset()
         output_graph, _ = alg.run_from_mol(Molecule(smiles))
@@ -288,7 +333,7 @@ def run_from_config(config: SearchConfig) -> Path:
         all_stats.append(stats)
         logger.info(pformat(stats))
 
-        with open(results_dir / "stats.json", "wt") as f_stats:
+        with open(results_stats_path, "wt") as f_stats:
             f_stats.write(json.dumps(stats, indent=2))
 
         if config.save_graph:
@@ -321,6 +366,7 @@ def run_from_config(config: SearchConfig) -> Path:
                 else:
                     assert False
 
+        results_lock_path.unlink()
         del results_dir
 
     if num_targets > 1:
