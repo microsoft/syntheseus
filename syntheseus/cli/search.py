@@ -50,8 +50,10 @@ from syntheseus.search.utils.misc import lookup_by_name
 try:
     # Try to import the visualization code, which will work only if `graphviz` is installed.
     from syntheseus.search.visualization import visualize_andor, visualize_molset
+
+    VISUALIZATION_CODE_IMPORTED = True
 except ModuleNotFoundError:
-    pass
+    VISUALIZATION_CODE_IMPORTED = False
 
 logger = logging.getLogger(__file__)
 
@@ -152,6 +154,12 @@ def run_from_config(config: SearchConfig) -> Path:
 
     print("Running search with the following config:")
     print(config)
+
+    if config.num_routes_to_plot > 0 and not VISUALIZATION_CODE_IMPORTED:
+        raise ValueError(
+            "Could not import visualization code (likely `viz` dependencies are not installed); "
+            "please install missing dependencies or set `num_routes_to_plot=0`"
+        )
 
     search_target, search_targets_file = [
         cast(DictConfig, config).get(key) for key in ["search_target", "search_targets_file"]
