@@ -7,7 +7,7 @@ from dataclasses import fields, is_dataclass
 from itertools import islice
 from os import devnull
 from typing import Any, Dict, Iterable, Iterator, List, Optional
-
+from torch import Tensor
 import numpy as np
 
 from syntheseus.interface.bag import Bag
@@ -60,6 +60,8 @@ def dictify(data: Any) -> Any:
             value = getattr(data, f.name)
             result[f.name] = dictify(value)
         return result
+    elif isinstance(data, Tensor):
+        return data.tolist()
     else:
         raise TypeError(f"Type {type(data)} cannot be handled by `dictify`")
 
