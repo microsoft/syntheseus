@@ -42,6 +42,7 @@ jobs:
       with:
         name: .coverage.core-${{ matrix.python-version }}
         path: .coverage.*
+        include-hidden-files: true
   test-models:
     runs-on: ubuntu-latest
     defaults:
@@ -74,6 +75,7 @@ jobs:
       with:
         name: .coverage.models
         path: .coverage.*
+        include-hidden-files: true
   coverage:
     needs: [test-core, test-models]
     runs-on: ubuntu-latest
