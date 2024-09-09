@@ -123,6 +123,7 @@ class BaseSearchConfig:
     limit_iterations: int = 1_000_000
     limit_graph_nodes: int = INT_INF
     prevent_repeat_mol_in_trees: bool = True
+    stop_on_first_solution: bool = False
 
     use_gpu: bool = True  # Whether to use a GPU
     canonicalize_inventory: bool = False  # Whether to canonicalize the inventory SMILES
@@ -209,6 +210,7 @@ def run_from_config(config: SearchConfig) -> Path:
                 "limit_iterations",
                 "limit_graph_nodes",
                 "prevent_repeat_mol_in_trees",
+                "stop_on_first_solution",
             ]
         }
     )
