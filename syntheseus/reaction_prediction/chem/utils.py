@@ -2,8 +2,8 @@ from typing import Optional
 
 from rdkit import Chem
 
-from syntheseus.interface.bag import Bag
-from syntheseus.interface.molecule import SMILES_SEPARATOR, Molecule
+from syntheseus import Bag, Molecule, Reaction
+from syntheseus.interface.molecule import SMILES_SEPARATOR
 
 ATOM_MAPPING_PROP_NAME = "molAtomMapNumber"
 
@@ -27,6 +27,19 @@ def remove_atom_mapping(smiles: str) -> str:
     remove_atom_mapping_from_mol(mol)
 
     return Chem.MolToSmiles(mol)
+
+
+def remove_stereo_information(mol: Molecule) -> Molecule:
+    return Molecule(Chem.MolToSmiles(mol.rdkit_mol, isomericSmiles=False))
+
+
+def remove_stereo_information_from_reaction(reaction: Reaction) -> Reaction:
+    return Reaction(
+        reactants=Bag([remove_stereo_information(mol) for mol in reaction.reactants]),
+        products=Bag([remove_stereo_information(mol) for mol in reaction.products]),
+        identifier=reaction.identifier,
+        metadata=reaction.metadata,
+    )
 
 
 def molecule_bag_from_smiles_strict(smiles: str) -> Bag[Molecule]:
