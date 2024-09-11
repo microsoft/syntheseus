@@ -397,21 +397,27 @@ def compute_metrics_from_config(
 
 
 def print_and_save(results: EvalResults, config: EvalConfig, suffix: str = "") -> None:
-    # Extract the top_k results for the chosen values of `k`; the other values are not printed.
-    chosen_topk_results = {x: results.top_k[x - 1] for x in config.print_idxs}
+    chosen_top_k_results: Dict[Dict[str, List[float]]] = {}
 
     # Print the results in a concise form.
     for f in fields(results):
-        if f.name not in ("model_info", "top_k", "predictions", "back_translation_predictions"):
-            print(f"{f.name}: {getattr(results, f.name)}")
+        if f.name not in ("model_info", "predictions", "back_translation_predictions"):
+            if f.name.endswith("top_k"):
+                top_k = getattr(results, f.name)
+                if top_k is not None:
+                    # Extract the top-k for the chosen values of `k`; other values are not printed.
+                    chosen_top_k_results[f.name] = {x: top_k[x - 1] for x in config.print_idxs}
+            else:
+                print(f"{f.name}: {getattr(results, f.name)}")
 
-    if suffix:
-        print(f"top_k results {suffix}:")
-    else:
-        print("top_k results:")
+    for key, top_k in chosen_top_k_results.items():
+        if suffix:
+            print(f"{key} results {suffix}:")
+        else:
+            print(f"{key} results:")
 
-    for k, result in chosen_topk_results.items():
-        print(f"{k}: {result}", flush=True)
+        for k, result in top_k.items():
+            print(f"{k}: {result}", flush=True)
 
     # Save the results into a json file, generate its name from the timestamp for uniqueness.
     if config.save_outputs:
@@ -425,7 +431,9 @@ def print_and_save(results: EvalResults, config: EvalConfig, suffix: str = "") -
             f"{config.model_class.name}_{str(timestamp)}{filestr}{suffix}.json",
         )
         results_dict = asdict_extended(results)
-        results_dict["chosen_top_k"] = chosen_topk_results
+
+        for key, top_k in chosen_top_k_results.items():
+            results_dict[f"chosen_{key}"] = top_k
 
         with open(outfile, "w") as outfile_stream:
             outfile_stream.write(json.dumps(results_dict))
