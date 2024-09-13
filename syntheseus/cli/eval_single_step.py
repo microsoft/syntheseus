@@ -35,6 +35,7 @@ from syntheseus.interface.models import (
     ReactionType,
 )
 from syntheseus.interface.reaction import Reaction, SingleProductReaction
+from syntheseus.reaction_prediction.chem.utils import remove_stereo_information_from_reaction
 from syntheseus.reaction_prediction.data.dataset import (
     DataFold,
     DiskReactionDataset,
@@ -77,6 +78,7 @@ class BaseEvalConfig:
     skip_repeats: bool = True  # Whether repeated results should be skipped
     num_gpus: int = 1  # Number of GPUs to use (or 0 if running on CPU)
     num_dataset_truncation: Optional[int] = None  # Subset size to evaluate on
+    include_results_modulo_stereo: bool = False  # Whether to include stereo-agnostic results
 
     # Fields for saving and printing results
     print_idxs: List[int] = field(default_factory=lambda: [1, 3, 5, 10, 20, 50])
@@ -121,6 +123,8 @@ class EvalResults:
     mean_num_predictions: float
     median_num_predictions: float
     model_time_total: ModelTimingResults
+    match_modulo_stereo_top_k: Optional[List[float]] = None
+    match_modulo_stereo_mrr: Optional[float] = None
     back_translation_top_k: Optional[List[float]] = None
     back_translation_mrr: Optional[float] = None
     predictions: Optional[List[Sequence[Reaction]]] = None
@@ -199,6 +203,7 @@ def compute_metrics(
     dataset: ReactionDataset,
     num_dataset_truncation: Optional[int],
     num_top_results: int,
+    include_results_modulo_stereo: bool = False,
     back_translation_model: Optional[ForwardReactionModel] = None,
     back_translation_num_results: int = 1,
     fold: DataFold = DataFold.VALIDATION,
@@ -216,6 +221,11 @@ def compute_metrics(
     }
 
     ground_truth_match_metrics = TopKMetricsAccumulator(max_num_results=num_top_results)
+
+    if include_results_modulo_stereo:
+        ground_truth_match_modulo_stereo_metrics = TopKMetricsAccumulator(
+            max_num_results=num_top_results
+        )
 
     if back_translation_model is not None:
         eval_args.update(
@@ -308,6 +318,15 @@ def compute_metrics(
             for rxn, ground_truth_match in zip(reaction_list, ground_truth_matches):
                 rxn.metadata["ground_truth_match"] = ground_truth_match
 
+            if include_results_modulo_stereo:
+                output_without_stereo = remove_stereo_information_from_reaction(output)
+                ground_truth_match_modulo_stereo_metrics.add(
+                    [
+                        remove_stereo_information_from_reaction(rxn) == output_without_stereo
+                        for rxn in reaction_list
+                    ]
+                )
+
             if back_translation_model is not None:
                 assert back_translation_metrics is not None
 
@@ -346,6 +365,12 @@ def compute_metrics(
     if include_predictions:
         extra_args.update(predictions=all_predictions)
         extra_args.update(back_translation_predictions=all_back_translation_predictions)
+
+    if include_results_modulo_stereo:
+        extra_args.update(
+            match_modulo_stereo_top_k=ground_truth_match_modulo_stereo_metrics.top_k,
+            match_modulo_stereo_mrr=ground_truth_match_modulo_stereo_metrics.mrr,
+        )
 
     if back_translation_model is not None:
         extra_args.update(
@@ -388,6 +413,7 @@ def compute_metrics_from_config(
         dataset=dataset,
         num_dataset_truncation=config.num_dataset_truncation,
         num_top_results=config.num_top_results,
+        include_results_modulo_stereo=config.include_results_modulo_stereo,
         back_translation_model=back_translation_model,
         back_translation_num_results=config.back_translation_num_results,
         fold=config.fold,
@@ -397,21 +423,27 @@ def compute_metrics_from_config(
 
 
 def print_and_save(results: EvalResults, config: EvalConfig, suffix: str = "") -> None:
-    # Extract the top_k results for the chosen values of `k`; the other values are not printed.
-    chosen_topk_results = {x: results.top_k[x - 1] for x in config.print_idxs}
+    chosen_top_k_results: Dict[str, Dict[int, List[float]]] = {}
 
     # Print the results in a concise form.
     for f in fields(results):
-        if f.name not in ("model_info", "top_k", "predictions", "back_translation_predictions"):
-            print(f"{f.name}: {getattr(results, f.name)}")
+        if f.name not in ("model_info", "predictions", "back_translation_predictions"):
+            if f.name.endswith("top_k"):
+                top_k = getattr(results, f.name)
+                if top_k is not None:
+                    # Extract the top-k for the chosen values of `k`; other values are not printed.
+                    chosen_top_k_results[f.name] = {x: top_k[x - 1] for x in config.print_idxs}
+            else:
+                print(f"{f.name}: {getattr(results, f.name)}")
 
-    if suffix:
-        print(f"top_k results {suffix}:")
-    else:
-        print("top_k results:")
+    for key, top_k in chosen_top_k_results.items():
+        if suffix:
+            print(f"{key} results {suffix}:")
+        else:
+            print(f"{key} results:")
 
-    for k, result in chosen_topk_results.items():
-        print(f"{k}: {result}", flush=True)
+        for k, result in top_k.items():
+            print(f"{k}: {result}", flush=True)
 
     # Save the results into a json file, generate its name from the timestamp for uniqueness.
     if config.save_outputs:
@@ -425,7 +457,9 @@ def print_and_save(results: EvalResults, config: EvalConfig, suffix: str = "") -
             f"{config.model_class.name}_{str(timestamp)}{filestr}{suffix}.json",
         )
         results_dict = asdict_extended(results)
-        results_dict["chosen_top_k"] = chosen_topk_results
+
+        for key, top_k in chosen_top_k_results.items():
+            results_dict[f"chosen_{key}"] = top_k
 
         with open(outfile, "w") as outfile_stream:
             outfile_stream.write(json.dumps(results_dict))

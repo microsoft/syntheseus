@@ -1,9 +1,10 @@
-from typing import Optional
+from typing import Dict, Optional, Union
 
 from rdkit import Chem
 
-from syntheseus.interface.bag import Bag
-from syntheseus.interface.molecule import SMILES_SEPARATOR, Molecule
+from syntheseus import Bag, Molecule, SingleProductReaction
+from syntheseus.interface.models import ReactionType
+from syntheseus.interface.molecule import SMILES_SEPARATOR
 
 ATOM_MAPPING_PROP_NAME = "molAtomMapNumber"
 
@@ -27,6 +28,25 @@ def remove_atom_mapping(smiles: str) -> str:
     remove_atom_mapping_from_mol(mol)
 
     return Chem.MolToSmiles(mol)
+
+
+def remove_stereo_information(mol: Molecule) -> Molecule:
+    return Molecule(Chem.MolToSmiles(mol.rdkit_mol, isomericSmiles=False))
+
+
+def remove_stereo_information_from_reaction(reaction: ReactionType) -> ReactionType:
+    mol_kwargs: Dict[str, Union[Molecule, Bag[Molecule]]] = {
+        "reactants": Bag([remove_stereo_information(mol) for mol in reaction.reactants])
+    }
+
+    if isinstance(reaction, SingleProductReaction):
+        mol_kwargs["product"] = remove_stereo_information(reaction.product)
+    else:
+        mol_kwargs["products"] = Bag([remove_stereo_information(mol) for mol in reaction.products])
+
+    return reaction.__class__(
+        **mol_kwargs, identifier=reaction.identifier, metadata=reaction.metadata  # type: ignore[arg-type]
+    )
 
 
 def molecule_bag_from_smiles_strict(smiles: str) -> Bag[Molecule]:
