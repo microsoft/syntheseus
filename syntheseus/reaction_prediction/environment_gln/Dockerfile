@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/azureml/openmpi3.1.2-cuda10.0-cudnn7-ubuntu18.04
+FROM mcr.microsoft.com/azureml/openmpi4.1.0-cuda11.8-cudnn8-ubuntu22.04
 MAINTAINER krmaziar@microsoft.com
 
 # Set bash, as conda doesn't like dash
@@ -12,13 +12,17 @@ ENV PIP_NO_CACHE_DIR=1
 
 # Install the dependencies into conda's default environment
 COPY ./environment.yml /tmp/
-RUN conda install mamba -n base -c conda-forge
-RUN mamba env update -p /opt/miniconda -f /tmp/environment.yml && conda clean -ay
+RUN conda config --remove channels defaults && \
+    conda config --add channels conda-forge && \
+    conda update --all && \
+    conda install mamba -n base -c conda-forge && \
+    conda clean --all --yes
+RUN mamba env update -p /opt/miniconda -f /tmp/environment.yml && conda clean --all --yes
 
 # Install RDKit from source
 RUN git clone https://github.com/rdkit/rdkit.git
 WORKDIR /rdkit
-RUN git checkout 7ad9e0d161110f758350ca080be0fc05530bee1e
+RUN git checkout 8bd74d91118f3fdb370081ef0a18d71715e7c6cf
 RUN mkdir build && cd build && cmake -DPy_ENABLE_SHARED=1 \
     -DRDK_INSTALL_INTREE=ON \
     -DRDK_INSTALL_STATIC_LIBS=OFF \
@@ -28,10 +32,9 @@ RUN mkdir build && cd build && cmake -DPy_ENABLE_SHARED=1 \
     .. && make && make install
 WORKDIR /
 
-# Install GLN (this relies on `CUDA_HOME` being set correctly).
-RUN git clone https://github.com/Hanjun-Dai/GLN.git
+# Install GLN (this relies on `CUDA_HOME` being set correctly)
+RUN git clone https://github.com/kmaziarz/GLN.git
 WORKDIR /GLN
-RUN git checkout b5bd7b181a61a8289cc1d1a33825b2c417bed0ef
 RUN pip install -e .
 
 ENV PYTHONPATH=$PYTHONPATH:/rdkit:/GLN
