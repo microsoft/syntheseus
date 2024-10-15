@@ -15,6 +15,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 - Reuse search results when given a partially filled directory ([#98](https://github.com/microsoft/syntheseus/pull/98)) ([@kmaziarz])
 - Expose `stop_on_first_solution` as a CLI flag ([#100](https://github.com/microsoft/syntheseus/pull/100)) ([@kmaziarz])
+- Add an option to set time limit for route extraction ([#104](https://github.com/microsoft/syntheseus/pull/104)) ([@kmaziarz])
 - Extend single-step evaluation with stereo-agnostic results ([#102](https://github.com/microsoft/syntheseus/pull/102)) ([@kmaziarz])
 
 ### Fixed
