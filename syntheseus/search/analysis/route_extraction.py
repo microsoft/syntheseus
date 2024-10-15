@@ -31,7 +31,7 @@ def _iter_top_routes(
     this is the case but are not sure in general.
 
     Args:
-        graph: graph to iterate over. Could be tree, but does not need to be.
+        graph: Graph to iterate over. Could be tree, but does not need to be.
         cost_fn: Gives the cost of a route (specified by the set of nodes).
             A cost of inf means the route will not be returned.
         cost_lower_bound: A lower bound of the cost. The lower bound means that
@@ -181,11 +181,11 @@ def iter_routes_cost_order(
     It is also assumed that `node.has_solution` is set beforehand.
 
     Args:
-        graph: graph whose routes to extract
-        max_routes: maximum number of routes to yield.
+        graph: Graph to extract routes from.
+        max_routes: Maximum number of routes to yield.
         max_time_s: Maximum total number of seconds to spend extracting routes.
-        stop_cost: if provided, iterator will terminate once a route of cost
-            >= stop_cost is encountered
+        stop_cost: If provided, iterator will terminate once a route of cost
+            larger than `stop_cost` is encountered.
     """
 
     for cost, route in _iter_top_routes(
@@ -232,8 +232,8 @@ def iter_routes_time_order(
     Creation time is measured by `node.creation_time`.
 
     Args:
-        graph: graph whose routes to extract
-        max_routes: maximum number of routes to yield.
+        graph: Graph to extract routes from.
+        max_routes: Maximum number of routes to yield.
         max_time_s: Maximum total number of seconds to spend extracting routes.
     """
 
