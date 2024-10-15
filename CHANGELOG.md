@@ -7,6 +7,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+
+- Update GLN to Python 3.9 ([#103](https://github.com/microsoft/syntheseus/pull/103)) ([@kmaziarz])
+
 ### Added
 
 - Reuse search results when given a partially filled directory ([#98](https://github.com/microsoft/syntheseus/pull/98)) ([@kmaziarz])
