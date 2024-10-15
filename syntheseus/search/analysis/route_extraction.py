@@ -3,6 +3,7 @@ from __future__ import annotations
 import heapq
 import math
 from collections.abc import Collection, Iterator
+from datetime import datetime
 from typing import Callable, Optional, TypeVar
 
 from syntheseus.search.graph.and_or import AndNode, OrNode
@@ -18,6 +19,7 @@ def _iter_top_routes(
     cost_fn: Callable[[Collection[NodeType], RetrosynthesisSearchGraph[NodeType]], float],
     cost_lower_bound: Callable[[Collection[NodeType], RetrosynthesisSearchGraph[NodeType]], float],
     max_routes: int,
+    max_time_s: float = math.inf,
     yield_partial_routes: bool = False,
 ) -> Iterator[tuple[float, Collection[NodeType]]]:
     """
@@ -37,6 +39,7 @@ def _iter_top_routes(
             will always exceed this lower bound.
             This function will always be evaluated on partial routes.
         max_routes: Maximum number of routes to return.
+        max_time_s: Maximum total number of seconds to spend extracting routes.
         yield_partial_routes: if True, will yield routes whose leaves
             have children in the full graph. This could be useful if, for example,
             there are purchasable molecules which have children.
@@ -54,10 +57,15 @@ def _iter_top_routes(
         (-math.inf, False, 0, {graph.root_node}, [graph.root_node])
     ]
     tie_breaker = 1
+    start_time = datetime.now()
 
     # Do best-first search
     num_routes_yielded = 0
-    while len(queue) > 0 and num_routes_yielded < max_routes:
+    while (
+        len(queue) > 0
+        and num_routes_yielded < max_routes
+        and (datetime.now() - start_time).total_seconds() < max_time_s
+    ):
         # Pop route
         cost, is_true_cost, _, partial_route, route_frontier = heapq.heappop(queue)
         assert cost < math.inf, "Infinite cost routes should not be in the queue."
@@ -162,6 +170,7 @@ def _min_route_partial_cost(
 def iter_routes_cost_order(
     graph: RetrosynthesisSearchGraph,
     max_routes: int,
+    max_time_s: float = math.inf,
     stop_cost: Optional[float] = None,
 ) -> Iterator[Collection[BaseGraphNode]]:
     """
@@ -174,6 +183,7 @@ def iter_routes_cost_order(
     Args:
         graph: graph whose routes to extract
         max_routes: maximum number of routes to yield.
+        max_time_s: Maximum total number of seconds to spend extracting routes.
         stop_cost: if provided, iterator will terminate once a route of cost
             >= stop_cost is encountered
     """
@@ -183,6 +193,7 @@ def iter_routes_cost_order(
         cost_fn=_min_route_cost,
         cost_lower_bound=_min_route_partial_cost,
         max_routes=max_routes,
+        max_time_s=max_time_s,
         yield_partial_routes=False,
     ):
         if stop_cost is not None and cost >= stop_cost:
@@ -211,7 +222,7 @@ def _route_time_partial_cost(nodes, _) -> float:
 
 
 def iter_routes_time_order(
-    graph: RetrosynthesisSearchGraph, max_routes: int
+    graph: RetrosynthesisSearchGraph, max_routes: int, max_time_s: float = math.inf
 ) -> Iterator[Collection[BaseGraphNode]]:
     """
     Iterate over all solved routes from `graph` in the order they were created
@@ -223,6 +234,7 @@ def iter_routes_time_order(
     Args:
         graph: graph whose routes to extract
         max_routes: maximum number of routes to yield.
+        max_time_s: Maximum total number of seconds to spend extracting routes.
     """
 
     for _, r in _iter_top_routes(
@@ -230,6 +242,7 @@ def iter_routes_time_order(
         cost_fn=_route_time_cost,
         cost_lower_bound=_route_time_partial_cost,
         max_routes=max_routes,
+        max_time_s=max_time_s,
         yield_partial_routes=False,
     ):
         yield r
