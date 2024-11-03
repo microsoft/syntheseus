@@ -41,6 +41,31 @@ pip install "syntheseus[all]"
 
 See [here](https://microsoft.github.io/syntheseus/installation) if you prefer a more lightweight installation that only includes the parts you actually need.
 
+## Citation and usage
+
+Since the release of our package, we've been thrilled to see syntheseus be used in the following projects:
+
+| **Project** | **Usage** | **Reference(s)** |
+|:--------------|:-----|:-----------|
+|Retro-fallback search|Multi-step search|ICLR [paper](https://arxiv.org/abs/2310.09270), [code](https://github.com/AustinT/retro-fallback-iclr24)|
+|RetroGFN|Pre-packaged single-step models|arXiv [paper](https://arxiv.org/abs/2406.18739), [code](https://github.com/gmum/RetroGFN)|
+|TANGO|Single-step and multi-step|arXiv [paper](https://arxiv.org/abs/2410.11527)|
+|"Challenging complexity with simplicity" study|Multi-step search|JCIM [paper](https://pubs.acs.org/doi/10.1021/acs.jcim.4c00432)|
+
+If you use syntheseus in an academic project, please consider citing our
+[associated paper from Faraday Discussions](https://pubs.rsc.org/en/content/articlelanding/2024/fd/d4fd00093e)
+(bibtex below). You can also message us or submit a PR to have your project added to the table above!
+
+```
+@article{maziarz2024re,
+  title={Re-evaluating retrosynthesis algorithms with syntheseus},
+  author={Maziarz, Krzysztof and Tripp, Austin and Liu, Guoqing and Stanley, Megan and Xie, Shufang and Gainski, Piotr and Seidl, Philipp and Segler, Marwin},
+  journal={Faraday Discussions},
+  year={2024},
+  publisher={Royal Society of Chemistry}
+}
+```
+
 ## Development
 
 Syntheseus is currently under active development.
@@ -75,3 +100,17 @@ trademarks or logos is subject to and must follow
 [Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 Any use of third-party trademarks or logos are subject to those third-party's policies.
+
+
+# TODO!!!
+
+- retro-fallback
+
+-  https://pubs.acs.org/doi/10.1021/acs.jcim.4c00432 (used multi-step planning)
+
+Should keep: code, paper, 
+
+
+Papers/projects using syntheseus!!
+
+Project | Usage | Reference
