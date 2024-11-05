@@ -50,7 +50,7 @@ Since the release of our package, we've been thrilled to see syntheseus be used 
 |Retro-fallback search|Multi-step search|ICLR [paper](https://arxiv.org/abs/2310.09270), [code](https://github.com/AustinT/retro-fallback-iclr24)|
 |RetroGFN|Pre-packaged single-step models|arXiv [paper](https://arxiv.org/abs/2406.18739), [code](https://github.com/gmum/RetroGFN)|
 |TANGO|Single-step and multi-step|arXiv [paper](https://arxiv.org/abs/2410.11527)|
-|"Challenging complexity with simplicity" study|Multi-step search|JCIM [paper](https://pubs.acs.org/doi/10.1021/acs.jcim.4c00432)|
+|SimpRetro|Multi-step search|JCIM [paper](https://pubs.acs.org/doi/10.1021/acs.jcim.4c00432), [code](https://github.com/catalystforyou/SimpRetro)|
 
 If you use syntheseus in an academic project, please consider citing our
 [associated paper from Faraday Discussions](https://pubs.rsc.org/en/content/articlelanding/2024/fd/d4fd00093e)
