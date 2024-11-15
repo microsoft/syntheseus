@@ -1,7 +1,13 @@
+import sys
 from collections.abc import Collection
 from typing import Generic, Iterable, Iterator, TypeVar
 
-from typing_extensions import Protocol
+# mypy-compatible import recommended here:
+# https://mypy.readthedocs.io/en/stable/runtime_troubles.html#using-new-additions-to-the-typing-module
+if sys.version_info >= (3, 8):
+    from typing import Protocol
+else:
+    from typing_extensions import Protocol
 
 
 class Comparable(Protocol):
