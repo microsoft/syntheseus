@@ -23,6 +23,7 @@ dependencies = [
     "omegaconf",            # reaction_prediction
     "rdkit",                # reaction_prediction, search
     "tqdm",                 # reaction_prediction
+    "typing_extensions ; python_version < '3.8'",  # for TypedDict and Protocol imports
 ]
 
 [project.optional-dependencies]
