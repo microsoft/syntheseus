@@ -10,6 +10,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ### Changed
 
 - Update GLN to Python 3.9 ([#103](https://github.com/microsoft/syntheseus/pull/103)) ([@kmaziarz])
+- Remove dependency on `typing_extensions` for python >= 3.8 ([#107](https://github.com/microsoft/syntheseus/pull/107)) ([@austint])
 
 ### Added
 
