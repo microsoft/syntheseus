@@ -10,7 +10,6 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ### Changed
 
 - Update GLN to Python 3.9 ([#103](https://github.com/microsoft/syntheseus/pull/103)) ([@kmaziarz])
-- Remove dependency on `typing_extensions` for python >= 3.8 ([#107](https://github.com/microsoft/syntheseus/pull/107)) ([@austint])
 
 ### Added
 
@@ -21,6 +20,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ### Fixed
 
+- Remove dependency on `typing_extensions` for python >= 3.8 ([#107](https://github.com/microsoft/syntheseus/pull/107)) ([@austint])
 - Pin further Chemformer dependencies to avoid `torch` reinstallation ([#108](https://github.com/microsoft/syntheseus/pull/108)) ([@kmaziarz])
 - Shift the `pandas` dependency to the external model packages ([#94](https://github.com/microsoft/syntheseus/pull/94)) ([@kmaziarz])
 - Fix constructor arguments in `ParallelReactionModel` ([#96](https://github.com/microsoft/syntheseus/pull/96)) ([@kmaziarz])
