@@ -41,7 +41,7 @@ graph2edits = ["syntheseus-graph2edits==0.2.0"]
 local-retro = ["syntheseus-local-retro==0.5.0"]
 megan = ["syntheseus-megan==0.1.0"]
 mhn-react = ["syntheseus-mhnreact==1.0.0"]
-retro-knn = ["syntheseus[local-retro]", "torch-scatter"]
+retro-knn = ["syntheseus[local-retro]"]
 root-aligned = ["syntheseus-root-aligned==0.1.0"]
 all-single-step = [
   "syntheseus[chemformer,graph2edits,local-retro,megan,mhn-react,retro-knn,root-aligned]"
