@@ -39,7 +39,7 @@ conda activate syntheseus-full
 pip install "syntheseus[all]"
 ```
 
-See [here](https://microsoft.github.io/syntheseus/installation) if you prefer a more lightweight installation that only includes the parts you actually need.
+See [here](https://microsoft.github.io/syntheseus/stable/installation) if you prefer a more lightweight installation that only includes the parts you actually need.
 
 ## Citation and usage
 
