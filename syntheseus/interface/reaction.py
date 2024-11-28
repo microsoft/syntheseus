@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, TypedDict
 
 from syntheseus.interface.bag import Bag
 from syntheseus.interface.molecule import Molecule, molecule_bag_to_smiles
-from syntheseus.interface.typed_dict import TypedDict
 
 REACTION_SEPARATOR = ">"
 

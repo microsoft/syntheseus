@@ -5,8 +5,7 @@ import datetime
 import math
 from collections.abc import Collection
 from dataclasses import dataclass, field
-
-from syntheseus.interface.typed_dict import TypedDict
+from typing import TypedDict
 
 
 class _NodeData_Time(TypedDict, total=False):
