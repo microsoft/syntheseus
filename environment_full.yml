@@ -3,13 +3,15 @@ channels:
   - defaults
   - conda-forge
   - pytorch
-  - dglteam       # LocalRetro, RetroKNN
+  - dglteam                 # LocalRetro, RetroKNN
+  - pyg                     # RetroKNN
 dependencies:
-  - dgl-cuda11.3  # LocalRetro, RetroKNN
-  - faiss-gpu     # RetroKNN
+  - dgl-cuda11.3            # LocalRetro, RetroKNN
+  - faiss-gpu               # RetroKNN
   - numpy
   - pip
   - python==3.9.7
   - pytorch=1.10.2=py3.9_cuda11.3_cudnn8.2.0_0
-  - rdchiral_cpp  # MHNreact
+  - pytorch-scatter==2.0.9  # RetroKNN
+  - rdchiral_cpp            # MHNreact
   - rdkit=2021.09.4
