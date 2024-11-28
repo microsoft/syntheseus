@@ -13,7 +13,7 @@ authors = [  # Note: PyPI does not support multiple authors with email addresses
 ]
 description = "A package for retrosynthetic planning."
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 license = {file = "LICENSE"}
 dynamic = ["version"]
 dependencies = [
