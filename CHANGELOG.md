@@ -11,6 +11,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 - Drop support for Python 3.7 ([#113](https://github.com/microsoft/syntheseus/pull/113)) ([@kmaziarz])
 
+### Fixed
+
+- Fix search CLI crash under Python 3.11+ ([#114](https://github.com/microsoft/syntheseus/pull/114)) ([@kmaziarz])
+
 ## [0.5.0] - 2024-11-28
 
 ### Changed
