@@ -7,6 +7,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+
+- Drop support for Python 3.7 ([#113](https://github.com/microsoft/syntheseus/pull/113)) ([@kmaziarz])
+
 ## [0.5.0] - 2024-11-28
 
 ### Changed
