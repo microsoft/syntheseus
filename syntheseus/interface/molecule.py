@@ -3,12 +3,11 @@ Classes to hold molecules, without reference to the reactions they may take part
 """
 
 from dataclasses import InitVar, dataclass, field
-from typing import Optional, Union
+from typing import Optional, TypedDict, Union
 
 from rdkit import Chem
 
 from syntheseus.interface.bag import Bag
-from syntheseus.interface.typed_dict import TypedDict
 
 SMILES_SEPARATOR = "."
 
