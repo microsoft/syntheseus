@@ -134,9 +134,9 @@ class BaseSearchConfig:
 
     # Fields configuring the search algorithm
     search_algorithm: str = "retro_star"  # "retro_star", "mcts", or "pdvn"
-    retro_star_config: RetroStarConfig = RetroStarConfig()
-    mcts_config: MCTSConfig = MCTSConfig()
-    pdvn_config: PDVNConfig = PDVNConfig()
+    retro_star_config: RetroStarConfig = field(default_factory=RetroStarConfig)
+    mcts_config: MCTSConfig = field(default_factory=MCTSConfig)
+    pdvn_config: PDVNConfig = field(default_factory=PDVNConfig)
 
     # Fields configuring what to save after the run
     save_graph: bool = True  # Whether to save the full reaction graph (can be large)
