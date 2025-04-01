@@ -15,6 +15,11 @@ ReactionType = TypeVar("ReactionType", bound=Reaction)
 DEFAULT_NUM_RESULTS = 100
 
 
+def deduplicate_keeping_order(seq: Sequence) -> list:
+    """Deduplicate a sequence while preserving order."""
+    return list(dict.fromkeys(seq))  # Dict insertion order is preserved in Python 3.7+
+
+
 class ReactionModel(Generic[InputType, ReactionType]):
     """Base class for all reaction models, both backward and forward."""
 
@@ -141,9 +146,7 @@ class ReactionModel(Generic[InputType, ReactionType]):
         but subclasses could add additional behaviour or override this.
         """
         if self._remove_duplicates:
-            # This removes duplicates but preserves order since dict's
-            # insertion order is preserved in Python 3.7+
-            return list(dict.fromkeys(reaction_list))
+            return deduplicate_keeping_order(reaction_list)
         else:
             return list(reaction_list)
 
