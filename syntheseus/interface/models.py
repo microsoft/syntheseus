@@ -110,7 +110,10 @@ class ReactionModel(Generic[InputType, ReactionType]):
 
         # Step 1: call underlying model for all inputs not in the cache,
         # and add them to the cache
-        inputs_not_in_cache = list({inp for inp in inputs if (inp, num_results) not in self._cache})
+        inputs_not_in_cache = deduplicate_keeping_order(
+            [inp for inp in inputs if (inp, num_results) not in self._cache]
+        )
+
         if len(inputs_not_in_cache) > 0:
             new_rxns = self._get_reactions(inputs=inputs_not_in_cache, num_results=num_results)
             assert len(new_rxns) == len(inputs_not_in_cache)
