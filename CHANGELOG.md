@@ -14,6 +14,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ### Fixed
 
 - Fix search CLI crash under Python 3.11+ ([#114](https://github.com/microsoft/syntheseus/pull/114)) ([@kmaziarz])
+- Query the underlying reaction model in a fixed order ([#122](https://github.com/microsoft/syntheseus/pull/122)) ([@kmaziarz])
 
 ## [0.5.0] - 2024-11-28
 
