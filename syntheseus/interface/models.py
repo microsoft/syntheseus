@@ -15,6 +15,11 @@ ReactionType = TypeVar("ReactionType", bound=Reaction)
 DEFAULT_NUM_RESULTS = 100
 
 
+def deduplicate_keeping_order(seq: Sequence) -> list:
+    """Deduplicate a sequence while preserving order."""
+    return list(dict.fromkeys(seq))  # Dict insertion order is preserved in Python 3.7+
+
+
 class ReactionModel(Generic[InputType, ReactionType]):
     """Base class for all reaction models, both backward and forward."""
 
@@ -100,26 +105,27 @@ class ReactionModel(Generic[InputType, ReactionType]):
                 number of results will be used.
         """
 
-        # Step 0: set num_results to default if not provided
+        # Step 0: set `num_results` to default if not provided.
         num_results = num_results or self.default_num_results
 
-        # Step 1: call underlying model for all inputs not in the cache,
-        # and add them to the cache
-        inputs_not_in_cache = list({inp for inp in inputs if (inp, num_results) not in self._cache})
+        # Step 1: call underlying model for all inputs not in the cache, and add them to the cache.
+        inputs_not_in_cache = deduplicate_keeping_order(
+            [inp for inp in inputs if (inp, num_results) not in self._cache]
+        )
+
         if len(inputs_not_in_cache) > 0:
             new_rxns = self._get_reactions(inputs=inputs_not_in_cache, num_results=num_results)
             assert len(new_rxns) == len(inputs_not_in_cache)
             for inp, rxns in zip(inputs_not_in_cache, new_rxns):
                 self._cache[(inp, num_results)] = self.filter_reactions(rxns)
 
-        # Step 2: all reactions should now be in the cache,
-        # so the output can just be assembled from there.
-        # Clear the cache if use_cache=False
+        # Step 2: all reactions should now be in the cache, so the output can just be assembled from
+        # there. We then clear the cache if `use_cache=False`.
         output = [self._cache[(inp, num_results)] for inp in inputs]
         if not self._use_cache:
             self._cache.clear()
 
-        # Step 3: increment counts
+        # Step 3: increment counts.
         self._num_cache_misses += len(inputs_not_in_cache)
         self._num_cache_hits += len(inputs) - len(inputs_not_in_cache)
 
@@ -141,9 +147,7 @@ class ReactionModel(Generic[InputType, ReactionType]):
         but subclasses could add additional behaviour or override this.
         """
         if self._remove_duplicates:
-            # This removes duplicates but preserves order since dict's
-            # insertion order is preserved in Python 3.7+
-            return list(dict.fromkeys(reaction_list))
+            return deduplicate_keeping_order(reaction_list)
         else:
             return list(reaction_list)
 
