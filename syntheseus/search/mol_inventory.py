@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import abc
 from collections.abc import Collection
+from pathlib import Path
+from typing import Union
 
 from syntheseus.interface.molecule import Molecule
 
@@ -52,3 +54,9 @@ class SmilesListInventory(ExplicitMolInventory):
 
     def purchasable_mols(self) -> Collection[Molecule]:
         return self._mol_set
+
+    @classmethod
+    def load_from_file(cls, path: Union[str, Path], **kwargs) -> SmilesListInventory:
+        """Load the inventory SMILES from a file."""
+        with open(path, "rt") as f_inventory:
+            return cls([line.strip() for line in f_inventory], **kwargs)
