@@ -194,10 +194,8 @@ def run_from_config(config: SearchConfig) -> Path:
     )
 
     # Set up the inventory
-    with open(config.inventory_smiles_file, "rt") as f_inventory:
-        inventory_smiles = [line.strip() for line in f_inventory]
-    mol_inventory = SmilesListInventory(
-        inventory_smiles, canonicalize=config.canonicalize_inventory
+    mol_inventory = SmilesListInventory.load_from_file(
+        config.inventory_smiles_file, canonicalize=config.canonicalize_inventory
     )
 
     alg_kwargs: Dict[str, Any] = dict(reaction_model=search_rxn_model, mol_inventory=mol_inventory)
