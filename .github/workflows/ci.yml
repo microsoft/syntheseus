@@ -59,6 +59,8 @@ jobs:
         channels: conda-forge,defaults
         channel-priority: true
         environment-file: environment_full.yml
+    - name: Upgrade pip, setuptools, and wheel
+      run: pip install --upgrade pip setuptools wheel
     - name: Install syntheseus with all single-step models
       run: |
         sudo apt install graphviz
