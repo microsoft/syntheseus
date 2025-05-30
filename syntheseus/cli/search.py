@@ -115,14 +115,11 @@ class SearchAlgorithmClass(Enum):
 
 
 @dataclass
-class BaseSearchConfig:
-    # Molecule(s) to search for (either as a single explicit SMILES or a file)
-    search_target: str = MISSING
-    search_targets_file: str = MISSING
-
-    inventory_smiles_file: str = MISSING  # Purchasable molecules
-    results_dir: str = "."  # Directory to save the results in
-    append_timestamp_to_dir: bool = True  # Whether to append the current time to directory name
+class SearchAlgorithmConfig:
+    search_algorithm: SearchAlgorithmClass = SearchAlgorithmClass.retro_star
+    retro_star_config: RetroStarConfig = field(default_factory=RetroStarConfig)
+    mcts_config: MCTSConfig = field(default_factory=MCTSConfig)
+    pdvn_config: PDVNConfig = field(default_factory=PDVNConfig)
 
     # By default limit search time (but set very high iteration limits just in case)
     time_limit_s: float = 600
@@ -132,18 +129,23 @@ class BaseSearchConfig:
     prevent_repeat_mol_in_trees: bool = True
     stop_on_first_solution: bool = False
 
+
+@dataclass
+class BaseSearchConfig(SearchAlgorithmConfig):
+    # Molecule(s) to search for (either as a single explicit SMILES or a file)
+    search_target: str = MISSING
+    search_targets_file: str = MISSING
+
+    inventory_smiles_file: str = MISSING  # Purchasable molecules
+    results_dir: str = "."  # Directory to save the results in
+    append_timestamp_to_dir: bool = True  # Whether to append the current time to directory name
+
     use_gpu: bool = True  # Whether to use a GPU
     canonicalize_inventory: bool = False  # Whether to canonicalize the inventory SMILES
 
     # Fields configuring the reaction model (on top of the arguments from `BackwardModelConfig`)
     num_top_results: int = 50  # Number of results to request
     reaction_model_use_cache: bool = True  # Whether to cache the results
-
-    # Fields configuring the search algorithm
-    search_algorithm: SearchAlgorithmClass = SearchAlgorithmClass.retro_star
-    retro_star_config: RetroStarConfig = field(default_factory=RetroStarConfig)
-    mcts_config: MCTSConfig = field(default_factory=MCTSConfig)
-    pdvn_config: PDVNConfig = field(default_factory=PDVNConfig)
 
     # Fields configuring what to save after the run
     save_graph: bool = True  # Whether to save the full reaction graph (can be large)
