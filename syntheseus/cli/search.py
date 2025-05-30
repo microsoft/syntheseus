@@ -21,6 +21,7 @@ import math
 import pickle
 import statistics
 from dataclasses import dataclass, field
+from enum import Enum
 from pathlib import Path
 from pprint import pformat
 from typing import Any, Dict, Iterator, List, Optional, cast
@@ -107,6 +108,12 @@ class PDVNConfig:
     bound_function_class: str = "pucb_bound"
 
 
+class SearchAlgorithmClass(Enum):
+    retro_star = RetroStarSearch
+    mcts = MolSetMCTS
+    pdvn = PDVN_MCTS
+
+
 @dataclass
 class BaseSearchConfig:
     # Molecule(s) to search for (either as a single explicit SMILES or a file)
@@ -133,7 +140,7 @@ class BaseSearchConfig:
     reaction_model_use_cache: bool = True  # Whether to cache the results
 
     # Fields configuring the search algorithm
-    search_algorithm: str = "retro_star"  # "retro_star", "mcts", or "pdvn"
+    search_algorithm: SearchAlgorithmClass = SearchAlgorithmClass.retro_star
     retro_star_config: RetroStarConfig = field(default_factory=RetroStarConfig)
     mcts_config: MCTSConfig = field(default_factory=MCTSConfig)
     pdvn_config: PDVNConfig = field(default_factory=PDVNConfig)
@@ -223,14 +230,11 @@ def run_from_config(config: SearchConfig) -> Path:
         del alg_kwargs[f"{key}_class"]
         del alg_kwargs[f"{key}_kwargs"]
 
-    alg: Any = None
-    if config.search_algorithm == "retro_star":
+    if config.search_algorithm == SearchAlgorithmClass.retro_star:
         alg_kwargs.update(cast(Dict[str, Any], OmegaConf.to_container(config.retro_star_config)))
         build_node_evaluator("value_function")
         build_node_evaluator("and_node_cost_fn")
-
-        alg = RetroStarSearch(**alg_kwargs)
-    elif config.search_algorithm == "mcts":
+    elif config.search_algorithm == SearchAlgorithmClass.mcts:
         alg_kwargs.update(cast(Dict[str, Any], OmegaConf.to_container(config.mcts_config)))
         build_node_evaluator("value_function")
         build_node_evaluator("reward_function")
@@ -238,9 +242,7 @@ def run_from_config(config: SearchConfig) -> Path:
 
         alg_kwargs["bound_function"] = lookup_by_name(mcts_base, alg_kwargs["bound_function_class"])
         del alg_kwargs["bound_function_class"]
-
-        alg = MolSetMCTS(**alg_kwargs)
-    elif config.search_algorithm == "pdvn":
+    elif config.search_algorithm == SearchAlgorithmClass.pdvn:
         alg_kwargs.update(cast(Dict[str, Any], OmegaConf.to_container(config.pdvn_config)))
         build_node_evaluator("value_function_syn")
         build_node_evaluator("value_function_cost")
@@ -250,9 +252,7 @@ def run_from_config(config: SearchConfig) -> Path:
         alg_kwargs["bound_function"] = lookup_by_name(mcts_base, alg_kwargs["bound_function_class"])
         del alg_kwargs["bound_function_class"]
 
-        alg = PDVN_MCTS(**alg_kwargs)
-    else:
-        raise NotImplementedError(f"Unsupported search algorithm {config.search_algorithm}")
+    alg = config.search_algorithm.value(**alg_kwargs)
 
     # Prepare the output directory
     results_dir_top_level = Path(config.results_dir)
@@ -407,12 +407,13 @@ def main(argv: Optional[List[str]] = None, config_cls: Any = SearchConfig) -> Pa
         with open(defaults_file_path, "rt") as f_defaults:
             defaults = yaml.safe_load(f_defaults)
 
-        if config.search_algorithm not in defaults:
+        search_algorithm_name = config.search_algorithm.name
+        if search_algorithm_name not in defaults:
             _warn_will_not_use_defaults(
-                f"Hyperparameter defaults file has no entry for {config.search_algorithm}"
+                f"Hyperparameter defaults file has no entry for {search_algorithm_name}"
             )
         else:
-            search_algorithm_defaults = defaults[config.search_algorithm]
+            search_algorithm_defaults = defaults[search_algorithm_name]
 
             model_name = config.model_class.name
             if model_name not in search_algorithm_defaults:
@@ -430,7 +431,7 @@ def main(argv: Optional[List[str]] = None, config_cls: Any = SearchConfig) -> Pa
                 config = cli_get_config(
                     argv=argv,
                     config_cls=config_cls,
-                    defaults={f"{config.search_algorithm}_config": relevant_defaults},
+                    defaults={f"{search_algorithm_name}_config": relevant_defaults},
                 )
 
     return run_from_config(config)
