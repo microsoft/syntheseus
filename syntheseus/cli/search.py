@@ -130,6 +130,54 @@ class SearchAlgorithmConfig:
     stop_on_first_solution: bool = False
 
 
+def search_algorithm_config_to_kwargs(config: SearchAlgorithmConfig) -> Dict[str, Any]:
+    alg_kwargs = {
+        key: cast(DictConfig, config).get(key)
+        for key in [
+            "time_limit_s",
+            "limit_reaction_model_calls",
+            "limit_iterations",
+            "limit_graph_nodes",
+            "prevent_repeat_mol_in_trees",
+            "stop_on_first_solution",
+        ]
+    }
+
+    def build_node_evaluator(key: str) -> None:
+        # Build a node evaluator based on chosen class and args
+        alg_kwargs[key] = lookup_by_name(node_evaluation_common, alg_kwargs[f"{key}_class"])(
+            **alg_kwargs[f"{key}_kwargs"]
+        )
+
+        # Delete the arguments to avoid passing them into the algorithm's constructor downstream
+        del alg_kwargs[f"{key}_class"]
+        del alg_kwargs[f"{key}_kwargs"]
+
+    if config.search_algorithm == SearchAlgorithmClass.retro_star:
+        alg_kwargs.update(cast(Dict[str, Any], OmegaConf.to_container(config.retro_star_config)))
+        build_node_evaluator("value_function")
+        build_node_evaluator("and_node_cost_fn")
+    elif config.search_algorithm == SearchAlgorithmClass.mcts:
+        alg_kwargs.update(cast(Dict[str, Any], OmegaConf.to_container(config.mcts_config)))
+        build_node_evaluator("value_function")
+        build_node_evaluator("reward_function")
+        build_node_evaluator("policy")
+
+        alg_kwargs["bound_function"] = lookup_by_name(mcts_base, alg_kwargs["bound_function_class"])
+        del alg_kwargs["bound_function_class"]
+    elif config.search_algorithm == SearchAlgorithmClass.pdvn:
+        alg_kwargs.update(cast(Dict[str, Any], OmegaConf.to_container(config.pdvn_config)))
+        build_node_evaluator("value_function_syn")
+        build_node_evaluator("value_function_cost")
+        build_node_evaluator("and_node_cost_fn")
+        build_node_evaluator("policy")
+
+        alg_kwargs["bound_function"] = lookup_by_name(mcts_base, alg_kwargs["bound_function_class"])
+        del alg_kwargs["bound_function_class"]
+
+    return alg_kwargs
+
+
 @dataclass
 class BaseSearchConfig(SearchAlgorithmConfig):
     # Molecule(s) to search for (either as a single explicit SMILES or a file)
@@ -207,54 +255,11 @@ def run_from_config(config: SearchConfig) -> Path:
         config.inventory_smiles_file, canonicalize=config.canonicalize_inventory
     )
 
-    alg_kwargs: Dict[str, Any] = dict(reaction_model=search_rxn_model, mol_inventory=mol_inventory)
-    alg_kwargs.update(
-        **{
-            key: cast(DictConfig, config).get(key)
-            for key in [
-                "time_limit_s",
-                "limit_reaction_model_calls",
-                "limit_iterations",
-                "limit_graph_nodes",
-                "prevent_repeat_mol_in_trees",
-                "stop_on_first_solution",
-            ]
-        }
+    alg = config.search_algorithm.value(
+        reaction_model=search_rxn_model,
+        mol_inventory=mol_inventory,
+        **search_algorithm_config_to_kwargs(config),
     )
-
-    def build_node_evaluator(key: str) -> None:
-        # Build a node evaluator based on chosen class and args
-        alg_kwargs[key] = lookup_by_name(node_evaluation_common, alg_kwargs[f"{key}_class"])(
-            **alg_kwargs[f"{key}_kwargs"]
-        )
-
-        # Delete the arguments to avoid passing them into the algorithm's constructor downstream
-        del alg_kwargs[f"{key}_class"]
-        del alg_kwargs[f"{key}_kwargs"]
-
-    if config.search_algorithm == SearchAlgorithmClass.retro_star:
-        alg_kwargs.update(cast(Dict[str, Any], OmegaConf.to_container(config.retro_star_config)))
-        build_node_evaluator("value_function")
-        build_node_evaluator("and_node_cost_fn")
-    elif config.search_algorithm == SearchAlgorithmClass.mcts:
-        alg_kwargs.update(cast(Dict[str, Any], OmegaConf.to_container(config.mcts_config)))
-        build_node_evaluator("value_function")
-        build_node_evaluator("reward_function")
-        build_node_evaluator("policy")
-
-        alg_kwargs["bound_function"] = lookup_by_name(mcts_base, alg_kwargs["bound_function_class"])
-        del alg_kwargs["bound_function_class"]
-    elif config.search_algorithm == SearchAlgorithmClass.pdvn:
-        alg_kwargs.update(cast(Dict[str, Any], OmegaConf.to_container(config.pdvn_config)))
-        build_node_evaluator("value_function_syn")
-        build_node_evaluator("value_function_cost")
-        build_node_evaluator("and_node_cost_fn")
-        build_node_evaluator("policy")
-
-        alg_kwargs["bound_function"] = lookup_by_name(mcts_base, alg_kwargs["bound_function_class"])
-        del alg_kwargs["bound_function_class"]
-
-    alg = config.search_algorithm.value(**alg_kwargs)
 
     # Prepare the output directory
     results_dir_top_level = Path(config.results_dir)
