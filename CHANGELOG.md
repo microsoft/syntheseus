@@ -10,6 +10,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ### Changed
 
 - Drop support for Python 3.7 ([#113](https://github.com/microsoft/syntheseus/pull/113)) ([@kmaziarz])
+- Refactor search CLI to make it easier to access programmatically ([#126](https://github.com/microsoft/syntheseus/pull/126)) ([@kmaziarz])
 
 ### Added
 
