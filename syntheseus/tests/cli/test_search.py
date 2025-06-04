@@ -54,7 +54,7 @@ def test_resume_search(tmpdir: Path) -> None:
     config = OmegaConf.create(  # type: ignore
         SearchConfig(
             model_class="FlakyReactionModel",  # type: ignore[arg-type]
-            search_algorithm="retro_star",
+            search_algorithm="retro_star",  # type: ignore[arg-type]
             search_targets_file=str(search_targets_file_path),
             inventory_smiles_file=str(inventory_file_path),
             results_dir=str(tmpdir),
