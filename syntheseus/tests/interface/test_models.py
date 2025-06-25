@@ -142,3 +142,50 @@ def test_initial_cache(
     # In all cases, resetting should clear the cache
     rxn_model.reset()
     assert len(rxn_model._cache) == 0
+
+
+@pytest.mark.parametrize("max_cache_size", [1, 2, 3])
+def test_caching_lru(
+    cocs_mol: Molecule, ossc_mol: Molecule, soos_mol: Molecule, max_cache_size: int
+) -> None:
+    """Test that setting `max_cache_size` works as expected."""
+
+    # Create reaction model with max cache size
+    rxn_model = LinearMoleculesToyModel(use_cache=True, max_cache_size=max_cache_size)
+
+    # Call model on two molecules
+    output_cocs = rxn_model([cocs_mol])
+    output_ossc = rxn_model([ossc_mol])
+
+    # Test 1: outputs should be different
+    assert output_cocs != output_ossc
+
+    # Test 2: are cache size and number of calls correct?
+    assert rxn_model.cache_size == min(max_cache_size, 2)
+    assert rxn_model.num_calls() == 2
+
+    # Test 3: calling again on the 2nd molecule should never require an additional call
+    output_ossc_again = rxn_model([ossc_mol])
+    assert output_ossc_again == output_ossc
+    assert rxn_model.cache_size == min(max_cache_size, 2)
+    assert rxn_model.num_calls() == 2
+
+    # Test 4: calling again on the 1st molecule may require an additional call
+    output_cocs_again = rxn_model([cocs_mol])
+    assert output_cocs_again == output_cocs
+    assert rxn_model.cache_size == min(max_cache_size, 2)
+    assert rxn_model.num_calls() == 2 + (max_cache_size == 1)
+
+    # Test 5: eviction should be based on recency of use, not insertion order
+    rxn_model([soos_mol])
+    assert rxn_model.cache_size == max_cache_size
+    assert rxn_model.num_calls() == 3 + (max_cache_size == 1)
+
+    # If cache size is 2, before calling on `soos_mol` the cache should contain `ossc_mol` first and
+    # `cocs_mol` second, even though they were inserted in the opposite order. Calling on `soos_mol`
+    # should have evicted `ossc_mol` as the least recently used input. We verify this by calling
+    # again on `ossc_mol` and checking that it requires a new call.
+    output_ossc_again = rxn_model([ossc_mol])
+    assert output_ossc_again == output_ossc
+    assert rxn_model.cache_size == max_cache_size
+    assert rxn_model.num_calls() == 3 + (max_cache_size == 1) + (max_cache_size <= 2)

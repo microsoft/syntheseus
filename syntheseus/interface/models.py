@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import warnings
 from abc import abstractmethod
+from collections import OrderedDict
 from typing import Any, Generic, Optional, Sequence, TypeVar
 
 from syntheseus.interface.bag import Bag
@@ -30,6 +31,7 @@ class ReactionModel(Generic[InputType, ReactionType]):
         use_cache: bool = False,
         count_cache_in_num_calls: bool = False,
         initial_cache: Optional[dict[tuple[InputType, int], Sequence[ReactionType]]] = None,
+        max_cache_size: Optional[int] = None,
         default_num_results: int = DEFAULT_NUM_RESULTS,
         **kwargs,
     ) -> None:
@@ -40,20 +42,23 @@ class ReactionModel(Generic[InputType, ReactionType]):
         # Attributes used in caching. They should not be modified manually
         # since doing so will likely make counts/etc inaccurate
         self._use_cache = False  # dummy init, will be set in reset
-        self._cache: dict[tuple[InputType, int], Sequence[ReactionType]] = dict()
+        self._cache: OrderedDict[tuple[InputType, int], Sequence[ReactionType]] = OrderedDict()
+        self._max_cache_size = max_cache_size
         self._remove_duplicates = remove_duplicates
         self.reset(use_cache=use_cache)
 
         # Add initial cache *after* reset is done so it is not cleared
-        if self._use_cache:
-            self._cache.update(
-                initial_cache or dict()
-            )  # syntactic sugar to avoid if ... is None check
-        elif initial_cache is not None:
-            warnings.warn(
-                "An initial cache was provided but will be ignored because caching is turned off.",
-                category=UserWarning,
-            )
+        if initial_cache is not None:
+            if self._use_cache:
+                if self._max_cache_size is not None and len(initial_cache) > self._max_cache_size:
+                    raise ValueError("Initial cache size exceeds `max_cache_size`.")
+
+                self._cache.update(initial_cache)
+            else:
+                warnings.warn(
+                    "Initial cache was provided but will be ignored because caching is turned off.",
+                    category=UserWarning,
+                )
 
     def reset(self, use_cache: Optional[bool] = None) -> None:
         """Reset counts, caches, etc for this model."""
@@ -91,6 +96,11 @@ class ReactionModel(Generic[InputType, ReactionType]):
         else:
             return self._num_cache_misses
 
+    @property
+    def cache_size(self) -> int:
+        """Return the current size of the cache."""
+        return len(self._cache) if self._use_cache else 0
+
     def __call__(
         self, inputs: list[InputType], num_results: Optional[int] = None
     ) -> list[Sequence[ReactionType]]:
@@ -119,11 +129,20 @@ class ReactionModel(Generic[InputType, ReactionType]):
             for inp, rxns in zip(inputs_not_in_cache, new_rxns):
                 self._cache[(inp, num_results)] = self.filter_reactions(rxns)
 
-        # Step 2: all reactions should now be in the cache, so the output can just be assembled from
-        # there. We then clear the cache if `use_cache=False`.
-        output = [self._cache[(inp, num_results)] for inp in inputs]
+        # Step 2: all reactions should now be in the cache, so output can be assembled from there.
+        output = []
+        for inp in inputs:
+            key = (inp, num_results)
+            output.append(self._cache[key])
+            self._cache.move_to_end(key)  # mark as most recently used
+
+        # Step 2.1: clear the cache if not used, trim if max size is set.
         if not self._use_cache:
             self._cache.clear()
+        elif self._max_cache_size is not None:
+            # If the cache is larger than the maximum size, remove the oldest entries.
+            while len(self._cache) > self._max_cache_size:
+                self._cache.popitem(last=False)
 
         # Step 3: increment counts.
         self._num_cache_misses += len(inputs_not_in_cache)
