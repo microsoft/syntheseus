@@ -33,6 +33,7 @@ viz = [
 dev = [
   "pytest",
   "pytest-cov",
+  "pytest-rerunfailures",
   "pre-commit"
 ]
 chemformer = ["syntheseus-chemformer==0.2.0"]

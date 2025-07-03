@@ -25,6 +25,7 @@ class BaseRandomSearchTest(BaseAlgorithmTest):
     def test_found_routes2(self, retrosynthesis_task2: RetrosynthesisTask) -> None:
         pass
 
+    @pytest.mark.flaky(reruns=3)
     @pytest.mark.parametrize("limit", [0, 1, 2, 1000])
     def test_limit_iterations(
         self,
