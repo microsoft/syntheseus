@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import collections
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 
 import pytest
 
@@ -249,6 +249,23 @@ def retrosynthesis_task6() -> RetrosynthesisTask:
         reaction_model=LinearMoleculesToyModel(allow_substitution=True, use_cache=True),
         inventory=SmilesListInventory(["CCCO", "CC", "COC", "O"]),
     )
+
+
+@pytest.fixture
+def retrosynthesis_task7(retrosynthesis_task1: RetrosynthesisTask) -> RetrosynthesisTask:
+    """
+    Variation on `retrosynthesis_task1` in which the target is already purchasable.
+
+    If one expands the target anyway, it can be solved in one step.
+    """
+
+    data = {f.name: getattr(retrosynthesis_task1, f.name) for f in fields(retrosynthesis_task1)}
+    new_inventory = SmilesListInventory(
+        [mol.smiles for mol in retrosynthesis_task1.inventory.purchasable_mols()]
+        + [retrosynthesis_task1.target_mol.smiles]
+    )
+
+    return RetrosynthesisTask(**data | {"inventory": new_inventory})
 
 
 @pytest.fixture
