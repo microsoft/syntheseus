@@ -182,6 +182,9 @@ class SearchAlgorithm(MinimalSearchAlgorithm[GraphType, AlgReturnType]):
             or (self.stop_on_first_solution and graph.root_node.has_solution)
         )
 
+    def should_expand_mol(self, mol: Molecule, graph: GraphType) -> bool:
+        return self.expand_purchasable_mols or not mol.metadata["is_purchasable"]
+
     def set_node_values(
         self, nodes: Collection[BaseGraphNode], graph: GraphType
     ) -> Collection[BaseGraphNode]:
@@ -307,7 +310,7 @@ class AndOrSearchAlgorithm(SearchAlgorithm[AndOrGraph, AlgReturnType], Generic[A
     def _get_mols_to_expand(self, node: BaseGraphNode, graph: AndOrGraph) -> Collection[Molecule]:
         output: list[Molecule] = []
         if isinstance(node, OrNode):
-            if self.expand_purchasable_mols or not node.mol.metadata["is_purchasable"]:
+            if self.should_expand_mol(node.mol, graph):
                 output.append(node.mol)
         return output
 
@@ -362,7 +365,7 @@ class MolSetSearchAlgorithm(SearchAlgorithm[MolSetGraph, AlgReturnType], Generic
         output: list[Molecule] = []
         assert isinstance(node, MolSetNode)
         for mol in node.mols:
-            if self.expand_purchasable_mols or not mol.metadata["is_purchasable"]:
+            if self.should_expand_mol(mol, graph):
                 output.append(mol)
         return output
 
