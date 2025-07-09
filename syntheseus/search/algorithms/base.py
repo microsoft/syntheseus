@@ -73,6 +73,7 @@ class SearchAlgorithm(MinimalSearchAlgorithm[GraphType, AlgReturnType]):
         limit_graph_nodes: int = INT_INF,
         time_limit_s: float = math.inf,
         max_expansion_depth: int = 50,
+        expand_purchasable_target: bool = False,
         expand_purchasable_mols: bool = False,
         set_depth: bool = True,
         set_has_solution: bool = True,
@@ -89,6 +90,7 @@ class SearchAlgorithm(MinimalSearchAlgorithm[GraphType, AlgReturnType]):
         self.limit_graph_nodes = limit_graph_nodes
         self.time_limit_s = time_limit_s
         self.max_expansion_depth = max_expansion_depth
+        self.expand_purchasable_target = expand_purchasable_target
         self.expand_purchasable_mols = expand_purchasable_mols
         self.set_depth = set_depth
         self.set_has_solution = set_has_solution
@@ -183,7 +185,11 @@ class SearchAlgorithm(MinimalSearchAlgorithm[GraphType, AlgReturnType]):
         )
 
     def should_expand_mol(self, mol: Molecule, graph: GraphType) -> bool:
-        return self.expand_purchasable_mols or not mol.metadata["is_purchasable"]
+        return (
+            self.expand_purchasable_mols
+            or not mol.metadata["is_purchasable"]
+            or (self.expand_purchasable_target and mol == graph.root_mol)
+        )
 
     def set_node_values(
         self, nodes: Collection[BaseGraphNode], graph: GraphType

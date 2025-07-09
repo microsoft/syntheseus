@@ -128,6 +128,7 @@ class SearchAlgorithmConfig:
     limit_graph_nodes: int = INT_INF
     prevent_repeat_mol_in_trees: bool = True
     stop_on_first_solution: bool = False
+    expand_purchasable_target: bool = False  # Whether to expand target even if it's purchasable
 
 
 def search_algorithm_config_to_kwargs(config: SearchAlgorithmConfig) -> Dict[str, Any]:
@@ -140,6 +141,7 @@ def search_algorithm_config_to_kwargs(config: SearchAlgorithmConfig) -> Dict[str
             "limit_graph_nodes",
             "prevent_repeat_mol_in_trees",
             "stop_on_first_solution",
+            "expand_purchasable_target",
         ]
     }
 
@@ -312,8 +314,20 @@ def run_from_config(config: SearchConfig) -> Path:
 
         results_lock_path.touch()
 
+        target = Molecule(smiles)
+        target_in_inventory = mol_inventory.is_purchasable(target)
+
+        if target_in_inventory:
+            if config.expand_purchasable_target:
+                logger.info("Target is purchasable but will be expanded anyway")
+            else:
+                logger.info(
+                    "Search will be a no-op as the target is purchasable; "
+                    "set `expand_purchasable_target` if you want to expand it regardless"
+                )
+
         alg.reset()
-        output_graph, _ = alg.run_from_mol(Molecule(smiles))
+        output_graph, _ = alg.run_from_mol(target)
         logger.info(f"Finished search for target {smiles}")
 
         # Time of first solution (rxn model calls)
@@ -331,6 +345,7 @@ def run_from_config(config: SearchConfig) -> Path:
         stats = {
             "index": idx,
             "smiles": smiles,
+            "target_in_inventory": target_in_inventory,
             "rxn_model_calls_used": alg.reaction_model.num_calls(),
             "num_nodes_in_final_tree": len(output_graph),
             "soln_time_rxn_model_calls": soln_time_rxn_model_calls,
