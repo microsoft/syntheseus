@@ -268,7 +268,8 @@ def retrosynthesis_task7(retrosynthesis_task1: RetrosynthesisTask) -> Retrosynth
         + [retrosynthesis_task1.target_mol.smiles]
     )
 
-    return RetrosynthesisTask(**data | {"inventory": new_inventory})  # type: ignore[arg-type]
+    data["inventory"] = new_inventory
+    return RetrosynthesisTask(**data)  # type: ignore[arg-type]
 
 
 @pytest.fixture
