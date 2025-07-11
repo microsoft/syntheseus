@@ -73,6 +73,7 @@ class SearchAlgorithm(MinimalSearchAlgorithm[GraphType, AlgReturnType]):
         limit_graph_nodes: int = INT_INF,
         time_limit_s: float = math.inf,
         max_expansion_depth: int = 50,
+        expand_purchasable_target: bool = False,
         expand_purchasable_mols: bool = False,
         set_depth: bool = True,
         set_has_solution: bool = True,
@@ -89,6 +90,7 @@ class SearchAlgorithm(MinimalSearchAlgorithm[GraphType, AlgReturnType]):
         self.limit_graph_nodes = limit_graph_nodes
         self.time_limit_s = time_limit_s
         self.max_expansion_depth = max_expansion_depth
+        self.expand_purchasable_target = expand_purchasable_target
         self.expand_purchasable_mols = expand_purchasable_mols
         self.set_depth = set_depth
         self.set_has_solution = set_has_solution
@@ -180,6 +182,13 @@ class SearchAlgorithm(MinimalSearchAlgorithm[GraphType, AlgReturnType]):
             or (self.reaction_model.num_calls() >= self.limit_reaction_model_calls)
             or (len(graph) >= self.limit_graph_nodes)
             or (self.stop_on_first_solution and graph.root_node.has_solution)
+        )
+
+    def should_expand_mol(self, mol: Molecule, graph: GraphType) -> bool:
+        return (
+            self.expand_purchasable_mols
+            or not mol.metadata["is_purchasable"]
+            or (self.expand_purchasable_target and mol == graph.root_mol)
         )
 
     def set_node_values(
@@ -307,7 +316,7 @@ class AndOrSearchAlgorithm(SearchAlgorithm[AndOrGraph, AlgReturnType], Generic[A
     def _get_mols_to_expand(self, node: BaseGraphNode, graph: AndOrGraph) -> Collection[Molecule]:
         output: list[Molecule] = []
         if isinstance(node, OrNode):
-            if self.expand_purchasable_mols or not node.mol.metadata["is_purchasable"]:
+            if self.should_expand_mol(node.mol, graph):
                 output.append(node.mol)
         return output
 
@@ -362,7 +371,7 @@ class MolSetSearchAlgorithm(SearchAlgorithm[MolSetGraph, AlgReturnType], Generic
         output: list[Molecule] = []
         assert isinstance(node, MolSetNode)
         for mol in node.mols:
-            if self.expand_purchasable_mols or not mol.metadata["is_purchasable"]:
+            if self.should_expand_mol(mol, graph):
                 output.append(mol)
         return output
 

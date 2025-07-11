@@ -315,6 +315,38 @@ class BaseAlgorithmTest(abc.ABC):
         else:
             assert len(expanded_purchasable_nodes) == 0
 
+    @pytest.mark.parametrize("expand_purchasable_target", [False, True])
+    def test_expand_purchasable_target(
+        self, retrosynthesis_task7: RetrosynthesisTask, expand_purchasable_target: bool
+    ) -> None:
+        # Run the algorithm
+        alg = self.setup_algorithm(
+            reaction_model=retrosynthesis_task7.reaction_model,
+            mol_inventory=retrosynthesis_task7.inventory,
+            time_limit_s=0.1 * self.time_limit_multiplier,
+            limit_iterations=10_000,
+            limit_reaction_model_calls=1_000,
+            max_expansion_depth=4,
+            expand_purchasable_target=expand_purchasable_target,
+        )
+        output_graph, _ = alg.run_from_mol(retrosynthesis_task7.target_mol)
+
+        assert output_graph.root_node.has_solution
+
+        for node in output_graph.nodes():
+            node.data["analysis_time"] = node.data["num_calls_rxn_model"]
+        solution_time = get_first_solution_time(output_graph)
+
+        # Even though we may have requested to expand the target, it should still be marked as
+        # purchasable; this is consistent with the behaviour of `expand_purchasable_mols`.
+        assert solution_time == 0
+        assert output_graph.root_mol.metadata["is_purchasable"]
+
+        if expand_purchasable_target:
+            assert output_graph.root_node.is_expanded
+        else:
+            assert not output_graph.root_node.is_expanded
+
     @pytest.mark.parametrize("unique_nodes", [False, True])
     def test_unique_nodes(
         self, unique_nodes: bool, retrosynthesis_task5: RetrosynthesisTask
