@@ -14,6 +14,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ### Added
 
+- Implement option to expand target even when purchasable ([#130](https://github.com/microsoft/syntheseus/pull/130)) ([@kmaziarz])
 - Support LRU cache eviction for reaction models ([#127](https://github.com/microsoft/syntheseus/pull/127)) ([@kmaziarz])
 - Add a utility to load a `SmilesListInventory` from file ([#124](https://github.com/microsoft/syntheseus/pull/124)) ([@kmaziarz])
 
