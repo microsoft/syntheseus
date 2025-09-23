@@ -42,6 +42,10 @@ class ExplicitMolInventory(BaseMolInventory):
     def purchasable_mols(self) -> Collection[Molecule]:
         """Return a collection of all purchasable molecules."""
 
+    @abc.abstractmethod
+    def __len__(self) -> int:
+        """Return the number of purchasable molecules in the inventory."""
+
 
 class SmilesListInventory(ExplicitMolInventory):
     """Most common type of inventory: a list of purchasable SMILES."""
@@ -64,6 +68,9 @@ class SmilesListInventory(ExplicitMolInventory):
 
     def purchasable_mols(self) -> Collection[Molecule]:
         return {Molecule(s, make_rdkit_mol=False, canonicalize=False) for s in self._smiles_set}
+
+    def __len__(self) -> int:
+        return len(self._smiles_set)
 
     @classmethod
     def load_from_file(cls, path: Union[str, Path], **kwargs) -> SmilesListInventory:
