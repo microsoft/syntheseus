@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import abc
+import warnings
 from collections.abc import Collection
 from pathlib import Path
 from typing import Union
+
+from rdkit import Chem
 
 from syntheseus.interface.molecule import Molecule
 
@@ -44,16 +47,23 @@ class SmilesListInventory(ExplicitMolInventory):
     """Most common type of inventory: a list of purchasable SMILES."""
 
     def __init__(self, smiles_list: list[str], canonicalize: bool = True):
-        all_mols = [
-            Molecule(s, make_rdkit_mol=False, canonicalize=canonicalize) for s in smiles_list
-        ]
-        self._mol_set = set(all_mols)
+        if canonicalize:
+            # For canonicalization we sequence `MolFromSmiles` and `MolToSmiles` to exactly match
+            # the process employed in the `Molecule` class.
+            smiles_list = [Chem.MolToSmiles(Chem.MolFromSmiles(s)) for s in smiles_list]
+
+        self._smiles_set = set(smiles_list)
 
     def is_purchasable(self, mol: Molecule) -> bool:
-        return mol in self._mol_set
+        if mol.identifier is not None:
+            warnings.warn(
+                f"Molecule identifier {mol.identifier} will be ignored during inventory lookup"
+            )
+
+        return mol.smiles in self._smiles_set
 
     def purchasable_mols(self) -> Collection[Molecule]:
-        return self._mol_set
+        return {Molecule(s, make_rdkit_mol=False, canonicalize=False) for s in self._smiles_set}
 
     @classmethod
     def load_from_file(cls, path: Union[str, Path], **kwargs) -> SmilesListInventory:
