@@ -264,7 +264,7 @@ def retrosynthesis_task7(retrosynthesis_task1: RetrosynthesisTask) -> Retrosynth
 
     old_inventory = cast(SmilesListInventory, retrosynthesis_task1.inventory)
     new_inventory = SmilesListInventory(
-        [mol.smiles for mol in old_inventory.purchasable_mols()]
+        [mol.smiles for mol in old_inventory.to_purchasable_mols()]
         + [retrosynthesis_task1.target_mol.smiles]
     )
 

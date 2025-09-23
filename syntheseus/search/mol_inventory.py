@@ -39,8 +39,11 @@ class ExplicitMolInventory(BaseMolInventory):
     """
 
     @abc.abstractmethod
-    def purchasable_mols(self) -> Collection[Molecule]:
-        """Return a collection of all purchasable molecules."""
+    def to_purchasable_mols(self) -> Collection[Molecule]:
+        """Returns an explicit collection of all purchasable molecules.
+
+        Likely expensive for large inventories, should be used mostly for testing or debugging.
+        """
 
     @abc.abstractmethod
     def __len__(self) -> int:
@@ -66,7 +69,7 @@ class SmilesListInventory(ExplicitMolInventory):
 
         return mol.smiles in self._smiles_set
 
-    def purchasable_mols(self) -> Collection[Molecule]:
+    def to_purchasable_mols(self) -> Collection[Molecule]:
         return {Molecule(s, make_rdkit_mol=False, canonicalize=False) for s in self._smiles_set}
 
     def __len__(self) -> int:
