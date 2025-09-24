@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="64.387939mm"
+   height="11.112927mm"
+   viewBox="0 0 64.387939 11.112927"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.2.2 (732a01da63, 2022-12-09)"
+   sodipodi:docname="logo.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="4.7572176"
+     inkscape:cx="105.31366"
+     inkscape:cy="62.851865"
+     inkscape:window-width="2256"
+     inkscape:window-height="1398"
+     inkscape:window-x="-11"
+     inkscape:window-y="-11"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs2" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-62.674973,-93.362679)">
+    <text
+       xml:space="preserve"
+       style="font-size:11.2889px;fill:#7e7e7e;fill-opacity:1;stroke:#1b1b1b;stroke-width:0.264999;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+       x="62.068844"
+       y="102.0721"
+       id="text8777"
+       inkscape:export-filename="text8777.png"
+       inkscape:export-xdpi="800"
+       inkscape:export-ydpi="800"><tspan
+         sodipodi:role="line"
+         id="tspan8775"
+         style="font-size:11.2889px;stroke:#0c0c0c;stroke-width:0.265;stroke-opacity:1"
+         x="62.068844"
+         y="102.0721"><tspan
+           style="fill:#c3c3c3;fill-opacity:1;stroke:#0c0c0c;stroke-opacity:1"
+           id="tspan10281">Syn</tspan><tspan
+           style="fill:#b60000;fill-opacity:1;stroke:#0c0c0c;stroke-opacity:1"
+           id="tspan8937">theseus</tspan></tspan></text>
+  </g>
+</svg>
