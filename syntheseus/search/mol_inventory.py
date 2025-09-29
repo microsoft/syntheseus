@@ -45,6 +45,12 @@ class ExplicitMolInventory(BaseMolInventory):
         Likely expensive for large inventories, should be used mostly for testing or debugging.
         """
 
+    def purchasable_mols(self) -> Collection[Molecule]:
+        warnings.warn(
+            "purchasable_mols is deprecated, use to_purchasable_mols instead", DeprecationWarning
+        )
+        return self.to_purchasable_mols()
+
     @abc.abstractmethod
     def __len__(self) -> int:
         """Return the number of purchasable molecules in the inventory."""
