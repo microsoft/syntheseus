@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import abc
+import warnings
 from collections.abc import Collection
 from pathlib import Path
 from typing import Union
+
+from rdkit import Chem
 
 from syntheseus.interface.molecule import Molecule
 
@@ -36,24 +39,47 @@ class ExplicitMolInventory(BaseMolInventory):
     """
 
     @abc.abstractmethod
+    def to_purchasable_mols(self) -> Collection[Molecule]:
+        """Returns an explicit collection of all purchasable molecules.
+
+        Likely expensive for large inventories, should be used mostly for testing or debugging.
+        """
+
     def purchasable_mols(self) -> Collection[Molecule]:
-        """Return a collection of all purchasable molecules."""
+        warnings.warn(
+            "purchasable_mols is deprecated, use to_purchasable_mols instead", DeprecationWarning
+        )
+        return self.to_purchasable_mols()
+
+    @abc.abstractmethod
+    def __len__(self) -> int:
+        """Return the number of purchasable molecules in the inventory."""
 
 
 class SmilesListInventory(ExplicitMolInventory):
     """Most common type of inventory: a list of purchasable SMILES."""
 
     def __init__(self, smiles_list: list[str], canonicalize: bool = True):
-        all_mols = [
-            Molecule(s, make_rdkit_mol=False, canonicalize=canonicalize) for s in smiles_list
-        ]
-        self._mol_set = set(all_mols)
+        if canonicalize:
+            # For canonicalization we sequence `MolFromSmiles` and `MolToSmiles` to exactly match
+            # the process employed in the `Molecule` class.
+            smiles_list = [Chem.MolToSmiles(Chem.MolFromSmiles(s)) for s in smiles_list]
+
+        self._smiles_set = set(smiles_list)
 
     def is_purchasable(self, mol: Molecule) -> bool:
-        return mol in self._mol_set
+        if mol.identifier is not None:
+            warnings.warn(
+                f"Molecule identifier {mol.identifier} will be ignored during inventory lookup"
+            )
 
-    def purchasable_mols(self) -> Collection[Molecule]:
-        return self._mol_set
+        return mol.smiles in self._smiles_set
+
+    def to_purchasable_mols(self) -> Collection[Molecule]:
+        return {Molecule(s, make_rdkit_mol=False, canonicalize=False) for s in self._smiles_set}
+
+    def __len__(self) -> int:
+        return len(self._smiles_set)
 
     @classmethod
     def load_from_file(cls, path: Union[str, Path], **kwargs) -> SmilesListInventory:
