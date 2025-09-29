@@ -1600,16 +1600,16 @@ First few predicted reactions for benzene:
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Load inventory and print some info</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">syntheseus_paroutes</span><span class="w"> </span><span class="kn">import</span> <span class="n">PaRoutesInventory</span>
 <span class="n">inventory</span> <span class="o">=</span> <span class="n">PaRoutesInventory</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">PAROUTES_N</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Size of inventory: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">inventory</span><span class="o">.</span><span class="n">purchasable_mols</span><span class="p">())</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Size of inventory: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">inventory</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">"First few molecules in inventory:"</span><span class="p">)</span>
-<span class="n">pprint</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">inventory</span><span class="o">.</span><span class="n">purchasable_mols</span><span class="p">())[:</span><span class="mi">5</span><span class="p">])</span>
+<span class="n">pprint</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">inventory</span><span class="o">.</span><span class="n">to_purchasable_mols</span><span class="p">())[:</span><span class="mi">5</span><span class="p">])</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-6"># Load inventory and print some info
 from syntheseus_paroutes import PaRoutesInventory
 inventory = PaRoutesInventory(n=PAROUTES_N)
-print(f"Size of inventory: {len(inventory.purchasable_mols())}")
+print(f"Size of inventory: {len(inventory)}")
 print("First few molecules in inventory:")
-pprint(list(inventory.purchasable_mols())[:5])</div>
+pprint(list(inventory.to_purchasable_mols())[:5])</div>
 </div>
 </div>
 </div>
