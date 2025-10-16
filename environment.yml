@@ -4,6 +4,6 @@ channels:
   - defaults
 dependencies:
   - numpy
-  - pip<25.1
+  - pip          # ideally >=25.2 unless using python 3.8
   - python>=3.8  # ideally 3.9+
   - rdkit
