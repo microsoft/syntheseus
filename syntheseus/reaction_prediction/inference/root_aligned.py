@@ -85,7 +85,13 @@ class RootAlignedModel(ExternalBackwardReactionModel):
         # Example outcome: b'C C ( = O ) c 1 c c c 2 c ( c c n 2 C ( = O ) O C ( C ) ( C ) C ) c 1\n'.
         return [bytes(smi_tokenizer(input.smiles) + "\n", "utf-8") for input in inputs]
 
-    def _build_kwargs_from_scores(self, scores: List[float]) -> List[ReactionMetaData]:
+    @staticmethod
+    def build_prediction_kwargs_from_scores(
+        scores: List[float],
+        num_augmentations: int,
+        beam_size: int,
+        probability_from_score_temperature: Optional[float],
+    ) -> List[ReactionMetaData]:
         """Compute kwargs to save in the predictions given raw scores from the RootAligned model.
 
         The scores we get from the model cannot be directly interpreted as a (log) probability.
@@ -107,16 +113,14 @@ class RootAlignedModel(ExternalBackwardReactionModel):
             assert score >= next_score
 
         # Maximum possible value `total_rr` could have.
-        max_possible_total_rr = self.num_augmentations * sum(
-            1.0 / (k + 1) for k in range(self.beam_size)
-        )
+        max_possible_total_rr = num_augmentations * sum(1.0 / (k + 1) for k in range(beam_size))
 
         kwargs_list: List[ReactionMetaData] = []
         for score in scores:
             best_pos = -math.floor(score / 1e8)
             total_rr = score + best_pos * 1e8
 
-            assert 0 <= best_pos < self.beam_size
+            assert 0 <= best_pos < beam_size
             assert 0.0 < total_rr <= max_possible_total_rr
 
             new_score = total_rr - (best_pos + 1) * max_possible_total_rr
@@ -135,9 +139,9 @@ class RootAlignedModel(ExternalBackwardReactionModel):
         for kwargs, next_kwargs in zip(kwargs_list, kwargs_list[1:]):
             assert kwargs["score"] >= next_kwargs["score"]
 
-        if self.probability_from_score_temperature is not None:
+        if probability_from_score_temperature is not None:
             scaled_scores = [
-                self.probability_from_score_temperature * kwargs["score"] / max_possible_total_rr
+                probability_from_score_temperature * kwargs["score"] / max_possible_total_rr
                 for kwargs in kwargs_list
             ]
             probabilities = torch.nn.functional.softmax(torch.as_tensor(scaled_scores), dim=-1)
@@ -251,7 +255,14 @@ class RootAlignedModel(ExternalBackwardReactionModel):
 
         return [
             process_raw_smiles_outputs_backwards(
-                input, outputs, self._build_kwargs_from_scores(scores)
+                input,
+                outputs,
+                RootAlignedModel.build_prediction_kwargs_from_scores(
+                    scores,
+                    num_augmentations=self.num_augmentations,
+                    beam_size=self.beam_size,
+                    probability_from_score_temperature=self.probability_from_score_temperature,
+                ),
             )
             for input, outputs, scores in zip(inputs, ranked_results, ranked_scores)
         ]
