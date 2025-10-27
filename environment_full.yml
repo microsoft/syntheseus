@@ -1,17 +1,20 @@
 name: syntheseus-full
 channels:
-  - defaults
-  - conda-forge
   - pytorch
-  - dglteam                 # LocalRetro, RetroKNN
-  - pyg                     # RetroKNN
+  - nvidia
+  - pyg                                         # RetroKNN
+  - conda-forge
+  - defaults
 dependencies:
-  - dgl-cuda11.3            # LocalRetro, RetroKNN
-  - faiss-gpu               # RetroKNN
+  - faiss-gpu                                   # RetroKNN
   - numpy
   - pip>=25.2
   - python==3.9.7
-  - pytorch=1.10.2=py3.9_cuda11.3_cudnn8.2.0_0
-  - pytorch-scatter==2.0.9  # RetroKNN
-  - rdchiral_cpp            # MHNreact
+  - pytorch=2.2.2=py3.9_cuda12.1_cudnn8.9.2_0
+  - pytorch-lightning==2.2.2                    # Chemformer
+  - pytorch-scatter==2.1.2                      # RetroKNN
+  - rdchiral_cpp                                # MHNreact
   - rdkit=2021.09.4
+  - pip:
+    - --find-links https://data.dgl.ai/wheels/torch-2.2/cu121/repo.html
+    - dgl==2.4.0                                # LocalRetro, RetroKNN

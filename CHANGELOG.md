@@ -13,6 +13,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- Upgrade all single-step models to `torch 2.2` ([#137](https://github.com/microsoft/syntheseus/pull/137)) ([@kmaziarz])
 - Optimize the internal representation of a `SmilesListInventory` ([#135](https://github.com/microsoft/syntheseus/pull/135)) ([@kmaziarz])
 
 ## [0.6.0] - 2025-09-23
