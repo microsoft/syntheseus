@@ -39,6 +39,8 @@ conda activate syntheseus-full
 pip install "syntheseus[all]"
 ```
 
+This sample environment pins `torch` to version `2.2.2`. To run the models under `1.x` please downgrade to `syntheseus 0.6.0`.
+
 See [here](https://microsoft.github.io/syntheseus/stable/installation) if you prefer a more lightweight installation that only includes the parts you actually need.
 
 ## Citation and usage
