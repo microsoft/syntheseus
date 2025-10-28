@@ -44,11 +44,15 @@ jobs:
         path: .coverage.*
         include-hidden-files: true
   test-models:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: ["ubuntu-latest", "Syntheseus-GPU"]
+    runs-on: ${{ matrix.runner }}
     defaults:
       run:
         shell: bash -l {0}
-    name: test-models
+    name: test-models (${{ matrix.runner == 'ubuntu-latest' && 'CPU' || 'GPU' }})
     steps:
     - name: Free extra disk space
       uses: jlumbroso/free-disk-space@main
@@ -61,8 +65,13 @@ jobs:
         environment-file: environment_full.yml
     - name: Install syntheseus with all single-step models
       run: |
-        sudo apt install graphviz
+        sudo apt install -y graphviz
         pip install .[all]
+    - name: Verify GPU is available
+      if: ${{ matrix.runner != 'ubuntu-latest' }}
+      run: |
+        nvidia-smi || (echo "❌ No GPU detected" && exit 1)
+        python -c "import torch; assert torch.cuda.is_available(), '❌ GPU not found'; print('✅ Found GPU:', torch.cuda.get_device_name(0))"
     - name: Run single-step model tests
       run: |
         coverage run -p -m pytest \
@@ -73,7 +82,7 @@ jobs:
     - name: Upload coverage report
       uses: actions/upload-artifact@v4
       with:
-        name: .coverage.models
+        name: .coverage.models-${{ matrix.runner }}
         path: .coverage.*
         include-hidden-files: true
   coverage:
