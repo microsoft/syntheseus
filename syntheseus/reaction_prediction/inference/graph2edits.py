@@ -12,7 +12,7 @@ from __future__ import annotations
 import sys
 from typing import Sequence
 
-from rdkit import Chem, RDLogger
+from rdkit import Chem
 
 from syntheseus.interface.molecule import Molecule
 from syntheseus.interface.reaction import SingleProductReaction
@@ -22,7 +22,7 @@ from syntheseus.reaction_prediction.utils.inference import (
     get_unique_file_in_dir,
     process_raw_smiles_outputs_backwards,
 )
-from syntheseus.reaction_prediction.utils.misc import suppress_outputs
+from syntheseus.reaction_prediction.utils.misc import suppress_outputs, suppress_rdkit_outputs
 
 
 class Graph2EditsModel(ExternalBackwardReactionModel):
@@ -54,8 +54,6 @@ class Graph2EditsModel(ExternalBackwardReactionModel):
         self.model = BeamSearch(model=model, step_beam_size=10, beam_size=None, use_rxn_class=False)
         self._max_edit_steps = max_edit_steps
 
-        RDLogger.DisableLog("rdApp.*")
-
     def get_parameters(self):
         return self.model.model.parameters()
 
@@ -76,7 +74,7 @@ class Graph2EditsModel(ExternalBackwardReactionModel):
             for idx, atom in enumerate(mol.GetAtoms()):
                 atom.SetAtomMapNum(idx + 1)
 
-            with torch.no_grad(), suppress_outputs():
+            with torch.no_grad(), suppress_outputs(), suppress_rdkit_outputs():
                 try:
                     raw_results = self.model.run_search(
                         prod_smi=Chem.MolToSmiles(mol),
