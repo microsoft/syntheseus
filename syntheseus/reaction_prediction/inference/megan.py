@@ -11,6 +11,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
+import warnings
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Any, Optional, Sequence
@@ -158,7 +159,11 @@ class MEGANModel(ExternalBackwardReactionModel):
         batch_valid_idxs = [idx for idx, mol in enumerate(batch) if mol is not None]
 
         if batch_valid:
-            with torch.no_grad():
+            with torch.no_grad(), warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore", message=".*DtypeTensor constructors are no longer recommended.*"
+                )
+
                 beam_search_results = beam_search(
                     [self.model],
                     batch_valid,
