@@ -9,6 +9,7 @@ from os import devnull
 from typing import Any, Dict, Iterable, Iterator, List, Optional
 
 import numpy as np
+from rdkit import rdBase
 
 from syntheseus.interface.bag import Bag
 from syntheseus.interface.molecule import Molecule
@@ -41,6 +42,19 @@ def suppress_outputs():
 
             logging.root.handlers = root_handlers
             logging.disable(logging.NOTSET)
+
+
+@contextmanager
+def suppress_rdkit_outputs():
+    """Suppress warning messages produced by `rdkit`."""
+    previous_settings = dict(line.split(":") for line in rdBase.LogStatus().split("\n"))
+    rdBase.DisableLog("rdApp.*")
+
+    yield
+
+    for level, setting in previous_settings.items():
+        if setting == "enabled":
+            rdBase.EnableLog(level)
 
 
 def dictify(data: Any) -> Any:
