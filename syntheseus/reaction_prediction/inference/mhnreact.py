@@ -20,7 +20,11 @@ from syntheseus.reaction_prediction.utils.inference import (
     get_unique_file_in_dir,
     process_raw_smiles_outputs_backwards,
 )
-from syntheseus.reaction_prediction.utils.misc import cpu_count, suppress_outputs
+from syntheseus.reaction_prediction.utils.misc import (
+    cpu_count,
+    suppress_outputs,
+    suppress_rdkit_outputs,
+)
 
 
 class MHNreactModel(ExternalBackwardReactionModel):
@@ -103,7 +107,7 @@ class MHNreactModel(ExternalBackwardReactionModel):
 
         input_smiles_list = [inp.smiles for inp in inputs]
 
-        with torch.no_grad():
+        with torch.no_grad(), suppress_rdkit_outputs():
             # Compute probabilities ranking the templates for each molecule.
             template_scores = self.model.forward_smiles(input_smiles_list)
             template_scores = self.model.softmax(template_scores)

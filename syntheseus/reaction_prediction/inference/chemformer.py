@@ -126,6 +126,9 @@ class ChemformerModel(ExternalReactionModel[InputType, ReactionType]):
 
         with torch.no_grad(), warnings.catch_warnings():
             warnings.filterwarnings("ignore", message="__floordiv__ is deprecated")
+            warnings.filterwarnings(
+                "ignore", message=".*mismatched key_padding_mask and attn_mask is deprecated.*"
+            )
 
             smiles_batch, batch_log_likelihoods = self.model.sample_molecules(
                 device_batch, sampling_alg="beam"

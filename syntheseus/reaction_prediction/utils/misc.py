@@ -2,6 +2,7 @@ import logging
 import multiprocessing
 import os
 import random
+import warnings
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from dataclasses import fields, is_dataclass
 from itertools import islice
@@ -9,6 +10,7 @@ from os import devnull
 from typing import Any, Dict, Iterable, Iterator, List, Optional
 
 import numpy as np
+from rdkit import rdBase
 
 from syntheseus.interface.bag import Bag
 from syntheseus.interface.molecule import Molecule
@@ -41,6 +43,25 @@ def suppress_outputs():
 
             logging.root.handlers = root_handlers
             logging.disable(logging.NOTSET)
+
+
+@contextmanager
+def suppress_rdkit_outputs():
+    """Suppress warning messages produced by `rdkit`."""
+    try:
+        previous_settings = dict(line.split(":") for line in rdBase.LogStatus().split("\n"))
+    except Exception:
+        # If `rdkit` internals change in the future we give up on restoring previous settings
+        warnings.warn("Could not read rdkit log settings, warnings will be silenced permanently")
+        previous_settings = {}
+
+    rdBase.DisableLog("rdApp.*")
+
+    yield
+
+    for level, setting in previous_settings.items():
+        if setting == "enabled":
+            rdBase.EnableLog(level)
 
 
 def dictify(data: Any) -> Any:
