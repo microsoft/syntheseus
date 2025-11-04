@@ -2,6 +2,7 @@ import logging
 import multiprocessing
 import os
 import random
+import warnings
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from dataclasses import fields, is_dataclass
 from itertools import islice
@@ -47,7 +48,13 @@ def suppress_outputs():
 @contextmanager
 def suppress_rdkit_outputs():
     """Suppress warning messages produced by `rdkit`."""
-    previous_settings = dict(line.split(":") for line in rdBase.LogStatus().split("\n"))
+    try:
+        previous_settings = dict(line.split(":") for line in rdBase.LogStatus().split("\n"))
+    except Exception:
+        # If `rdkit` internals change in the future we give up on restoring previous settings
+        warnings.warn("Could not read rdkit log settings, warnings will be silenced permanently")
+        previous_settings = {}
+
     rdBase.DisableLog("rdApp.*")
 
     yield
