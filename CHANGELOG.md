@@ -9,15 +9,15 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [0.7.0] - 2025-11-06
 
-### Added
-
-- Expose RootAligned's utility for building prediction kwargs ([#138](https://github.com/microsoft/syntheseus/pull/138)) ([@kmaziarz])
-
 ### Changed
 
 - Upgrade all single-step models to `torch 2.2` ([#137](https://github.com/microsoft/syntheseus/pull/137)) ([@kmaziarz])
 - Optimize the internal representation of a `SmilesListInventory` ([#135](https://github.com/microsoft/syntheseus/pull/135)) ([@kmaziarz])
 - Suppress warnings produced by single-step models on newer environments ([#141](https://github.com/microsoft/syntheseus/pull/141)) ([@kmaziarz])
+
+### Added
+
+- Expose RootAligned's utility for building prediction kwargs ([#138](https://github.com/microsoft/syntheseus/pull/138)) ([@kmaziarz])
 
 ## [0.6.0] - 2025-09-23
 
