@@ -16,7 +16,7 @@ from syntheseus.interface.bag import Bag
 from syntheseus.interface.models import InputType, ReactionType
 from syntheseus.interface.molecule import Molecule
 from syntheseus.interface.reaction import ReactionMetaData
-from syntheseus.reaction_prediction.inference.base import ExternalReactionModel
+from syntheseus.reaction_prediction.inference_base import ExternalReactionModel
 from syntheseus.reaction_prediction.utils.inference import (
     get_module_path,
     get_unique_file_in_dir,

@@ -15,7 +15,7 @@ from tqdm.contrib import concurrent
 
 from syntheseus.interface.molecule import Molecule
 from syntheseus.interface.reaction import SingleProductReaction
-from syntheseus.reaction_prediction.inference.base import ExternalBackwardReactionModel
+from syntheseus.reaction_prediction.inference_base import ExternalBackwardReactionModel
 from syntheseus.reaction_prediction.utils.inference import (
     get_unique_file_in_dir,
     process_raw_smiles_outputs_backwards,

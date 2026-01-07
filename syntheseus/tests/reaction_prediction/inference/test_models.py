@@ -2,7 +2,7 @@ import pytest
 
 from syntheseus.interface.bag import Bag
 from syntheseus.interface.molecule import Molecule
-from syntheseus.reaction_prediction.inference.base import ExternalBackwardReactionModel
+from syntheseus.reaction_prediction.inference_base import ExternalBackwardReactionModel
 from syntheseus.reaction_prediction.inference.config import BackwardModelClass
 from syntheseus.reaction_prediction.utils.testing import are_single_step_models_installed
 
