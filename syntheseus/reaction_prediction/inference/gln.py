@@ -12,7 +12,7 @@ from typing import List, Sequence
 
 from syntheseus.interface.molecule import Molecule
 from syntheseus.interface.reaction import SingleProductReaction
-from syntheseus.reaction_prediction.inference.base import ExternalBackwardReactionModel
+from syntheseus.reaction_prediction.inference_base import ExternalBackwardReactionModel
 from syntheseus.reaction_prediction.utils.inference import process_raw_smiles_outputs_backwards
 from syntheseus.reaction_prediction.utils.misc import suppress_outputs
 
