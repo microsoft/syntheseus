@@ -7,6 +7,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+
+- Move `inference/base.py` out of `inference/` ([#144](https://github.com/microsoft/syntheseus/pull/144)) ([@kmaziarz])
+
 ## [0.7.0] - 2025-11-06
 
 ### Changed
