@@ -11,6 +11,14 @@ from syntheseus.reaction_prediction.inference.toy_models import (
     ListOfReactionsToyModel,
 )
 
+
+# RetroChimera is directly built on top of Syntheseus, so we import from it directly.
+try:
+    from retrochimera import RetroChimeraModel
+except ImportError:
+    RetroChimeraModel = None
+
+
 __all__ = [
     "ChemformerModel",
     "GLNModel",
@@ -20,6 +28,7 @@ __all__ = [
     "LocalRetroModel",
     "MEGANModel",
     "MHNreactModel",
+    "RetroChimeraModel",
     "RetroKNNModel",
     "RootAlignedModel",
 ]
