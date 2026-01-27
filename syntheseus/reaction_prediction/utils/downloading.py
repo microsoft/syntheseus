@@ -28,12 +28,30 @@ def get_cache_dir(key: str) -> Path:
     return cache_dir
 
 
-def get_cache_dir_download_if_missing(key: str, link: str) -> Path:
-    """Get the cache directory for a given key, but populate by downloading from link if empty."""
+def get_figshare_download_link(figshare_id: int) -> str:
+    """Query Figshare API to get a download link for a given file ID."""
+
+    logger.info(f"Downloading metadata for Figshare ID {figshare_id}")
+    with urllib.request.urlopen(
+        f"https://api.figshare.com/v2/articles/{figshare_id}/files"
+    ) as response:
+        [metadata] = json.load(response)
+
+    URL_KEY = "download_url"
+
+    if URL_KEY not in metadata:
+        raise ValueError(f"Got corrupted Figshare metadata: {metadata}")
+
+    return metadata[URL_KEY]
+
+
+def get_cache_dir_download_if_missing(key: str, figshare_id: int) -> Path:
+    """Get the cache directory for a given key, but populate from Figshare if empty."""
 
     cache_dir = get_cache_dir(key)
     if not any(cache_dir.iterdir()):
         cache_zip_path = cache_dir / "model.zip"
+        link = get_figshare_download_link(figshare_id)
 
         logger.info(f"Downloading data from {link} to {cache_zip_path}")
         urllib.request.urlretrieve(link, cache_zip_path)
@@ -47,28 +65,28 @@ def get_cache_dir_download_if_missing(key: str, link: str) -> Path:
 
 
 def get_default_model_dir_from_cache(model_name: str, is_forward: bool) -> Optional[Path]:
-    default_model_links_file_path = (
-        Path(__file__).parent.parent / "inference" / "default_checkpoint_links.yml"
+    default_checkpoint_ids_file_path = (
+        Path(__file__).parent.parent / "inference" / "default_checkpoint_ids.yml"
     )
 
-    if not default_model_links_file_path.exists():
+    if not default_checkpoint_ids_file_path.exists():
         logger.info(
-            f"Could not obtain a default model link: {default_model_links_file_path} does not exist"
+            f"Could not obtain a default model link: {default_checkpoint_ids_file_path} does not exist"
         )
         return None
 
-    with open(default_model_links_file_path, "rt") as f_defaults:
-        default_model_links = yaml.safe_load(f_defaults)
+    with open(default_checkpoint_ids_file_path, "rt") as f_defaults:
+        default_checkpoint_ids = yaml.safe_load(f_defaults)
 
-    assert default_model_links.keys() == {"backward", "forward"}
+    assert default_checkpoint_ids.keys() == {"backward", "forward"}
 
     forward_backward_key = "forward" if is_forward else "backward"
-    model_links = default_model_links[forward_backward_key]
+    checkpoint_ids = default_checkpoint_ids[forward_backward_key]
 
-    if model_name not in model_links:
+    if model_name not in checkpoint_ids:
         logger.info(f"Could not obtain a default model link: no entry for {model_name}")
         return None
 
     return get_cache_dir_download_if_missing(
-        f"{model_name}_{forward_backward_key}", link=model_links[model_name]
+        f"{model_name}_{forward_backward_key}", figshare_id=checkpoint_ids[model_name]
     )
