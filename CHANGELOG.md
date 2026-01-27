@@ -7,6 +7,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix automatic checkpoint download ([#146](https://github.com/microsoft/syntheseus/pull/146)) ([@kmaziarz])
+
 ## [0.7.1] - 2026-01-08
 
 ### Changed
