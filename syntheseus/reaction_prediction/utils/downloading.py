@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import urllib.request
@@ -49,8 +50,18 @@ def get_cache_dir_download_if_missing(key: str, figshare_id: int) -> Path:
     """Get the cache directory for a given key, but populate from Figshare if empty."""
 
     cache_dir = get_cache_dir(key)
-    if not any(cache_dir.iterdir()):
-        cache_zip_path = cache_dir / "model.zip"
+    cache_dir_contents = list(cache_dir.iterdir())
+
+    MODEL_ZIP_FILE_NAME = "model.zip"
+
+    if len(cache_dir_contents) == 1 and cache_dir_contents[0].name == MODEL_ZIP_FILE_NAME:
+        # It seems either a previous download was interrupted, or there was an issue during
+        # extraction. Either way, remove the zip file to trigger a re-download.
+        cache_dir_contents[0].unlink()
+        cache_dir_contents = []
+
+    if not cache_dir_contents:
+        cache_zip_path = cache_dir / MODEL_ZIP_FILE_NAME
         link = get_figshare_download_link(figshare_id)
 
         logger.info(f"Downloading data from {link} to {cache_zip_path}")
