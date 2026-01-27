@@ -12,6 +12,7 @@ import omegaconf
 import pytest
 
 from syntheseus.reaction_prediction.inference.config import BackwardModelClass
+from syntheseus.reaction_prediction.utils.downloading import get_figshare_download_link
 from syntheseus.reaction_prediction.utils.testing import are_single_step_models_installed
 
 pytestmark = pytest.mark.skipif(
@@ -30,9 +31,7 @@ def data_dir() -> Generator[Path, None, None]:
 
         # Download the raw USPTO-50K data released by the authors of GLN.
         uspto50k_zip_path = tempdir / "uspto50k.zip"
-        urllib.request.urlretrieve(
-            "https://figshare.com/ndownloader/files/45206101", uspto50k_zip_path
-        )
+        urllib.request.urlretrieve(get_figshare_download_link(25459573), uspto50k_zip_path)
 
         with zipfile.ZipFile(uspto50k_zip_path, "r") as f_zip:
             f_zip.extractall(tempdir)
