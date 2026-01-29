@@ -1,0 +1,12 @@
+# Figshare IDs for the default checkpoints; these are mapped to direct links using the Figshare API.
+backward:
+  Chemformer: 23958114
+  GLN: 23960733
+  Graph2Edits: 25047314
+  LocalRetro: 23960745
+  MEGAN: 23960748
+  MHNreact: 23960766
+  RetroKNN: 23960769
+  RootAligned: 23960781
+forward:
+  Chemformer: 23960724
