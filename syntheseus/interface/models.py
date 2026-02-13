@@ -28,6 +28,7 @@ class ReactionModel(Generic[InputType, ReactionType]):
         self,
         *,
         remove_duplicates: bool = True,
+        remove_product_in_reactants: bool = False,
         use_cache: bool = False,
         count_cache_in_num_calls: bool = False,
         initial_cache: Optional[dict[tuple[InputType, int], Sequence[ReactionType]]] = None,
@@ -45,6 +46,7 @@ class ReactionModel(Generic[InputType, ReactionType]):
         self._cache: OrderedDict[tuple[InputType, int], Sequence[ReactionType]] = OrderedDict()
         self._max_cache_size = max_cache_size
         self._remove_duplicates = remove_duplicates
+        self._remove_product_in_reactants = remove_product_in_reactants
         self.reset(use_cache=use_cache)
 
         # Add initial cache *after* reset is done so it is not cleared
@@ -162,13 +164,16 @@ class ReactionModel(Generic[InputType, ReactionType]):
 
     def filter_reactions(self, reaction_list: Sequence[ReactionType]) -> Sequence[ReactionType]:
         """
-        Filters a list of reactions. In the base version this just removes duplicates,
-        but subclasses could add additional behaviour or override this.
+        Filters a list of reactions. In the base version this just removes (i) duplicates,
+        and (ii) reactions where the product is also in the reactants (if the corresponding
+        flags are set), but subclasses could add additional behaviour or override this.
         """
+        output: Sequence[ReactionType] = list(reaction_list)
+        if self._remove_product_in_reactants:
+            output = [rxn for rxn in output if rxn.unique_products.isdisjoint(rxn.unique_reactants)]
         if self._remove_duplicates:
-            return deduplicate_keeping_order(reaction_list)
-        else:
-            return list(reaction_list)
+            output = deduplicate_keeping_order(output)
+        return output
 
     def get_model_info(self) -> dict[str, Any]:
         return {}
