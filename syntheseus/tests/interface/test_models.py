@@ -13,6 +13,22 @@ from syntheseus.reaction_prediction.inference.toy_models import LinearMoleculesT
 
 
 @pytest.mark.parametrize("remove", [True, False])
+def test_remove_product_in_reactants(remove: bool) -> None:
+    """Test that reactions where a product appears in the reactants are filtered out."""
+    product = Molecule("CC")
+    good_rxn = SingleProductReaction(product=product, reactants=Bag({Molecule("C"), Molecule("O")}))
+    bad_rxn = SingleProductReaction(product=product, reactants=Bag({product, Molecule("O")}))
+
+    model = LinearMoleculesToyModel(remove_duplicates=False, remove_product_in_reactants=remove)
+    filtered = model.filter_reactions([good_rxn, bad_rxn])
+
+    if remove:
+        assert list(filtered) == [good_rxn]
+    else:
+        assert list(filtered) == [good_rxn, bad_rxn]
+
+
+@pytest.mark.parametrize("remove", [True, False])
 def test_remove_duplicates(remove: bool) -> None:
     """
     Test the 'remove_duplicates' kwarg by calling the LinearMolecules model on "CC".
