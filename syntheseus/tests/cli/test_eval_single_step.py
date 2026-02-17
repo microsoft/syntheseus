@@ -1,13 +1,17 @@
+import json
 import math
 from itertools import cycle, islice
 from pathlib import Path
-from typing import Iterable, List, Sequence
+from typing import Iterable, List, Optional, Sequence
 
 import pytest
 
 from syntheseus.cli.eval_single_step import (
+    PREDICTIONS_JSONL,
     EvalConfig,
     EvalResults,
+    PredictionRecord,
+    TimingRecord,
     compute_metrics,
     get_results,
     print_and_save,
@@ -170,3 +174,131 @@ def test_print_and_save(tmp_path: Path) -> None:
     )
 
     print_and_save(results, config)
+
+
+def _make_dataset_and_run(
+    tmp_path: Path,
+    resumable: bool = False,
+    num_top_results: int = 4,
+    num_dataset_truncation: int = 3,
+    output_dir: Optional[Path] = None,
+    include_predictions: bool = False,
+) -> EvalResults:
+    """Helper: creates a 3-sample backward dataset and runs compute_metrics."""
+    samples = [
+        ReactionSample.from_reaction_smiles_strict(f"{inp}>>{out}", mapped=False)
+        for inp, out in [("C.N", "CN"), ("NC=O", "CN"), ("C.C", "CC")]
+    ]
+
+    data_dir = tmp_path / "data"
+    data_dir.mkdir(exist_ok=True)
+    for fold in DataFold:
+        DiskReactionDataset.save_samples_to_file(data_dir=data_dir, fold=fold, samples=samples)
+
+    return compute_metrics(
+        model=DummyModel(is_forward=False, repeat=False),
+        dataset=DiskReactionDataset(data_dir, sample_cls=ReactionSample),
+        num_dataset_truncation=num_dataset_truncation,
+        num_top_results=num_top_results,
+        resumable=resumable,
+        output_dir=output_dir,
+        include_predictions=include_predictions,
+    )
+
+
+def test_resumable_writes_jsonl(tmp_path: Path) -> None:
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+
+    results = _make_dataset_and_run(tmp_path, resumable=True, output_dir=output_dir)
+    predictions_path = output_dir / PREDICTIONS_JSONL
+    assert predictions_path.exists()
+
+    with open(predictions_path) as f:
+        lines = [line for line in f if line.strip()]
+    assert len(lines) == results.num_samples
+
+    for line in lines:
+        rec = PredictionRecord.from_dict(json.loads(line))
+        assert isinstance(rec.target, str) and len(rec.target) > 0
+        assert isinstance(rec.num_predictions, int)
+        assert isinstance(rec.timing, TimingRecord)
+
+
+def test_resume_after_interrupt(tmp_path: Path) -> None:
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+
+    full_results = _make_dataset_and_run(
+        tmp_path, resumable=True, output_dir=output_dir, num_dataset_truncation=3
+    )
+
+    predictions_path = output_dir / PREDICTIONS_JSONL
+    with open(predictions_path) as f:
+        all_lines = [line for line in f if line.strip()]
+    assert len(all_lines) == 3
+
+    # Keep only the first line (simulate crash after 1 sample).
+    with open(predictions_path, "w") as f:
+        f.write(all_lines[0] + "\n")
+
+    resumed_results = _make_dataset_and_run(
+        tmp_path, resumable=True, output_dir=output_dir, num_dataset_truncation=3
+    )
+
+    assert resumed_results.num_samples == full_results.num_samples
+    assert math.isclose(resumed_results.mrr, full_results.mrr)
+    for k in range(len(full_results.top_k)):
+        assert math.isclose(resumed_results.top_k[k], full_results.top_k[k])
+
+    with open(predictions_path) as f:
+        assert len([line for line in f if line.strip()]) == 3
+
+
+def test_metrics_consistency(tmp_path: Path) -> None:
+    """Resumable and non-resumable runs should produce the same metrics."""
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+
+    non_resumable = _make_dataset_and_run(tmp_path, resumable=False)
+    resumable_results = _make_dataset_and_run(tmp_path, resumable=True, output_dir=output_dir)
+
+    assert non_resumable.num_samples == resumable_results.num_samples
+    assert math.isclose(non_resumable.mrr, resumable_results.mrr)
+    for k in range(len(non_resumable.top_k)):
+        assert math.isclose(non_resumable.top_k[k], resumable_results.top_k[k])
+
+
+def test_resume_with_predictions(tmp_path: Path) -> None:
+    """Resumable runs with include_predictions should restore predictions on resume."""
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+
+    full_results = _make_dataset_and_run(
+        tmp_path,
+        resumable=True,
+        output_dir=output_dir,
+        num_dataset_truncation=3,
+        include_predictions=True,
+    )
+    assert full_results.predictions is not None
+    assert len(full_results.predictions) == 3
+
+    # Simulate crash after 1 sample.
+    predictions_path = output_dir / PREDICTIONS_JSONL
+    with open(predictions_path) as f:
+        all_lines = [line for line in f if line.strip()]
+    with open(predictions_path, "w") as f:
+        f.write(all_lines[0] + "\n")
+
+    resumed_results = _make_dataset_and_run(
+        tmp_path,
+        resumable=True,
+        output_dir=output_dir,
+        num_dataset_truncation=3,
+        include_predictions=True,
+    )
+    assert resumed_results.predictions is not None
+    assert len(resumed_results.predictions) == 3
+    assert resumed_results.num_samples == full_results.num_samples
+    assert math.isclose(resumed_results.mrr, full_results.mrr)
