@@ -220,7 +220,8 @@ def test_resumable_writes_jsonl(tmp_path: Path) -> None:
 
     for line in lines:
         rec = PredictionRecord.from_dict(json.loads(line))
-        assert isinstance(rec.target, str) and len(rec.target) > 0
+        assert isinstance(rec.input, str) and len(rec.input) > 0
+        assert isinstance(rec.ground_truth, str) and len(rec.ground_truth) > 0
         assert isinstance(rec.num_predictions, int)
         assert isinstance(rec.timing, TimingRecord)
 

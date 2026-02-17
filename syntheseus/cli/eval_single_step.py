@@ -216,7 +216,8 @@ class TimingRecord:
 class PredictionRecord:
     """Schema for a single row in the resumable predictions JSONL file."""
 
-    target: str
+    input: str
+    ground_truth: str
     num_predictions: int
     ground_truth_correct: List[bool]
     timing: TimingRecord
@@ -229,7 +230,8 @@ class PredictionRecord:
     def to_dict(self) -> Dict[str, Any]:
         """Serialize to a JSON-compatible dict, omitting unset optional fields."""
         d: Dict[str, Any] = {
-            "target": self.target,
+            "input": self.input,
+            "ground_truth": self.ground_truth,
             "num_predictions": self.num_predictions,
             "ground_truth_correct": self.ground_truth_correct,
             "timing": asdict(self.timing),
@@ -250,7 +252,8 @@ class PredictionRecord:
         """Deserialize from a JSON-loaded dict."""
         bt_timing = d.get("back_translation_timing")
         return cls(
-            target=d.get("target", ""),
+            input=d.get("input", ""),
+            ground_truth=d.get("ground_truth", ""),
             num_predictions=d["num_predictions"],
             ground_truth_correct=d["ground_truth_correct"],
             timing=TimingRecord(**d["timing"]),
@@ -509,8 +512,14 @@ def compute_metrics(
                         bt_preds = [
                             [rxn.reaction_smiles for rxn in seq] for seq in back_translation_results
                         ]
+                if isinstance(input, Molecule):
+                    input_smiles = input.smiles
+                else:
+                    assert isinstance(input, Bag)
+                    input_smiles = ".".join(mol.smiles for mol in input)
                 record = PredictionRecord(
-                    target=output.reaction_smiles,
+                    input=input_smiles,
+                    ground_truth=output.reaction_smiles,
                     num_predictions=len(reaction_list),
                     ground_truth_correct=ground_truth_matches,
                     timing=TimingRecord(
