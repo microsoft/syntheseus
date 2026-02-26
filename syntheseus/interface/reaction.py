@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Optional, TypedDict
 
 from syntheseus.interface.bag import Bag
-from syntheseus.interface.molecule import Molecule, molecule_bag_to_smiles
+from syntheseus.interface.molecule import SMILES_SEPARATOR, Molecule, molecule_bag_to_smiles
 
 REACTION_SEPARATOR = ">"
 
@@ -61,6 +61,15 @@ class Reaction:
     @property
     def reaction_smiles(self) -> str:
         return reaction_string(reactants_str=self.reactants_str, products_str=self.products_str)
+
+    @classmethod
+    def from_reaction_smiles(cls, rxn_smiles: str) -> "Reaction":
+        """Construct a Reaction from a reaction SMILES string (e.g. ``"A.B>>C"``)."""
+        sep = REACTION_SEPARATOR * 2
+        reactants_str, products_str = rxn_smiles.split(sep)
+        reactants = Bag(Molecule(s) for s in reactants_str.split(SMILES_SEPARATOR))
+        products = Bag(Molecule(s) for s in products_str.split(SMILES_SEPARATOR))
+        return cls(reactants=reactants, products=products)
 
     def __str__(self) -> str:
         output = self.reaction_smiles

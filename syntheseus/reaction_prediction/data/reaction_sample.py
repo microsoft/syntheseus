@@ -65,10 +65,3 @@ class ReactionSample(Reaction):
             reagents=SMILES_SEPARATOR.join(sorted(reagents_smiles)),
             **kwargs,
         )
-
-    @classmethod
-    def from_reaction_smiles(cls: Type[ReactionType], *args, **kwargs) -> Optional[ReactionType]:
-        try:
-            return cls.from_reaction_smiles_strict(*args, **kwargs)
-        except Exception:
-            return None

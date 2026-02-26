@@ -11,7 +11,6 @@ from syntheseus.cli.eval_single_step import (
     EvalConfig,
     EvalResults,
     PredictionRecord,
-    TimingRecord,
     compute_metrics,
     get_results,
     print_and_save,
@@ -223,7 +222,7 @@ def test_resumable_writes_jsonl(tmp_path: Path) -> None:
         assert isinstance(rec.input, str) and len(rec.input) > 0
         assert isinstance(rec.ground_truth, str) and len(rec.ground_truth) > 0
         assert isinstance(rec.num_predictions, int)
-        assert isinstance(rec.timing, TimingRecord)
+        assert isinstance(rec.timing, ModelTimingResults)
 
 
 def test_resume_after_interrupt(tmp_path: Path) -> None:

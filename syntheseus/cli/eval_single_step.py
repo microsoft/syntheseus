@@ -36,8 +36,8 @@ from syntheseus.interface.models import (
     ReactionModel,
     ReactionType,
 )
-from syntheseus.interface.molecule import SMILES_SEPARATOR, Molecule
-from syntheseus.interface.reaction import REACTION_SEPARATOR, Reaction, SingleProductReaction
+from syntheseus.interface.molecule import Molecule, molecule_bag_to_smiles
+from syntheseus.interface.reaction import Reaction, SingleProductReaction
 from syntheseus.reaction_prediction.chem.utils import remove_stereo_information_from_reaction
 from syntheseus.reaction_prediction.data.dataset import (
     DataFold,
@@ -50,12 +50,8 @@ from syntheseus.reaction_prediction.inference.config import (
     BackwardModelConfig,
     ForwardModelConfig,
 )
-from syntheseus.reaction_prediction.utils.config import (
-    get_config as cli_get_config,
-)
-from syntheseus.reaction_prediction.utils.config import (
-    get_error_message_for_missing_value,
-)
+from syntheseus.reaction_prediction.utils.config import get_config as cli_get_config
+from syntheseus.reaction_prediction.utils.config import get_error_message_for_missing_value
 from syntheseus.reaction_prediction.utils.metrics import (
     ModelTimingResults,
     TopKMetricsAccumulator,
@@ -205,14 +201,6 @@ def get_results(
 
 
 @dataclass(frozen=True)
-class TimingRecord:
-    """Timing information for a single sample's model call."""
-
-    time_model_call: float
-    time_post_processing: float
-
-
-@dataclass(frozen=True)
 class PredictionRecord:
     """Schema for a single row in the resumable predictions JSONL file."""
 
@@ -220,58 +208,29 @@ class PredictionRecord:
     ground_truth: str
     num_predictions: int
     ground_truth_correct: List[bool]
-    timing: TimingRecord
+    timing: ModelTimingResults
     stereo_correct: Optional[List[bool]] = None
     back_translation_correct: Optional[List[bool]] = None
-    back_translation_timing: Optional[TimingRecord] = None
+    back_translation_timing: Optional[ModelTimingResults] = None
     predictions: Optional[List[str]] = None
     back_translation_predictions: Optional[List[List[str]]] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize to a JSON-compatible dict, omitting unset optional fields."""
-        d: Dict[str, Any] = {
-            "input": self.input,
-            "ground_truth": self.ground_truth,
-            "num_predictions": self.num_predictions,
-            "ground_truth_correct": self.ground_truth_correct,
-            "timing": asdict(self.timing),
-        }
-        if self.stereo_correct is not None:
-            d["stereo_correct"] = self.stereo_correct
-        if self.back_translation_timing is not None:
-            d["back_translation_correct"] = self.back_translation_correct
-            d["back_translation_timing"] = asdict(self.back_translation_timing)
-        if self.predictions is not None:
-            d["predictions"] = self.predictions
-        if self.back_translation_predictions is not None:
-            d["back_translation_predictions"] = self.back_translation_predictions
+        d: Dict[str, Any] = {}
+        for f in fields(self):
+            val = getattr(self, f.name)
+            if val is None:
+                continue
+            d[f.name] = asdict(val) if f.name.endswith("timing") else val
         return d
 
     @classmethod
     def from_dict(cls, d: Dict[str, Any]) -> "PredictionRecord":
         """Deserialize from a JSON-loaded dict."""
-        bt_timing = d.get("back_translation_timing")
         return cls(
-            input=d.get("input", ""),
-            ground_truth=d.get("ground_truth", ""),
-            num_predictions=d["num_predictions"],
-            ground_truth_correct=d["ground_truth_correct"],
-            timing=TimingRecord(**d["timing"]),
-            stereo_correct=d.get("stereo_correct"),
-            back_translation_correct=d.get("back_translation_correct"),
-            back_translation_timing=TimingRecord(**bt_timing) if bt_timing else None,
-            predictions=d.get("predictions"),
-            back_translation_predictions=d.get("back_translation_predictions"),
+            **{k: ModelTimingResults(**v) if k.endswith("timing") else v for k, v in d.items()}  # type: ignore
         )
-
-
-def _reaction_from_smiles(rxn_smiles: str) -> Reaction:
-    """Reconstruct a Reaction from its reaction SMILES string."""
-    sep = REACTION_SEPARATOR * 2
-    reactants_str, products_str = rxn_smiles.split(sep)
-    reactants = Bag(Molecule(s) for s in reactants_str.split(SMILES_SEPARATOR) if s)
-    products = Bag(Molecule(s) for s in products_str.split(SMILES_SEPARATOR) if s)
-    return Reaction(reactants=reactants, products=products)
 
 
 def _load_and_fix_jsonl(path: Path) -> List[PredictionRecord]:
@@ -369,25 +328,15 @@ def compute_metrics(
                 assert rec.back_translation_correct is not None
                 back_translation_metrics.add(rec.back_translation_correct)
             num_predictions.append(rec.num_predictions)
-            model_timing_results.append(
-                ModelTimingResults(
-                    time_model_call=rec.timing.time_model_call,
-                    time_post_processing=rec.timing.time_post_processing,
-                )
-            )
+            model_timing_results.append(rec.timing)
             if rec.back_translation_timing is not None:
-                back_translation_timing_results.append(
-                    ModelTimingResults(
-                        time_model_call=rec.back_translation_timing.time_model_call,
-                        time_post_processing=rec.back_translation_timing.time_post_processing,
-                    )
-                )
+                back_translation_timing_results.append(rec.back_translation_timing)
             if include_predictions and rec.predictions is not None:
-                all_predictions.append([_reaction_from_smiles(s) for s in rec.predictions])
+                all_predictions.append([Reaction.from_reaction_smiles(s) for s in rec.predictions])
             if include_predictions and rec.back_translation_predictions is not None:
                 all_back_translation_predictions.append(
                     [
-                        [_reaction_from_smiles(s) for s in seq]
+                        [Reaction.from_reaction_smiles(s) for s in seq]
                         for seq in rec.back_translation_predictions
                     ]
                 )
@@ -498,13 +447,13 @@ def compute_metrics(
                 batch_len = len(batch)
                 t = results_with_timing.model_timing_results
                 bt_correct: Optional[List[bool]] = None
-                bt_timing: Optional[TimingRecord] = None
+                bt_timing: Optional[ModelTimingResults] = None
                 bt_preds: Optional[List[List[str]]] = None
                 if back_translation_model is not None:
                     bt = back_translation_results_with_timing.model_timing_results
                     assert bt is not None
                     bt_correct = back_translation_matches
-                    bt_timing = TimingRecord(
+                    bt_timing = ModelTimingResults(
                         time_model_call=bt.time_model_call / batch_len,
                         time_post_processing=bt.time_post_processing / batch_len,
                     )
@@ -516,13 +465,13 @@ def compute_metrics(
                     input_smiles = input.smiles
                 else:
                     assert isinstance(input, Bag)
-                    input_smiles = ".".join(mol.smiles for mol in input)
+                    input_smiles = molecule_bag_to_smiles(input)
                 record = PredictionRecord(
                     input=input_smiles,
                     ground_truth=output.reaction_smiles,
                     num_predictions=len(reaction_list),
                     ground_truth_correct=ground_truth_matches,
-                    timing=TimingRecord(
+                    timing=ModelTimingResults(
                         time_model_call=t.time_model_call / batch_len,
                         time_post_processing=t.time_post_processing / batch_len,
                     ),
