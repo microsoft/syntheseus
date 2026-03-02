@@ -7,6 +7,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Add a `resumable` flag when running single step predictions. By default this is set to False, preserving existing behaviour. If this is turned on, single step results for each input are saved to disk in a JSON-lines file, such that if a job is killed halfway through, running the same command will resume from the state the previous run reached. ([#149](https://github.com/microsoft/syntheseus/pull/149)) ([@jla-gardner])
+
 ## [0.7.2] - 2026-01-30
 
 ### Fixed
