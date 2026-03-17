@@ -57,7 +57,11 @@ from syntheseus.reaction_prediction.utils.metrics import (
     TopKMetricsAccumulator,
     compute_total_time,
 )
-from syntheseus.reaction_prediction.utils.misc import asdict_extended, set_random_seed
+from syntheseus.reaction_prediction.utils.misc import (
+    asdict_extended,
+    set_random_seed,
+    undictify_bag_of_molecules,
+)
 from syntheseus.reaction_prediction.utils.model_loading import get_model
 
 logger = logging.getLogger(__file__)
@@ -212,8 +216,8 @@ class PredictionRecord:
     stereo_correct: Optional[List[bool]] = None
     back_translation_correct: Optional[List[bool]] = None
     back_translation_timing: Optional[ModelTimingResults] = None
-    predictions: Optional[List[str]] = None
-    back_translation_predictions: Optional[List[List[str]]] = None
+    predictions: Optional[List[Dict[str, Any]]] = None
+    back_translation_predictions: Optional[List[List[Dict[str, Any]]]] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize to a JSON-compatible dict, omitting unset optional fields."""
@@ -246,6 +250,16 @@ def _load_and_fix_jsonl(path: Path) -> List[PredictionRecord]:
         for d in raw_dicts:
             f.write(json.dumps(d) + "\n")
     return [PredictionRecord.from_dict(d) for d in raw_dicts]
+
+
+def _reaction_from_dict(data: Dict[str, Any]) -> Reaction:
+    """Recover a reaction serialized with `asdict_extended`."""
+    return Reaction(
+        reactants=undictify_bag_of_molecules(data["reactants"]),
+        products=undictify_bag_of_molecules(data["products"]),
+        identifier=data.get("identifier"),
+        metadata=data.get("metadata", {}),
+    )
 
 
 def compute_metrics(
@@ -332,11 +346,11 @@ def compute_metrics(
             if rec.back_translation_timing is not None:
                 back_translation_timing_results.append(rec.back_translation_timing)
             if include_predictions and rec.predictions is not None:
-                all_predictions.append([Reaction.from_reaction_smiles(s) for s in rec.predictions])
+                all_predictions.append([_reaction_from_dict(d) for d in rec.predictions])
             if include_predictions and rec.back_translation_predictions is not None:
                 all_back_translation_predictions.append(
                     [
-                        [Reaction.from_reaction_smiles(s) for s in seq]
+                        [_reaction_from_dict(d) for d in seq]
                         for seq in rec.back_translation_predictions
                     ]
                 )
@@ -413,6 +427,10 @@ def compute_metrics(
                 ]
                 ground_truth_match_modulo_stereo_metrics.add(stereo_matches)
 
+            preds_for_output: Optional[List[Dict[str, Any]]] = None
+            if include_predictions:
+                preds_for_output = [asdict_extended(rxn) for rxn in reaction_list]
+
             if back_translation_model is not None:
                 assert back_translation_metrics is not None
 
@@ -430,7 +448,11 @@ def compute_metrics(
 
                 back_translation_results = back_translation_results_with_timing.results
 
+                bt_preds_for_output: Optional[List[List[Dict[str, Any]]]] = None
                 if include_predictions:
+                    bt_preds_for_output = [
+                        [asdict_extended(rxn) for rxn in seq] for seq in back_translation_results
+                    ]
                     batch_back_translation_predictions.append(back_translation_results)
 
                 # Back translation is successful if any of the `back_translation_num_results` bags
@@ -448,7 +470,7 @@ def compute_metrics(
                 t = results_with_timing.model_timing_results
                 bt_correct: Optional[List[bool]] = None
                 bt_timing: Optional[ModelTimingResults] = None
-                bt_preds: Optional[List[List[str]]] = None
+                bt_preds: Optional[List[List[Dict[str, Any]]]] = None
                 if back_translation_model is not None:
                     bt = back_translation_results_with_timing.model_timing_results
                     assert bt is not None
@@ -458,9 +480,7 @@ def compute_metrics(
                         time_post_processing=bt.time_post_processing / batch_len,
                     )
                     if include_predictions:
-                        bt_preds = [
-                            [rxn.reaction_smiles for rxn in seq] for seq in back_translation_results
-                        ]
+                        bt_preds = bt_preds_for_output
                 if isinstance(input, Molecule):
                     input_smiles = input.smiles
                 else:
@@ -478,11 +498,7 @@ def compute_metrics(
                     stereo_correct=stereo_matches,
                     back_translation_correct=bt_correct,
                     back_translation_timing=bt_timing,
-                    predictions=(
-                        [rxn.reaction_smiles for rxn in reaction_list]
-                        if include_predictions
-                        else None
-                    ),
+                    predictions=preds_for_output,
                     back_translation_predictions=bt_preds,
                 )
                 jsonl_file.write(json.dumps(record.to_dict()) + "\n")
