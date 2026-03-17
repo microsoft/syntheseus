@@ -9,7 +9,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Implement resumability for single-step evaluations ([#149](https://github.com/microsoft/syntheseus/pull/149)) ([@jla-gardner])  
+- Implement resumability for single-step evaluations ([#149](https://github.com/microsoft/syntheseus/pull/149)) ([@jla-gardner])
 
 ## [0.7.2] - 2026-01-30
 
