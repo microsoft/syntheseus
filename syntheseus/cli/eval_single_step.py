@@ -60,7 +60,7 @@ from syntheseus.reaction_prediction.utils.metrics import (
 from syntheseus.reaction_prediction.utils.misc import (
     asdict_extended,
     set_random_seed,
-    undictify_bag_of_molecules,
+    undictify_reaction,
 )
 from syntheseus.reaction_prediction.utils.model_loading import get_model
 
@@ -252,16 +252,6 @@ def _load_and_fix_jsonl(path: Path) -> List[PredictionRecord]:
     return [PredictionRecord.from_dict(d) for d in raw_dicts]
 
 
-def _reaction_from_dict(data: Dict[str, Any]) -> Reaction:
-    """Recover a reaction serialized with `asdict_extended`."""
-    return Reaction(
-        reactants=undictify_bag_of_molecules(data["reactants"]),
-        products=undictify_bag_of_molecules(data["products"]),
-        identifier=data.get("identifier"),
-        metadata=data.get("metadata", {}),
-    )
-
-
 def compute_metrics(
     model: ReactionModel[InputType, ReactionType],
     dataset: ReactionDataset,
@@ -346,11 +336,11 @@ def compute_metrics(
             if rec.back_translation_timing is not None:
                 back_translation_timing_results.append(rec.back_translation_timing)
             if include_predictions and rec.predictions is not None:
-                all_predictions.append([_reaction_from_dict(d) for d in rec.predictions])
+                all_predictions.append([undictify_reaction(d) for d in rec.predictions])
             if include_predictions and rec.back_translation_predictions is not None:
                 all_back_translation_predictions.append(
                     [
-                        [_reaction_from_dict(d) for d in seq]
+                        [undictify_reaction(d) for d in seq]
                         for seq in rec.back_translation_predictions
                     ]
                 )
