@@ -144,3 +144,12 @@ def parallelize(
 def cpu_count(default: int = 8) -> int:
     """Return the number of CPUs, fallback to `default` if it cannot be determined."""
     return os.cpu_count() or default
+
+
+def get_unavailable_model_class(name: str, pkg: str) -> type:
+    """Returns a placeholder class that raises an `ImportError` on instantiation."""
+
+    def __init__(self, *args, **kwargs) -> None:
+        raise ImportError(f"{name} cannot be instantiated because package '{pkg}' is not installed")
+
+    return type(name, (), {"__init__": __init__})

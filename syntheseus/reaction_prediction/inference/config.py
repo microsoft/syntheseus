@@ -11,6 +11,9 @@ from syntheseus.reaction_prediction.inference import (
     LocalRetroModel,
     MEGANModel,
     MHNreactModel,
+    RetroChimeraDeNovoModel,
+    RetroChimeraEditModel,
+    RetroChimeraModel,
     RetroKNNModel,
     RootAlignedModel,
 )
@@ -27,6 +30,9 @@ class BackwardModelClass(Enum):
     LocalRetro = LocalRetroModel
     MEGAN = MEGANModel
     MHNreact = MHNreactModel
+    RetroChimeraDeNovo = RetroChimeraDeNovoModel
+    RetroChimeraEdit = RetroChimeraEditModel
+    RetroChimera = RetroChimeraModel
     RetroKNN = RetroKNNModel
     RootAligned = RootAlignedModel
 
