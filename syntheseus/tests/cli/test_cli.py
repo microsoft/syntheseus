@@ -153,7 +153,7 @@ def test_cli_search(
             f"search_targets_file={data_dir}/search_targets.smiles",
             f"inventory_smiles_file={data_dir}/inventory.smiles",
             "limit_iterations=3",
-            "num_top_results=5",
+            "num_top_results=10",
         ]
     )
 
