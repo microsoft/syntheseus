@@ -14,10 +14,12 @@ from syntheseus.reaction_prediction.inference import (
     RetroKNNModel,
     RootAlignedModel,
 )
+from retrochimera.inference.smiles_transformer_forward import SmilesTransformerForwardModel
 
 
 class ForwardModelClass(Enum):
     Chemformer = ChemformerModel
+    ForwardChimeraDeNovo = SmilesTransformerForwardModel
 
 
 class BackwardModelClass(Enum):
@@ -29,6 +31,10 @@ class BackwardModelClass(Enum):
     MHNreact = MHNreactModel
     RetroKNN = RetroKNNModel
     RootAligned = RootAlignedModel
+
+
+class FilterModelClass(Enum):
+    pass
 
 
 @dataclass
@@ -51,3 +57,10 @@ class BackwardModelConfig(ModelConfig):
     """Config for loading one of the supported backward models."""
 
     model_class: BackwardModelClass = MISSING
+
+
+@dataclass
+class FilterModelConfig(ModelConfig):
+    """Config for loading a model used to filter reactions during search."""
+
+    model_class: FilterModelClass = MISSING

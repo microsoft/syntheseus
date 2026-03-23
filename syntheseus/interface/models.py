@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 import warnings
 from abc import abstractmethod
 from collections import OrderedDict
@@ -73,6 +74,7 @@ class ReactionModel(Generic[InputType, ReactionType]):
         # miss = was not in the cache
         self._num_cache_hits = 0
         self._num_cache_misses = 0
+        self._model_calls_wallclock_time = 0.0
 
     def num_calls(self, count_cache: Optional[bool] = None) -> int:
         """
@@ -96,6 +98,10 @@ class ReactionModel(Generic[InputType, ReactionType]):
         else:
             return self._num_cache_misses
 
+    def model_calls_time(self) -> float:
+        """Total wallclock time spent in calls to the reaction model."""
+        return self._model_calls_wallclock_time
+
     @property
     def cache_size(self) -> int:
         """Return the current size of the cache."""
@@ -114,6 +120,7 @@ class ReactionModel(Generic[InputType, ReactionType]):
                 lists are allowed to be shorter than `num_results`. If not provided, the default
                 number of results will be used.
         """
+        time_start = time.perf_counter()
 
         # Step 0: set `num_results` to default if not provided.
         num_results = num_results or self.default_num_results
@@ -147,6 +154,7 @@ class ReactionModel(Generic[InputType, ReactionType]):
         # Step 3: increment counts.
         self._num_cache_misses += len(inputs_not_in_cache)
         self._num_cache_hits += len(inputs) - len(inputs_not_in_cache)
+        self._model_calls_wallclock_time += time.perf_counter() - time_start
 
         return output
 

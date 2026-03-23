@@ -178,7 +178,7 @@ class SearchAlgorithm(MinimalSearchAlgorithm[GraphType, AlgReturnType]):
             datetime.now() - self._start_time
         ).total_seconds()  # NOTE: `self._start_time` is set in `setup`
         return (
-            (elapsed_time >= self.time_limit_s)
+            (self.reaction_model.backward_model.model_calls_time() >= self.time_limit_s)
             or (self.reaction_model.num_calls() >= self.limit_reaction_model_calls)
             or (len(graph) >= self.limit_graph_nodes)
             or (self.stop_on_first_solution and graph.root_node.has_solution)
@@ -206,6 +206,12 @@ class SearchAlgorithm(MinimalSearchAlgorithm[GraphType, AlgReturnType]):
         for node in nodes:
             # Initialize number of calls to reaction model
             node.data.setdefault("num_calls_rxn_model", self.reaction_model.num_calls())
+
+            if hasattr(self.reaction_model, "backward_model"):
+                node.data.setdefault("creation_time_backward_model", self.reaction_model.backward_model.model_calls_time())
+                #node.data.setdefault("creation_time_forward_model", self.reaction_model.forward_model.model_calls_time())
+            else:
+                node.data.setdefault("creation_time_backward_model", self.reaction_model.model_calls_time())
 
             # Fill molecule metadata from inventory
             self._fill_molecule_metadata(node, graph)

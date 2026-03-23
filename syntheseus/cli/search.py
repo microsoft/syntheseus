@@ -31,7 +31,8 @@ from omegaconf import MISSING, DictConfig, OmegaConf
 from tqdm import tqdm
 
 from syntheseus import Molecule
-from syntheseus.reaction_prediction.inference.config import BackwardModelConfig
+from syntheseus.reaction_prediction.inference.config import BackwardModelConfig, FilterModelConfig
+from syntheseus.reaction_prediction.utils.compose import FilteredBackwardReactionModel
 from syntheseus.reaction_prediction.utils.config import get_config as cli_get_config
 from syntheseus.reaction_prediction.utils.misc import set_random_seed
 from syntheseus.reaction_prediction.utils.model_loading import get_model
@@ -206,7 +207,7 @@ class BaseSearchConfig(SearchAlgorithmConfig):
 class SearchConfig(BackwardModelConfig, BaseSearchConfig):
     """Config for running search for given search targets."""
 
-    pass
+    filter_model_config: FilterModelConfig = field(default_factory=FilterModelConfig)
 
 
 def run_from_config(config: SearchConfig) -> Path:
@@ -251,6 +252,15 @@ def run_from_config(config: SearchConfig) -> Path:
         use_cache=config.reaction_model_use_cache,
         default_num_results=config.num_top_results,
     )
+
+    if True:
+        filter_model = config.filter_model_config.model_class.value(
+            **config.filter_model_config.model_kwargs
+        )
+
+        search_rxn_model = FilteredBackwardReactionModel(
+            backward_model=search_rxn_model, filter_models={"filter_model": filter_model}
+        )
 
     # Set up the inventory
     mol_inventory = SmilesListInventory.load_from_file(
@@ -335,6 +345,11 @@ def run_from_config(config: SearchConfig) -> Path:
             node.data["analysis_time"] = node.data["num_calls_rxn_model"]
         soln_time_rxn_model_calls = get_first_solution_time(output_graph)
 
+        # Time of first solution (backward model time)
+        for node in output_graph.nodes():
+            node.data["analysis_time"] = node.data["creation_time_backward_model"]
+        soln_time_backward_model_wallclock = get_first_solution_time(output_graph)
+
         # Time of first solution (wallclock)
         for node in output_graph.nodes():
             node.data["analysis_time"] = (
@@ -350,7 +365,18 @@ def run_from_config(config: SearchConfig) -> Path:
             "num_nodes_in_final_tree": len(output_graph),
             "soln_time_rxn_model_calls": soln_time_rxn_model_calls,
             "soln_time_wallclock": soln_time_wallclock,
+            "soln_time_backward_model_wallclock": soln_time_backward_model_wallclock,
         }
+
+        if True:
+            stats.update(
+                {
+                    "backward_model_time_wallclock": alg.reaction_model.backward_model.model_calls_time(),
+                    "acceptance_rate": alg.reaction_model.acceptance_rate,
+                }
+            )
+        else:
+            stats["backward_model_time_wallclock"] = alg.reaction_model.model_calls_time()
 
         all_stats.append(stats)
         logger.info(pformat(stats))
