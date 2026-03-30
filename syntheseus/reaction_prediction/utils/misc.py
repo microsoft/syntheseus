@@ -14,6 +14,7 @@ from rdkit import rdBase
 
 from syntheseus.interface.bag import Bag
 from syntheseus.interface.molecule import Molecule
+from syntheseus.interface.reaction import Reaction
 
 
 def set_random_seed(seed: int = 0) -> None:
@@ -96,6 +97,16 @@ def asdict_extended(data) -> Dict[str, Any]:
 def undictify_bag_of_molecules(data: List[Dict[str, str]]) -> Bag[Molecule]:
     """Recovers a bag of molecules serialized with `dictify`."""
     return Bag(Molecule(d["smiles"]) for d in data)
+
+
+def undictify_reaction(data: Dict[str, Any]) -> Reaction:
+    """Recovers a reaction serialized with `dictify`/`asdict_extended`."""
+    return Reaction(
+        reactants=undictify_bag_of_molecules(data["reactants"]),
+        products=undictify_bag_of_molecules(data["products"]),
+        identifier=data.get("identifier"),
+        metadata=data.get("metadata", {}),
+    )
 
 
 def parallelize(

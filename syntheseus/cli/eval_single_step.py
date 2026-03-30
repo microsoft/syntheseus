@@ -18,9 +18,10 @@ import logging
 import math
 import os
 import time
-from dataclasses import dataclass, field, fields
+from dataclasses import asdict, dataclass, field, fields
 from functools import partial
 from itertools import islice
+from pathlib import Path
 from statistics import mean, median
 from typing import Any, Callable, Dict, Generic, Iterable, List, Optional, Sequence, Tuple, cast
 
@@ -28,12 +29,14 @@ from more_itertools import batched
 from omegaconf import MISSING, OmegaConf
 from tqdm import tqdm
 
+from syntheseus.interface.bag import Bag
 from syntheseus.interface.models import (
     ForwardReactionModel,
     InputType,
     ReactionModel,
     ReactionType,
 )
+from syntheseus.interface.molecule import Molecule, molecule_bag_to_smiles
 from syntheseus.interface.reaction import Reaction, SingleProductReaction
 from syntheseus.reaction_prediction.chem.utils import remove_stereo_information_from_reaction
 from syntheseus.reaction_prediction.data.dataset import (
@@ -47,18 +50,18 @@ from syntheseus.reaction_prediction.inference.config import (
     BackwardModelConfig,
     ForwardModelConfig,
 )
-from syntheseus.reaction_prediction.utils.config import (
-    get_config as cli_get_config,
-)
-from syntheseus.reaction_prediction.utils.config import (
-    get_error_message_for_missing_value,
-)
+from syntheseus.reaction_prediction.utils.config import get_config as cli_get_config
+from syntheseus.reaction_prediction.utils.config import get_error_message_for_missing_value
 from syntheseus.reaction_prediction.utils.metrics import (
     ModelTimingResults,
     TopKMetricsAccumulator,
     compute_total_time,
 )
-from syntheseus.reaction_prediction.utils.misc import asdict_extended, set_random_seed
+from syntheseus.reaction_prediction.utils.misc import (
+    asdict_extended,
+    set_random_seed,
+    undictify_reaction,
+)
 from syntheseus.reaction_prediction.utils.model_loading import get_model
 
 logger = logging.getLogger(__file__)
@@ -67,6 +70,8 @@ logger = logging.getLogger(__file__)
 _RXN_WTIH_IDENTIFIER_ERROR = (
     "Reactions with the `identifier` field currently not supported in evaluation"
 )
+PREDICTIONS_JSONL = "predictions.jsonl"
+STATS_JSON = "stats.json"
 
 
 @dataclass
@@ -82,12 +87,13 @@ class BaseEvalConfig:
 
     # Fields for saving and printing results
     print_idxs: List[int] = field(default_factory=lambda: [1, 3, 5, 10, 20, 50])
-    save_outputs: bool = True  # Whether to save the results as a JSON file
+    save_outputs: bool = True  # Whether to save the results as a JSON/JSONL file
     include_predictions: bool = True  # Whether to include the full predictions lists
     results_dir: str = field(
         default_factory=lambda: os.path.join(os.path.dirname(__file__), "results")
     )
     filestring: Optional[str] = None  # Unique string (appended to filename) to identify the run
+    resumable: bool = False  # Write predictions incrementally to allow resuming after interruption
 
     # Fields relevant to back translation
     back_translation_config: ForwardModelConfig = field(
@@ -198,6 +204,54 @@ def get_results(
     )
 
 
+@dataclass(frozen=True)
+class PredictionRecord:
+    """Schema for a single row in the resumable predictions JSONL file."""
+
+    input: str
+    ground_truth: str
+    num_predictions: int
+    ground_truth_correct: List[bool]
+    timing: ModelTimingResults
+    stereo_correct: Optional[List[bool]] = None
+    back_translation_correct: Optional[List[bool]] = None
+    back_translation_timing: Optional[ModelTimingResults] = None
+    predictions: Optional[List[Dict[str, Any]]] = None
+    back_translation_predictions: Optional[List[List[Dict[str, Any]]]] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize to a JSON-compatible dict, omitting unset optional fields."""
+        d: Dict[str, Any] = {}
+        for f in fields(self):
+            val = getattr(self, f.name)
+            if val is None:
+                continue
+            d[f.name] = asdict(val) if f.name.endswith("timing") else val
+        return d
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "PredictionRecord":
+        """Deserialize from a JSON-loaded dict."""
+        return cls(
+            **{k: ModelTimingResults(**v) if k.endswith("timing") else v for k, v in d.items()}  # type: ignore
+        )
+
+
+def _load_and_fix_jsonl(path: Path) -> List[PredictionRecord]:
+    """Read a JSONL file, discarding any truncated trailing line, and re-write it clean."""
+    raw_dicts: List[Dict[str, Any]] = []
+    with open(path) as f:
+        for line in f:
+            try:
+                raw_dicts.append(json.loads(line))
+            except json.JSONDecodeError:
+                break
+    with open(path, "w") as f:
+        for d in raw_dicts:
+            f.write(json.dumps(d) + "\n")
+    return [PredictionRecord.from_dict(d) for d in raw_dicts]
+
+
 def compute_metrics(
     model: ReactionModel[InputType, ReactionType],
     dataset: ReactionDataset,
@@ -209,6 +263,8 @@ def compute_metrics(
     fold: DataFold = DataFold.VALIDATION,
     batch_size: int = 16,
     include_predictions: bool = False,
+    resumable: bool = False,
+    output_dir: Optional[Path] = None,
 ) -> EvalResults:
     """Compute top-k accuracies and Mean Reciprocal Rank of a model on a given dataset."""
 
@@ -261,6 +317,40 @@ def compute_metrics(
 
         test_dataset = islice(test_dataset, num_dataset_truncation)
         test_dataset_size = num_dataset_truncation
+
+    # Resume from partial JSONL if available.
+    num_already_done = 0
+    predictions_path = output_dir / PREDICTIONS_JSONL if resumable and output_dir else None
+    if predictions_path is not None and predictions_path.exists():
+        valid_records = _load_and_fix_jsonl(predictions_path)
+        for rec in valid_records:
+            ground_truth_match_metrics.add(rec.ground_truth_correct)
+            if include_results_modulo_stereo:
+                assert rec.stereo_correct is not None
+                ground_truth_match_modulo_stereo_metrics.add(rec.stereo_correct)
+            if back_translation_model is not None:
+                assert rec.back_translation_correct is not None
+                back_translation_metrics.add(rec.back_translation_correct)
+            num_predictions.append(rec.num_predictions)
+            model_timing_results.append(rec.timing)
+            if rec.back_translation_timing is not None:
+                back_translation_timing_results.append(rec.back_translation_timing)
+            if include_predictions and rec.predictions is not None:
+                all_predictions.append([undictify_reaction(d) for d in rec.predictions])
+            if include_predictions and rec.back_translation_predictions is not None:
+                all_back_translation_predictions.append(
+                    [
+                        [undictify_reaction(d) for d in seq]
+                        for seq in rec.back_translation_predictions
+                    ]
+                )
+        num_already_done = len(valid_records)
+        if num_already_done > 0:
+            logger.info(f"Resumed: {num_already_done} samples already processed")
+            test_dataset = islice(test_dataset, num_already_done, None)
+            test_dataset_size -= num_already_done
+
+    jsonl_file = open(predictions_path, "a") if predictions_path else None
 
     for batch in tqdm(
         batched(test_dataset, batch_size),
@@ -318,14 +408,18 @@ def compute_metrics(
             for rxn, ground_truth_match in zip(reaction_list, ground_truth_matches):
                 rxn.metadata["ground_truth_match"] = ground_truth_match
 
+            stereo_matches: Optional[List[bool]] = None
             if include_results_modulo_stereo:
                 output_without_stereo = remove_stereo_information_from_reaction(output)
-                ground_truth_match_modulo_stereo_metrics.add(
-                    [
-                        remove_stereo_information_from_reaction(rxn) == output_without_stereo
-                        for rxn in reaction_list
-                    ]
-                )
+                stereo_matches = [
+                    remove_stereo_information_from_reaction(rxn) == output_without_stereo
+                    for rxn in reaction_list
+                ]
+                ground_truth_match_modulo_stereo_metrics.add(stereo_matches)
+
+            preds_for_output: Optional[List[Dict[str, Any]]] = None
+            if include_predictions:
+                preds_for_output = [asdict_extended(rxn) for rxn in reaction_list]
 
             if back_translation_model is not None:
                 assert back_translation_metrics is not None
@@ -344,7 +438,11 @@ def compute_metrics(
 
                 back_translation_results = back_translation_results_with_timing.results
 
+                bt_preds_for_output: Optional[List[List[Dict[str, Any]]]] = None
                 if include_predictions:
+                    bt_preds_for_output = [
+                        [asdict_extended(rxn) for rxn in seq] for seq in back_translation_results
+                    ]
                     batch_back_translation_predictions.append(back_translation_results)
 
                 # Back translation is successful if any of the `back_translation_num_results` bags
@@ -356,9 +454,52 @@ def compute_metrics(
 
                 back_translation_metrics.add(back_translation_matches)
 
+            # Write incremental JSONL line for resumability.
+            if jsonl_file is not None:
+                batch_len = len(batch)
+                t = results_with_timing.model_timing_results
+                bt_correct: Optional[List[bool]] = None
+                bt_timing: Optional[ModelTimingResults] = None
+                bt_preds: Optional[List[List[Dict[str, Any]]]] = None
+                if back_translation_model is not None:
+                    bt = back_translation_results_with_timing.model_timing_results
+                    assert bt is not None
+                    bt_correct = back_translation_matches
+                    bt_timing = ModelTimingResults(
+                        time_model_call=bt.time_model_call / batch_len,
+                        time_post_processing=bt.time_post_processing / batch_len,
+                    )
+                    if include_predictions:
+                        bt_preds = bt_preds_for_output
+                if isinstance(input, Molecule):
+                    input_smiles = input.smiles
+                else:
+                    assert isinstance(input, Bag)
+                    input_smiles = molecule_bag_to_smiles(input)
+                record = PredictionRecord(
+                    input=input_smiles,
+                    ground_truth=output.reaction_smiles,
+                    num_predictions=len(reaction_list),
+                    ground_truth_correct=ground_truth_matches,
+                    timing=ModelTimingResults(
+                        time_model_call=t.time_model_call / batch_len,
+                        time_post_processing=t.time_post_processing / batch_len,
+                    ),
+                    stereo_correct=stereo_matches,
+                    back_translation_correct=bt_correct,
+                    back_translation_timing=bt_timing,
+                    predictions=preds_for_output,
+                    back_translation_predictions=bt_preds,
+                )
+                jsonl_file.write(json.dumps(record.to_dict()) + "\n")
+                jsonl_file.flush()
+
         if include_predictions:
             all_predictions.extend(batch_predictions)
             all_back_translation_predictions.extend(batch_back_translation_predictions)
+
+    if jsonl_file is not None:
+        jsonl_file.close()
 
     extra_args: Dict[str, Any] = {}
 
@@ -405,6 +546,7 @@ def compute_metrics_from_config(
     dataset: ReactionDataset,
     back_translation_model: Optional[ForwardReactionModel],
     config: BaseEvalConfig,
+    output_dir: Optional[Path] = None,
 ) -> EvalResults:
     """Variant of `compute_metrics` that uses an eval config instead of explicit arguments."""
 
@@ -419,10 +561,14 @@ def compute_metrics_from_config(
         fold=config.fold,
         batch_size=config.batch_size,
         include_predictions=config.include_predictions,
+        resumable=config.resumable,
+        output_dir=output_dir,
     )
 
 
-def print_and_save(results: EvalResults, config: EvalConfig, suffix: str = "") -> None:
+def print_and_save(
+    results: EvalResults, config: EvalConfig, suffix: str = "", output_dir: Optional[Path] = None
+) -> None:
     chosen_top_k_results: Dict[str, Dict[int, List[float]]] = {}
 
     # Print the results in a concise form.
@@ -445,24 +591,33 @@ def print_and_save(results: EvalResults, config: EvalConfig, suffix: str = "") -
         for k, result in top_k.items():
             print(f"{k}: {result}", flush=True)
 
-    # Save the results into a json file, generate its name from the timestamp for uniqueness.
     if config.save_outputs:
-        filestr = ("_" + config.filestring) if config.filestring else ""
-        suffix = ("_" + suffix) if suffix else ""
-        timestamp = datetime.datetime.now().isoformat(timespec="seconds")
-
-        os.makedirs(config.results_dir, exist_ok=True)
-        outfile = os.path.join(
-            config.results_dir,
-            f"{config.model_class.name}_{str(timestamp)}{filestr}{suffix}.json",
-        )
         results_dict = asdict_extended(results)
-
         for key, top_k in chosen_top_k_results.items():
             results_dict[f"chosen_{key}"] = top_k
 
-        with open(outfile, "w") as outfile_stream:
-            outfile_stream.write(json.dumps(results_dict))
+        if config.resumable and output_dir is not None:
+            # In resumable mode, write stats separately (predictions are in the JSONL).
+            results_dict.pop("predictions", None)
+            results_dict.pop("back_translation_predictions", None)
+            stats_path = output_dir / STATS_JSON
+            with open(stats_path, "w") as stats_file:
+                stats_file.write(json.dumps(results_dict))
+            print(f"Stats saved to {stats_path}")
+            print(f"Predictions saved to {output_dir / PREDICTIONS_JSONL}")
+        else:
+            filestr = ("_" + config.filestring) if config.filestring else ""
+            suffix = ("_" + suffix) if suffix else ""
+            timestamp = datetime.datetime.now().isoformat(timespec="seconds")
+
+            os.makedirs(config.results_dir, exist_ok=True)
+            outfile = os.path.join(
+                config.results_dir,
+                f"{config.model_class.name}_{str(timestamp)}{filestr}{suffix}.json",
+            )
+
+            with open(outfile, "w") as outfile_stream:
+                outfile_stream.write(json.dumps(results_dict))
 
 
 def run_from_config(
@@ -482,6 +637,16 @@ def run_from_config(
             get_error_message_for_missing_value("model_class", [c.name for c in BackwardModelClass])
         )
 
+    # Set up resumable output directory if requested.
+    output_dir: Optional[Path] = None
+    if config.resumable:
+        filestr = ("_" + config.filestring) if config.filestring else ""
+        output_dir = Path(config.results_dir) / f"resumable_{config.fold.name}{filestr}"
+        output_dir.mkdir(parents=True, exist_ok=True)
+        if (output_dir / STATS_JSON).exists():
+            print(f"Evaluation already complete (results at {output_dir}), skipping")
+            return
+
     get_model_fn = partial(get_model, batch_size=config.batch_size, num_gpus=config.num_gpus)
     model = get_model_fn(config, remove_duplicates=config.skip_repeats)
 
@@ -495,9 +660,13 @@ def run_from_config(
 
     dataset = DiskReactionDataset(config.data_dir, sample_cls=ReactionSample)
     results = compute_metrics_from_config(
-        model=model, dataset=dataset, back_translation_model=back_translation_model, config=config
+        model=model,
+        dataset=dataset,
+        back_translation_model=back_translation_model,
+        config=config,
+        output_dir=output_dir,
     )
-    print_and_save(results, config)
+    print_and_save(results, config, output_dir=output_dir)
 
     for extra_step in extra_steps:
         extra_step(model, dataset, back_translation_model)

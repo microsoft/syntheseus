@@ -67,7 +67,7 @@ class ReactionSample(Reaction):
         )
 
     @classmethod
-    def from_reaction_smiles(cls: Type[ReactionType], *args, **kwargs) -> Optional[ReactionType]:
+    def from_reaction_smiles(cls: Type[ReactionType], *args, **kwargs) -> Optional[ReactionType]:  # type: ignore[override]
         try:
             return cls.from_reaction_smiles_strict(*args, **kwargs)
         except Exception:
