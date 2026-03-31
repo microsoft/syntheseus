@@ -65,6 +65,7 @@ jobs:
         environment-file: environment_full.yml
     - name: Install syntheseus with all single-step models
       run: |
+        sudo apt-get update
         sudo apt install -y graphviz
         pip install .[all]
     - name: Verify GPU is available
