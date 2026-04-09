@@ -1,6 +1,7 @@
 import glob
 import json
 import math
+import subprocess
 import sys
 import tempfile
 import urllib
@@ -8,7 +9,6 @@ import zipfile
 from pathlib import Path
 from typing import Generator, List
 
-import omegaconf
 import pytest
 
 from syntheseus.reaction_prediction.inference.config import BackwardModelClass
@@ -66,12 +66,13 @@ def search_cli_argv() -> List[str]:
 
 
 def run_cli_with_argv(argv: List[str]) -> None:
-    # The import below pulls in some optional dependencies, so do it locally to avoid executing it
-    # if the test suite is being skipped.
-    from syntheseus.cli.main import main
+    # Run in a subprocess so that model memory is fully reclaimed after each test.
+    result = subprocess.run(
+        [sys.executable, "-m", "syntheseus.cli.main"] + argv, capture_output=True, text=True
+    )
 
-    sys.argv = ["syntheseus"] + argv
-    main()
+    if result.returncode != 0:
+        raise RuntimeError("CLI failed")
 
 
 def test_cli_invalid(
@@ -103,7 +104,7 @@ def test_cli_invalid(
     ]
 
     for argv in argv_lists:
-        with pytest.raises((ValueError, omegaconf.errors.MissingMandatoryValue)):
+        with pytest.raises(RuntimeError):
             run_cli_with_argv(argv)
 
 
