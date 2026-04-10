@@ -1,3 +1,6 @@
+import gc
+from typing import Generator
+
 import pytest
 
 from syntheseus.interface.bag import Bag
@@ -16,9 +19,14 @@ MODEL_CLASSES_TO_TEST = set(BackwardModelClass) - {BackwardModelClass.GLN}
 
 
 @pytest.fixture(scope="module", params=list(MODEL_CLASSES_TO_TEST) * 2)
-def model(request) -> ExternalBackwardReactionModel:
+def model(request) -> Generator[ExternalBackwardReactionModel, None, None]:
     model_cls = request.param.value
-    return model_cls()
+    model = model_cls()
+    yield model
+
+    # Make sure the model is deleted and garbage collected to free up memory.
+    del model
+    gc.collect()
 
 
 def test_call(model: ExternalBackwardReactionModel) -> None:
