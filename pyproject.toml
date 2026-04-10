@@ -42,7 +42,7 @@ local-retro = ["syntheseus-local-retro==0.5.0"]
 megan = ["syntheseus-megan==0.2.0"]
 mhn-react = ["syntheseus-mhnreact==1.0.0"]
 retro-knn = ["syntheseus[local-retro]"]
-retrochimera = ["retrochimera==1.1.0"]
+retrochimera = ["retrochimera @ git+https://github.com/microsoft/retrochimera.git@kmaziarz/combined-2"]
 root-aligned = ["syntheseus-root-aligned==0.2.0"]
 all-single-step = [
   "syntheseus[chemformer,graph2edits,local-retro,megan,mhn-react,retro-knn,retrochimera,root-aligned]"
