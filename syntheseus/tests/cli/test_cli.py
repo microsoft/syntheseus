@@ -7,7 +7,7 @@ import tempfile
 import urllib
 import zipfile
 from pathlib import Path
-from typing import Generator, List
+from typing import Dict, Generator, List
 
 import pytest
 
@@ -22,6 +22,12 @@ pytestmark = pytest.mark.skipif(
 
 
 MODEL_CLASSES_TO_TEST = set(BackwardModelClass) - {BackwardModelClass.GLN}
+
+# Use a single rule application process for template-based models to reduce memory usage.
+EXTRA_CLI_ARGS: Dict[BackwardModelClass, List[str]] = {
+    BackwardModelClass.RetroChimeraEdit: ["model_kwargs.num_processes=1"],
+    BackwardModelClass.RetroChimera: ["model_kwargs.template_localization.num_processes=1"],
+}
 
 
 @pytest.fixture(scope="module")
@@ -122,6 +128,7 @@ def test_cli_eval_single_step(
             "print_idxs=[1,5]",
             "num_dataset_truncation=10",
         ]
+        + EXTRA_CLI_ARGS.get(model_class, [])
     )
 
     [results_path] = glob.glob(f"{tmpdir}/{model_class.name}_*.json")
@@ -156,6 +163,7 @@ def test_cli_search(
             "limit_iterations=3",
             "num_top_results=10",
         ]
+        + EXTRA_CLI_ARGS.get(model_class, [])
     )
 
     results_dir = f"{tmpdir}/{model_class.name}_*/"
