@@ -239,6 +239,22 @@ class ForwardReactionModel(ReactionModel[Bag[Molecule], Reaction]):
         return True
 
 
+class ReactionScoringModel(BaseModel[Reaction, float]):
+    """Base class for models that assign a scalar score to reactions.
+
+    Subclasses implement `_get_scores`, which takes a batch of reactions and returns one float
+    per reaction.
+    """
+
+    def __call__(self, reactions: list[Reaction]) -> list[float]:
+        """Return one score per input reaction."""
+        return self._cached_call(reactions, compute=self._get_scores)
+
+    @abstractmethod
+    def _get_scores(self, reactions: list[Reaction]) -> Sequence[float]:
+        """Compute scores for a batch of deduplicated, uncached reactions."""
+
+
 class ReactionFilterModel(BaseModel[Reaction, bool]):
     """Base class for models that filter reactions (e.g. for removing hallucinations).
 
