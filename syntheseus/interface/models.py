@@ -3,13 +3,14 @@ from __future__ import annotations
 import warnings
 from abc import abstractmethod
 from collections import OrderedDict
-from typing import Any, Generic, Optional, Sequence, TypeVar
+from typing import Any, Callable, Generic, Optional, Sequence, TypeVar
 
 from syntheseus.interface.bag import Bag
 from syntheseus.interface.molecule import Molecule
 from syntheseus.interface.reaction import Reaction, SingleProductReaction
 
 InputType = TypeVar("InputType")
+ValueType = TypeVar("ValueType")
 ReactionType = TypeVar("ReactionType", bound=Reaction)
 
 
@@ -21,30 +22,31 @@ def deduplicate_keeping_order(seq: Sequence) -> list:
     return list(dict.fromkeys(seq))  # Dict insertion order is preserved in Python 3.7+
 
 
-class ReactionModel(Generic[InputType, ReactionType]):
-    """Base class for all reaction models, both backward and forward."""
+class BaseModel(Generic[InputType, ValueType]):
+    """Generic base providing an LRU-style cache and call counting for batched models.
+
+    Subclasses define their own `__call__` (with whatever signature they need) and delegate
+    to `_cached_call`, passing in the cache keys for the batch and a `compute` callable that
+    produces values for the keys that turned out to be cache misses.
+    """
 
     def __init__(
         self,
         *,
-        remove_duplicates: bool = True,
         use_cache: bool = False,
         count_cache_in_num_calls: bool = False,
-        initial_cache: Optional[dict[tuple[InputType, int], Sequence[ReactionType]]] = None,
+        initial_cache: Optional[dict[InputType, ValueType]] = None,
         max_cache_size: Optional[int] = None,
-        default_num_results: int = DEFAULT_NUM_RESULTS,
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)  # in case this is not the first class in the MRO
         self.count_cache_in_num_calls = count_cache_in_num_calls
-        self.default_num_results = default_num_results
 
         # Attributes used in caching. They should not be modified manually
         # since doing so will likely make counts/etc inaccurate
         self._use_cache = False  # dummy init, will be set in reset
-        self._cache: OrderedDict[tuple[InputType, int], Sequence[ReactionType]] = OrderedDict()
+        self._cache: OrderedDict[InputType, ValueType] = OrderedDict()
         self._max_cache_size = max_cache_size
-        self._remove_duplicates = remove_duplicates
         self.reset(use_cache=use_cache)
 
         # Add initial cache *after* reset is done so it is not cleared
@@ -75,18 +77,15 @@ class ReactionModel(Generic[InputType, ReactionType]):
         self._num_cache_misses = 0
 
     def num_calls(self, count_cache: Optional[bool] = None) -> int:
-        """
-        Number of times this reaction model has been called.
+        """Number of times this model has been called.
 
         Args:
-            count_cache: if true, all calls to the reaction model are counted,
-                even if those calls just retrieved an item from the cache.
-                If false, just count calls which were not in the cache.
-                If None, then `self.count_cache_in_num_calls` is used.
-                Defaults to None.
+            count_cache: if `True`, all calls to the model are counted, even if those calls just
+                retrieved an item from the cache. If `False`, just count calls which were not in the
+                cache. If `None`, then `self.count_cache_in_num_calls` is used.
 
         Returns:
-            An integer representing the number of calls to the reaction model.
+            An integer representing the number of calls to the model.
         """
         if count_cache is None:  # fill in default value
             count_cache = self.count_cache_in_num_calls
@@ -100,6 +99,66 @@ class ReactionModel(Generic[InputType, ReactionType]):
     def cache_size(self) -> int:
         """Return the current size of the cache."""
         return len(self._cache) if self._use_cache else 0
+
+    def _cached_call(
+        self,
+        inputs: Sequence[InputType],
+        compute: Callable[[list[InputType]], Sequence[ValueType]],
+    ) -> list[ValueType]:
+        """Resolve a batch of cache keys, calling `compute` only for the misses.
+
+        Args:
+            inputs: Batch of inputs to the model.
+            compute: Called with the deduplicated list of missing keys, must return values in the
+                same order. Not called at all if every key is already cached.
+        """
+        # Step 1: call underlying model for all inputs not in the cache, and add them to the cache.
+        inputs_not_in_cache = deduplicate_keeping_order(
+            [inp for inp in inputs if inp not in self._cache]
+        )
+
+        if len(inputs_not_in_cache) > 0:
+            new_values = compute(inputs_not_in_cache)
+            assert len(new_values) == len(inputs_not_in_cache)
+            for inp, value in zip(inputs_not_in_cache, new_values):
+                self._cache[inp] = value
+
+        # Step 2: all values should now be in the cache, so output can be assembled from there.
+        output = []
+        for inp in inputs:
+            output.append(self._cache[inp])
+            self._cache.move_to_end(inp)  # mark as most recently used
+
+        # Step 2.1: clear the cache if not used, trim if max size is set.
+        if not self._use_cache:
+            self._cache.clear()
+        elif self._max_cache_size is not None:
+            # If the cache is larger than the maximum size, remove the oldest entries.
+            while len(self._cache) > self._max_cache_size:
+                self._cache.popitem(last=False)
+
+        # Step 3: increment counts.
+        self._num_cache_misses += len(inputs_not_in_cache)
+        self._num_cache_hits += len(inputs) - len(inputs_not_in_cache)
+
+        return output
+
+
+class ReactionModel(
+    BaseModel[tuple[InputType, int], Sequence[ReactionType]], Generic[InputType, ReactionType]
+):
+    """Base class for all reaction models, both backward and forward."""
+
+    def __init__(
+        self,
+        *,
+        remove_duplicates: bool = True,
+        default_num_results: int = DEFAULT_NUM_RESULTS,
+        **kwargs,
+    ) -> None:
+        super().__init__(**kwargs)
+        self.default_num_results = default_num_results
+        self._remove_duplicates = remove_duplicates
 
     def __call__(
         self, inputs: list[InputType], num_results: Optional[int] = None
@@ -115,40 +174,17 @@ class ReactionModel(Generic[InputType, ReactionType]):
                 number of results will be used.
         """
 
-        # Step 0: set `num_results` to default if not provided.
+        # Set `num_results` to default if not provided.
         num_results = num_results or self.default_num_results
 
-        # Step 1: call underlying model for all inputs not in the cache, and add them to the cache.
-        inputs_not_in_cache = deduplicate_keeping_order(
-            [inp for inp in inputs if (inp, num_results) not in self._cache]
-        )
+        # Build cache keys (one per input) and delegate to the cached-call helper.
+        keys = [(inp, num_results) for inp in inputs]
 
-        if len(inputs_not_in_cache) > 0:
-            new_rxns = self._get_reactions(inputs=inputs_not_in_cache, num_results=num_results)
-            assert len(new_rxns) == len(inputs_not_in_cache)
-            for inp, rxns in zip(inputs_not_in_cache, new_rxns):
-                self._cache[(inp, num_results)] = self.filter_reactions(rxns)
+        def compute(missing: list[tuple[InputType, int]],) -> list[Sequence[ReactionType]]:
+            new_rxns = self._get_reactions(inputs=[k[0] for k in missing], num_results=num_results)
+            return [self.filter_reactions(rxns) for rxns in new_rxns]
 
-        # Step 2: all reactions should now be in the cache, so output can be assembled from there.
-        output = []
-        for inp in inputs:
-            key = (inp, num_results)
-            output.append(self._cache[key])
-            self._cache.move_to_end(key)  # mark as most recently used
-
-        # Step 2.1: clear the cache if not used, trim if max size is set.
-        if not self._use_cache:
-            self._cache.clear()
-        elif self._max_cache_size is not None:
-            # If the cache is larger than the maximum size, remove the oldest entries.
-            while len(self._cache) > self._max_cache_size:
-                self._cache.popitem(last=False)
-
-        # Step 3: increment counts.
-        self._num_cache_misses += len(inputs_not_in_cache)
-        self._num_cache_hits += len(inputs) - len(inputs_not_in_cache)
-
-        return output
+        return self._cached_call(keys, compute=compute)
 
     @abstractmethod
     def _get_reactions(
