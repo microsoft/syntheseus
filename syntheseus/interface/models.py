@@ -237,3 +237,19 @@ class BackwardReactionModel(ReactionModel[Molecule, SingleProductReaction]):
 class ForwardReactionModel(ReactionModel[Bag[Molecule], Reaction]):
     def is_forward(self) -> bool:
         return True
+
+
+class ReactionFilterModel(BaseModel[Reaction, bool]):
+    """Base class for models that filter reactions (e.g. for removing hallucinations).
+
+    Subclasses implement `_get_acceptance`, which takes a batch of reactions and returns a single
+    boolean per reaction (`True` = accepted, `False` = rejected).
+    """
+
+    def __call__(self, reactions: list[Reaction]) -> list[bool]:
+        """Return a boolean acceptance mask: `True` = accepted, `False` = rejected."""
+        return self._cached_call(reactions, compute=self._get_acceptance)
+
+    @abstractmethod
+    def _get_acceptance(self, reactions: list[Reaction]) -> Sequence[bool]:
+        """Compute acceptance for a batch of deduplicated, uncached reactions."""
