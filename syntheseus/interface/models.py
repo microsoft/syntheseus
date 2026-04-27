@@ -180,7 +180,7 @@ class ReactionModel(
         # Build cache keys (one per input) and delegate to the cached-call helper.
         keys = [(inp, num_results) for inp in inputs]
 
-        def compute(missing: list[tuple[InputType, int]],) -> list[Sequence[ReactionType]]:
+        def compute(missing: list[tuple[InputType, int]]) -> list[Sequence[ReactionType]]:
             new_rxns = self._get_reactions(inputs=[k[0] for k in missing], num_results=num_results)
             return [self.filter_reactions(rxns) for rxns in new_rxns]
 

@@ -88,9 +88,7 @@ def test_filtered_backward_model_reset_propagates() -> None:
 def test_filtered_backward_model_no_filters_passthrough() -> None:
     """With no filters, output matches the underlying backward model."""
     backward_model = LinearMoleculesToyModel(allow_substitution=False)
-    wrapped = FilteredBackwardReactionModel(
-        backward_model=backward_model, filter_models={}
-    )
+    wrapped = FilteredBackwardReactionModel(backward_model=backward_model, filter_models={})
 
     inputs = [Molecule("CC"), Molecule("CCC")]
     assert wrapped(inputs) == backward_model(inputs)

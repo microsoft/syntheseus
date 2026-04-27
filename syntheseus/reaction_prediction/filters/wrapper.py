@@ -76,9 +76,7 @@ class FilteredBackwardReactionModel(BackwardReactionModel):
             num_before = len(reactions_passed)
             passed_flags = filter_model(reactions_passed)
             reactions_passed = [
-                reaction
-                for reaction, passed in zip(reactions_passed, passed_flags)
-                if passed
+                reaction for reaction, passed in zip(reactions_passed, passed_flags) if passed
             ]
 
             # Update per-filter acceptance counts.

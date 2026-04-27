@@ -13,9 +13,7 @@ class ReactantListFilterModel(ReactionFilterModel):
         self._allowed = set(allowed_smiles)
 
     def _get_acceptance(self, reactions: list[Reaction]) -> list[bool]:
-        return [
-            all(r.smiles in self._allowed for r in rxn.reactants) for rxn in reactions
-        ]
+        return [all(r.smiles in self._allowed for r in rxn.reactants) for rxn in reactions]
 
 
 def test_filter_model_basic() -> None:
