@@ -88,3 +88,10 @@ class SingleProductReaction(Reaction):
         """Handle for the single product of this reaction."""
         assert len(self.products) == 1  # Guaranteed in `__init__`.
         return next(iter(self.products))
+
+    @classmethod
+    def from_reaction_smiles(cls, rxn_smiles: str) -> "SingleProductReaction":
+        rxn = Reaction.from_reaction_smiles(rxn_smiles)
+        if len(rxn.products) != 1:
+            raise ValueError(f"Expected exactly one product, got {len(rxn.products)}.")
+        return cls(reactants=rxn.reactants, product=next(iter(rxn.products)))
