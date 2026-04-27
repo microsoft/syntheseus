@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Sequence
 
 from syntheseus.interface.models import ForwardReactionModel, ReactionFilterModel
-from syntheseus.interface.reaction import Reaction
+from syntheseus.interface.reaction import SingleProductReaction
 
 
 class ForwardReactionFilterModel(ReactionFilterModel):
@@ -14,7 +14,7 @@ class ForwardReactionFilterModel(ReactionFilterModel):
         self.forward_model = forward_model
         self.top_k = top_k
 
-    def _get_acceptance(self, reactions: list[Reaction]) -> Sequence[bool]:
+    def _get_acceptance(self, reactions: Sequence[SingleProductReaction]) -> list[bool]:
         predictions = self.forward_model(
             [rxn.reactants for rxn in reactions], num_results=self.top_k
         )

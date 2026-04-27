@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional, Sequence
+from typing import Any, Optional, Sequence
 
 from syntheseus.interface.models import BackwardReactionModel, ReactionFilterModel
 from syntheseus.interface.molecule import Molecule
@@ -26,7 +26,7 @@ class FilteredBackwardReactionModel(BackwardReactionModel):
 
         self.reset_acceptance_rates()
 
-        default_kwargs = {  # By default match the backward model's settings
+        default_kwargs: dict[str, Any] = {  # By default match the backward model's settings
             "remove_duplicates": backward_model._remove_duplicates,
             "use_cache": backward_model._use_cache,
             "count_cache_in_num_calls": backward_model.count_cache_in_num_calls,

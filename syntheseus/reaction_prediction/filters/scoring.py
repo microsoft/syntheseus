@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Sequence
 
 from syntheseus.interface.models import ReactionFilterModel, ReactionScoringModel
-from syntheseus.interface.reaction import Reaction
+from syntheseus.interface.reaction import SingleProductReaction
 
 
 class ScoringReactionFilterModel(ReactionFilterModel):
@@ -16,5 +16,5 @@ class ScoringReactionFilterModel(ReactionFilterModel):
         self.scoring_model = scoring_model
         self.min_score_threshold = min_score_threshold
 
-    def _get_acceptance(self, reactions: list[Reaction]) -> Sequence[bool]:
+    def _get_acceptance(self, reactions: Sequence[SingleProductReaction]) -> list[bool]:
         return [score >= self.min_score_threshold for score in self.scoring_model(reactions)]
