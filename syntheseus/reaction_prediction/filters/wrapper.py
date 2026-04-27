@@ -7,7 +7,6 @@ from syntheseus.interface.models import BackwardReactionModel, ReactionFilterMod
 from syntheseus.interface.molecule import Molecule
 from syntheseus.interface.reaction import SingleProductReaction
 
-
 logger = logging.getLogger(__file__)
 
 
