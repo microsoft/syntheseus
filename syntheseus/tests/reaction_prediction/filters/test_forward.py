@@ -22,7 +22,7 @@ class DictForwardModel(ForwardReactionModel):
     ) -> list[Sequence[Reaction]]:
         return [
             [
-                SingleProductReaction(reactants=reactants, product=p)
+                Reaction(reactants=reactants, products=Bag([p]))
                 for p in self._predictions[reactants][:num_results]
             ]
             for reactants in inputs

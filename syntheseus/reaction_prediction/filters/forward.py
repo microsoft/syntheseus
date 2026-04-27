@@ -19,6 +19,6 @@ class ForwardReactionFilterModel(ReactionFilterModel):
             [rxn.reactants for rxn in reactions], num_results=self.top_k
         )
         return [
-            any(pred.product in rxn.products for pred in preds)
+            any(rxn.product in pred.products for pred in preds)
             for rxn, preds in zip(reactions, predictions)
         ]
