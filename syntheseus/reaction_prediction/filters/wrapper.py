@@ -33,7 +33,7 @@ class FilteredBackwardReactionModel(BackwardReactionModel):
             "default_num_results": backward_model.default_num_results,
         }
 
-        super().__init__(**(default_kwargs | kwargs))
+        super().__init__(**{**default_kwargs, **kwargs})
 
     def reset(self, use_cache: Optional[bool] = None) -> None:
         super().reset(use_cache=use_cache)

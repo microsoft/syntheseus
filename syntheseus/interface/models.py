@@ -3,7 +3,7 @@ from __future__ import annotations
 import warnings
 from abc import abstractmethod
 from collections import OrderedDict
-from typing import Any, Callable, Generic, Optional, Sequence, TypeVar
+from typing import Any, Callable, Generic, Optional, Sequence, Tuple, TypeVar
 
 from syntheseus.interface.bag import Bag
 from syntheseus.interface.molecule import Molecule
@@ -145,7 +145,7 @@ class BaseModel(Generic[InputType, ValueType]):
 
 
 class ReactionModel(
-    BaseModel[tuple[InputType, int], Sequence[ReactionType]], Generic[InputType, ReactionType]
+    BaseModel[Tuple[InputType, int], Sequence[ReactionType]], Generic[InputType, ReactionType]
 ):
     """Base class for all reaction models, both backward and forward."""
 
