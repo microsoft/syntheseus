@@ -49,13 +49,13 @@ def remove_stereo_information_from_reaction(reaction: ReactionType) -> ReactionT
     )
 
 
-def molecule_bag_from_smiles_strict(smiles: str) -> Bag[Molecule]:
-    return Bag([Molecule(component) for component in smiles.split(SMILES_SEPARATOR)])
+def molecule_bag_from_smiles_strict(smiles: str, **kwargs) -> Bag[Molecule]:
+    return Bag([Molecule(component, **kwargs) for component in smiles.split(SMILES_SEPARATOR)])
 
 
-def molecule_bag_from_smiles(smiles: str) -> Optional[Bag[Molecule]]:
+def molecule_bag_from_smiles(smiles: str, **kwargs) -> Optional[Bag[Molecule]]:
     try:
-        return molecule_bag_from_smiles_strict(smiles)
+        return molecule_bag_from_smiles_strict(smiles, **kwargs)
     except ValueError:
         # If any of the components ends up invalid we return `None` instead.
         return None
