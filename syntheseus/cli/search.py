@@ -210,7 +210,7 @@ class SearchConfig(BackwardModelConfig, BaseSearchConfig):
     filter_model_config: FilterModelConfig = field(default_factory=FilterModelConfig)
 
 
-def run_from_config(config: SearchConfig) -> Path:
+def run_from_config(config: SearchConfig, *, per_target_callback=None) -> Path:
     set_random_seed(0)
 
     print("Running search with the following config:")
@@ -320,6 +320,8 @@ def run_from_config(config: SearchConfig) -> Path:
                 all_stats.append(stats)
 
             logger.info("Search results already exist, skipping")
+            if per_target_callback is not None:
+                per_target_callback(idx=idx, results_dir=results_dir, output_graph=None, stats=stats)
             continue
 
         results_lock_path.touch()
@@ -415,6 +417,10 @@ def run_from_config(config: SearchConfig) -> Path:
                     assert False
 
         results_lock_path.unlink()
+
+        if per_target_callback is not None:
+            per_target_callback(idx=idx, results_dir=results_dir, output_graph=output_graph, stats=stats)
+
         del results_dir
 
     if num_targets > 1:
@@ -442,7 +448,7 @@ def run_from_config(config: SearchConfig) -> Path:
     return results_dir_current_run
 
 
-def main(argv: Optional[List[str]] = None, config_cls: Any = SearchConfig) -> Path:
+def main(argv: Optional[List[str]] = None, config_cls: Any = SearchConfig, *, per_target_callback=None) -> Path:
     config = cli_get_config(argv=argv, config_cls=config_cls)
 
     def _warn_will_not_use_defaults(message: str) -> None:
@@ -482,7 +488,7 @@ def main(argv: Optional[List[str]] = None, config_cls: Any = SearchConfig) -> Pa
                     defaults={f"{search_algorithm_name}_config": relevant_defaults},
                 )
 
-    return run_from_config(config)
+    return run_from_config(config, per_target_callback=per_target_callback)
 
 
 if __name__ == "__main__":
