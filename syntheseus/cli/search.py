@@ -31,7 +31,9 @@ from omegaconf import MISSING, DictConfig, OmegaConf
 from tqdm import tqdm
 
 from syntheseus import Molecule
-from syntheseus.reaction_prediction.inference.config import BackwardModelConfig
+from syntheseus.reaction_prediction.filters.forward import ForwardReactionFilterModel
+from syntheseus.reaction_prediction.filters.wrapper import FilteredBackwardReactionModel
+from syntheseus.reaction_prediction.inference.config import BackwardModelConfig, ForwardModelClass
 from syntheseus.reaction_prediction.utils.config import get_config as cli_get_config
 from syntheseus.reaction_prediction.utils.misc import set_random_seed
 from syntheseus.reaction_prediction.utils.model_loading import get_model
@@ -181,6 +183,21 @@ def search_algorithm_config_to_kwargs(config: SearchAlgorithmConfig) -> Dict[str
 
 
 @dataclass
+class ForwardFilterConfig:
+    """Config for filtering backward model proposals via a forward reaction model."""
+
+    model_class: Optional[ForwardModelClass] = None
+    model_dir: Optional[str] = None
+    model_kwargs: Dict[str, Any] = field(default_factory=dict)
+
+    # Number of top forward predictions to check the proposed product against.
+    top_k: int = 5
+
+    # Extra kwargs forwarded to `ForwardReactionFilterModel`.
+    filter_kwargs: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
 class BaseSearchConfig(SearchAlgorithmConfig):
     # Molecule(s) to search for (either as a single explicit SMILES or a file)
     search_target: str = MISSING
@@ -200,6 +217,9 @@ class BaseSearchConfig(SearchAlgorithmConfig):
     # Fields configuring what to save after the run
     save_graph: bool = True  # Whether to save the full reaction graph (can be large)
     num_routes_to_plot: int = 5  # Number of routes to extract and plot for a quick check
+
+    # Optional filtering of backward model proposals via a forward model.
+    forward_filter: ForwardFilterConfig = field(default_factory=ForwardFilterConfig)
 
 
 @dataclass
@@ -251,6 +271,30 @@ def run_from_config(config: SearchConfig) -> Path:
         use_cache=config.reaction_model_use_cache,
         default_num_results=config.num_top_results,
     )
+
+    # Optionally wrap the backward model with one or more filter models.
+    filtering_enabled = config.forward_filter.model_class is not None
+    if filtering_enabled:
+        forward_filter_config = config.forward_filter
+        if forward_filter_config.model_dir is None:
+            raise ValueError("Forward filtering is enabled but `model_dir` was not set")
+
+        forward_model = forward_filter_config.model_class.value(
+            model_dir=forward_filter_config.model_dir,
+            device="cuda:0" if config.use_gpu else "cpu",
+            **cast(Dict[str, Any], OmegaConf.to_container(forward_filter_config.model_kwargs)),
+        )
+
+        forward_filter = ForwardReactionFilterModel(
+            forward_model=forward_model,
+            top_k=forward_filter_config.top_k,
+            **cast(Dict[str, Any], OmegaConf.to_container(forward_filter_config.filter_kwargs)),
+        )
+
+        search_rxn_model = FilteredBackwardReactionModel(
+            backward_model=search_rxn_model,
+            filter_models={"forward": forward_filter},
+        )
 
     # Set up the inventory
     mol_inventory = SmilesListInventory.load_from_file(
@@ -352,6 +396,11 @@ def run_from_config(config: SearchConfig) -> Path:
             "soln_time_wallclock": soln_time_wallclock,
         }
 
+        if filtering_enabled:
+            assert isinstance(search_rxn_model, FilteredBackwardReactionModel)
+            stats["filter_acceptance_rate"] = search_rxn_model.acceptance_rate
+            stats["filter_acceptance_rate_per_filter"] = search_rxn_model.acceptance_rate_per_filter
+
         all_stats.append(stats)
         logger.info(pformat(stats))
 
@@ -393,7 +442,7 @@ def run_from_config(config: SearchConfig) -> Path:
 
     if num_targets > 1:
         logger.info(f"Writing summary statistics across all {num_targets} targets")
-        combined_stats: Dict[str, float] = dict(
+        combined_stats: Dict[str, Any] = dict(
             num_targets=num_targets,
             num_solved_targets=sum(stats["soln_time_wallclock"] != math.inf for stats in all_stats),
         )
@@ -407,6 +456,20 @@ def run_from_config(config: SearchConfig) -> Path:
             values = [stats[key] for stats in all_stats]
             combined_stats[f"average_{key}"] = statistics.mean(values)
             combined_stats[f"median_{key}"] = statistics.median(values)
+
+        if filtering_enabled:
+            acceptance_rates = [stats["filter_acceptance_rate"] for stats in all_stats]
+            combined_stats["average_filter_acceptance_rate"] = statistics.mean(acceptance_rates)
+            combined_stats["median_filter_acceptance_rate"] = statistics.median(acceptance_rates)
+
+            # Per-filter average across targets (filter names are identical for every target).
+            per_filter_keys = list(all_stats[0]["filter_acceptance_rate_per_filter"].keys())
+            combined_stats["average_filter_acceptance_rate_per_filter"] = {
+                name: statistics.mean(
+                    stats["filter_acceptance_rate_per_filter"][name] for stats in all_stats
+                )
+                for name in per_filter_keys
+            }
 
         logger.info(pformat(combined_stats))
 
