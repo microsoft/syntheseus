@@ -23,6 +23,11 @@ pytestmark = pytest.mark.skipif(
 
 MODEL_CLASSES_TO_TEST = set(BackwardModelClass) - {BackwardModelClass.GLN}
 
+# MHNreact CLI search runs have become too slow on CPU-only CI with recent upstream dependency
+# updates, causing the `test-models (CPU)` job to hit the runner timeout. MHNreact is still
+# covered in `test_models.py`; skip only the expensive CLI search permutations here.
+MODEL_CLASSES_TO_TEST_FOR_SEARCH = MODEL_CLASSES_TO_TEST - {BackwardModelClass.MHNreact}
+
 
 @pytest.fixture(scope="module")
 def data_dir() -> Generator[Path, None, None]:
@@ -135,7 +140,7 @@ def test_cli_eval_single_step(
     assert 0.2 <= top_1_accuracy <= 0.8
 
 
-@pytest.mark.parametrize("model_class", MODEL_CLASSES_TO_TEST)
+@pytest.mark.parametrize("model_class", MODEL_CLASSES_TO_TEST_FOR_SEARCH)
 @pytest.mark.parametrize("search_algorithm", ["retro_star", "mcts", "pdvn"])
 def test_cli_search(
     model_class: BackwardModelClass,
