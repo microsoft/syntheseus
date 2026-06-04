@@ -35,9 +35,9 @@ def test_call(model: ExternalBackwardReactionModel) -> None:
     # The model should recover at least two (out of six) in its top-20.
     assert len(set(expected_predictions) & set(model_predictions)) >= 2
 
-
-def test_misc(model: ExternalBackwardReactionModel) -> None:
     import torch
+
+    # Additionally test some misc properties and methods.
 
     assert isinstance(model.name, str)
     assert isinstance(model.get_model_info(), dict)
