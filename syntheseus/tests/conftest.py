@@ -1,10 +1,16 @@
 from __future__ import annotations
 
+import os
+
 import pytest
 
 from syntheseus.interface.bag import Bag
 from syntheseus.interface.molecule import Molecule
 from syntheseus.interface.reaction import SingleProductReaction
+
+# Make `torch.cuda.is_available()` fork-safe so that calling it in the parent process does not
+# poison `@pytest.mark.forked` tests (otherwise could run into CUDA reinitialization issues).
+os.environ.setdefault("PYTORCH_NVML_BASED_CUDA_CHECK", "1")
 
 
 @pytest.fixture

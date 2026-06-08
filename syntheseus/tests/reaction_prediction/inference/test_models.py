@@ -12,15 +12,16 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-MODEL_CLASSES_TO_TEST = set(BackwardModelClass) - {BackwardModelClass.GLN}
+MODEL_CLASSES_TO_TEST = [m for m in BackwardModelClass if m is not BackwardModelClass.GLN]
 
 
-@pytest.fixture(scope="module", params=list(MODEL_CLASSES_TO_TEST) * 2)
+@pytest.fixture(params=MODEL_CLASSES_TO_TEST)
 def model(request) -> ExternalBackwardReactionModel:
     model_cls = request.param.value
     return model_cls()
 
 
+@pytest.mark.forked
 def test_call(model: ExternalBackwardReactionModel) -> None:
     [result] = model([Molecule("Cc1ccc(-c2ccc(C)cc2)cc1")], num_results=20)
     model_predictions = [prediction.reactants for prediction in result]
