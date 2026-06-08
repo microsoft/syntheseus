@@ -73,6 +73,11 @@ jobs:
       run: |
         nvidia-smi || (echo "❌ No GPU detected" && exit 1)
         python -c "import torch; assert torch.cuda.is_available(), '❌ GPU not found'; print('✅ Found GPU:', torch.cuda.get_device_name(0))"
+    - name: Cache model checkpoints
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/torch/syntheseus
+        key: model-checkpoints-${{ hashFiles('syntheseus/reaction_prediction/inference/default_checkpoint_ids.yml') }}
     - name: Run single-step model tests
       run: |
         coverage run -p -m pytest \
