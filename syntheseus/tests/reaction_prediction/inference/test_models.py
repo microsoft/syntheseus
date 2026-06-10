@@ -12,15 +12,16 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-MODEL_CLASSES_TO_TEST = set(BackwardModelClass) - {BackwardModelClass.GLN}
+MODEL_CLASSES_TO_TEST = [m for m in BackwardModelClass if m is not BackwardModelClass.GLN]
 
 
-@pytest.fixture(scope="module", params=list(MODEL_CLASSES_TO_TEST) * 2)
+@pytest.fixture(params=MODEL_CLASSES_TO_TEST)
 def model(request) -> ExternalBackwardReactionModel:
     model_cls = request.param.value
     return model_cls()
 
 
+@pytest.mark.forked
 def test_call(model: ExternalBackwardReactionModel) -> None:
     [result] = model([Molecule("Cc1ccc(-c2ccc(C)cc2)cc1")], num_results=20)
     model_predictions = [prediction.reactants for prediction in result]
@@ -35,9 +36,9 @@ def test_call(model: ExternalBackwardReactionModel) -> None:
     # The model should recover at least two (out of six) in its top-20.
     assert len(set(expected_predictions) & set(model_predictions)) >= 2
 
-
-def test_misc(model: ExternalBackwardReactionModel) -> None:
     import torch
+
+    # Additionally test some misc properties and methods.
 
     assert isinstance(model.name, str)
     assert isinstance(model.get_model_info(), dict)

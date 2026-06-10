@@ -33,6 +33,7 @@ viz = [
 dev = [
   "pytest",
   "pytest-cov",
+  "pytest-forked",
   "pytest-rerunfailures",
   "pre-commit"
 ]
