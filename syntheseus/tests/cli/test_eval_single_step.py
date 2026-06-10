@@ -274,6 +274,12 @@ def test_resume_with_predictions(tmp_path: Path) -> None:
     output_dir = tmp_path / "output"
     output_dir.mkdir()
 
+    predictions_path = output_dir / PREDICTIONS_JSONL
+
+    def read_records() -> List[PredictionRecord]:
+        with open(predictions_path) as f:
+            return [PredictionRecord.from_dict(json.loads(line)) for line in f if line.strip()]
+
     full_results = _make_dataset_and_run(
         tmp_path,
         resumable=True,
@@ -281,11 +287,18 @@ def test_resume_with_predictions(tmp_path: Path) -> None:
         num_dataset_truncation=3,
         include_predictions=True,
     )
-    assert full_results.predictions is not None
-    assert len(full_results.predictions) == 3
+
+    # In resumable mode predictions live in the file, not in the returned object.
+    assert full_results.predictions is None
+
+    records = read_records()
+    assert len(records) == 3
+
+    for rec in records:
+        assert rec.predictions is not None
+        assert len(rec.predictions) == rec.num_predictions
 
     # Simulate crash after 1 sample.
-    predictions_path = output_dir / PREDICTIONS_JSONL
     with open(predictions_path) as f:
         all_lines = [line for line in f if line.strip()]
     with open(predictions_path, "w") as f:
@@ -298,7 +311,13 @@ def test_resume_with_predictions(tmp_path: Path) -> None:
         num_dataset_truncation=3,
         include_predictions=True,
     )
-    assert resumed_results.predictions is not None
-    assert len(resumed_results.predictions) == 3
+    assert resumed_results.predictions is None
     assert resumed_results.num_samples == full_results.num_samples
     assert math.isclose(resumed_results.mrr, full_results.mrr)
+
+    # Predictions are still present in the file for all samples after resuming.
+    resumed_records = read_records()
+    assert len(resumed_records) == 3
+    for rec in resumed_records:
+        assert rec.predictions is not None
+        assert len(rec.predictions) == rec.num_predictions
