@@ -352,8 +352,6 @@ def compute_metrics(
             test_dataset = islice(test_dataset, num_already_done, None)
             test_dataset_size -= num_already_done
 
-    jsonl_file = open(predictions_path, "a") if predictions_path else None
-
     for batch in tqdm(
         batched(test_dataset, batch_size),
         total=math.ceil(test_dataset_size / batch_size),
@@ -457,7 +455,7 @@ def compute_metrics(
                 back_translation_metrics.add(back_translation_matches)
 
             # Write incremental JSONL line for resumability.
-            if jsonl_file is not None:
+            if predictions_path is not None:
                 batch_len = len(batch)
                 t = results_with_timing.model_timing_results
                 bt_correct: Optional[List[bool]] = None
@@ -493,15 +491,12 @@ def compute_metrics(
                     predictions=preds_for_output,
                     back_translation_predictions=bt_preds,
                 )
-                jsonl_file.write(json.dumps(record.to_dict()) + "\n")
-                jsonl_file.flush()
+                with open(predictions_path, "a") as jsonl_file:
+                    jsonl_file.write(json.dumps(record.to_dict()) + "\n")
 
         if include_predictions:
             all_predictions.extend(batch_predictions)
             all_back_translation_predictions.extend(batch_back_translation_predictions)
-
-    if jsonl_file is not None:
-        jsonl_file.close()
 
     extra_args: Dict[str, Any] = {}
 
