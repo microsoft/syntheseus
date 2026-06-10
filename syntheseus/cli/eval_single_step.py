@@ -347,6 +347,8 @@ def compute_metrics(
                     ]
                 )
         num_already_done = len(valid_records)
+        del valid_records
+
         if num_already_done > 0:
             logger.info(f"Resumed: {num_already_done} samples already processed")
             test_dataset = islice(test_dataset, num_already_done, None)
