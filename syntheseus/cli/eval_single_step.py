@@ -240,15 +240,17 @@ class PredictionRecord:
 def _load_and_fix_jsonl(path: Path) -> List[PredictionRecord]:
     """Read a JSONL file, discarding any truncated trailing line, and re-write it clean."""
     raw_dicts: List[Dict[str, Any]] = []
-    with open(path) as f:
+    last_valid_pos = 0
+
+    with open(path, "rb") as f:
         for line in f:
             try:
                 raw_dicts.append(json.loads(line))
+                last_valid_pos = f.tell()
             except json.JSONDecodeError:
                 break
-    with open(path, "w") as f:
-        for d in raw_dicts:
-            f.write(json.dumps(d) + "\n")
+    with open(path, "r+b") as f:
+        f.truncate(last_valid_pos)
     return [PredictionRecord.from_dict(d) for d in raw_dicts]
 
 
