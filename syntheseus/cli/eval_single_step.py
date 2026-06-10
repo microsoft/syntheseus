@@ -57,11 +57,7 @@ from syntheseus.reaction_prediction.utils.metrics import (
     TopKMetricsAccumulator,
     compute_total_time,
 )
-from syntheseus.reaction_prediction.utils.misc import (
-    asdict_extended,
-    set_random_seed,
-    undictify_reaction,
-)
+from syntheseus.reaction_prediction.utils.misc import asdict_extended, set_random_seed
 from syntheseus.reaction_prediction.utils.model_loading import get_model
 
 logger = logging.getLogger(__file__)
@@ -301,6 +297,10 @@ def compute_metrics(
 
     print(f"Testing model {model.__class__.__name__} with args {eval_args}")
 
+    # In resumable mode, predictions are already persisted in the JSONL file, so even if we want to
+    # include them, we don't need to gather them in memory.
+    store_predictions_in_memory = include_predictions and not resumable
+
     all_predictions: List[Sequence[Reaction]] = []
     all_back_translation_predictions: List[List[Sequence[Reaction]]] = []
 
@@ -337,15 +337,7 @@ def compute_metrics(
             model_timing_results.append(rec.timing)
             if rec.back_translation_timing is not None:
                 back_translation_timing_results.append(rec.back_translation_timing)
-            if include_predictions and rec.predictions is not None:
-                all_predictions.append([undictify_reaction(d) for d in rec.predictions])
-            if include_predictions and rec.back_translation_predictions is not None:
-                all_back_translation_predictions.append(
-                    [
-                        [undictify_reaction(d) for d in seq]
-                        for seq in rec.back_translation_predictions
-                    ]
-                )
+
         num_already_done = len(valid_records)
         del valid_records
 
@@ -496,13 +488,13 @@ def compute_metrics(
                 with open(predictions_path, "a") as jsonl_file:
                     jsonl_file.write(json.dumps(record.to_dict()) + "\n")
 
-        if include_predictions:
+        if store_predictions_in_memory:
             all_predictions.extend(batch_predictions)
             all_back_translation_predictions.extend(batch_back_translation_predictions)
 
     extra_args: Dict[str, Any] = {}
 
-    if include_predictions:
+    if store_predictions_in_memory:
         extra_args.update(predictions=all_predictions)
         extra_args.update(back_translation_predictions=all_back_translation_predictions)
 
