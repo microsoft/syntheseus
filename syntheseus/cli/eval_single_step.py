@@ -57,11 +57,7 @@ from syntheseus.reaction_prediction.utils.metrics import (
     TopKMetricsAccumulator,
     compute_total_time,
 )
-from syntheseus.reaction_prediction.utils.misc import (
-    asdict_extended,
-    set_random_seed,
-    undictify_reaction,
-)
+from syntheseus.reaction_prediction.utils.misc import asdict_extended, set_random_seed
 from syntheseus.reaction_prediction.utils.model_loading import get_model
 
 logger = logging.getLogger(__file__)
@@ -240,15 +236,17 @@ class PredictionRecord:
 def _load_and_fix_jsonl(path: Path) -> List[PredictionRecord]:
     """Read a JSONL file, discarding any truncated trailing line, and re-write it clean."""
     raw_dicts: List[Dict[str, Any]] = []
-    with open(path) as f:
+    last_valid_pos = 0
+
+    with open(path, "rb") as f:
         for line in f:
             try:
                 raw_dicts.append(json.loads(line))
+                last_valid_pos = f.tell()
             except json.JSONDecodeError:
                 break
-    with open(path, "w") as f:
-        for d in raw_dicts:
-            f.write(json.dumps(d) + "\n")
+    with open(path, "r+b") as f:
+        f.truncate(last_valid_pos)
     return [PredictionRecord.from_dict(d) for d in raw_dicts]
 
 
@@ -299,6 +297,10 @@ def compute_metrics(
 
     print(f"Testing model {model.__class__.__name__} with args {eval_args}")
 
+    # In resumable mode, predictions are already persisted in the JSONL file, so even if we want to
+    # include them, we don't need to gather them in memory.
+    store_predictions_in_memory = include_predictions and not resumable
+
     all_predictions: List[Sequence[Reaction]] = []
     all_back_translation_predictions: List[List[Sequence[Reaction]]] = []
 
@@ -335,22 +337,14 @@ def compute_metrics(
             model_timing_results.append(rec.timing)
             if rec.back_translation_timing is not None:
                 back_translation_timing_results.append(rec.back_translation_timing)
-            if include_predictions and rec.predictions is not None:
-                all_predictions.append([undictify_reaction(d) for d in rec.predictions])
-            if include_predictions and rec.back_translation_predictions is not None:
-                all_back_translation_predictions.append(
-                    [
-                        [undictify_reaction(d) for d in seq]
-                        for seq in rec.back_translation_predictions
-                    ]
-                )
+
         num_already_done = len(valid_records)
+        del valid_records
+
         if num_already_done > 0:
             logger.info(f"Resumed: {num_already_done} samples already processed")
             test_dataset = islice(test_dataset, num_already_done, None)
             test_dataset_size -= num_already_done
-
-    jsonl_file = open(predictions_path, "a") if predictions_path else None
 
     for batch in tqdm(
         batched(test_dataset, batch_size),
@@ -455,7 +449,7 @@ def compute_metrics(
                 back_translation_metrics.add(back_translation_matches)
 
             # Write incremental JSONL line for resumability.
-            if jsonl_file is not None:
+            if predictions_path is not None:
                 batch_len = len(batch)
                 t = results_with_timing.model_timing_results
                 bt_correct: Optional[List[bool]] = None
@@ -491,19 +485,16 @@ def compute_metrics(
                     predictions=preds_for_output,
                     back_translation_predictions=bt_preds,
                 )
-                jsonl_file.write(json.dumps(record.to_dict()) + "\n")
-                jsonl_file.flush()
+                with open(predictions_path, "a") as jsonl_file:
+                    jsonl_file.write(json.dumps(record.to_dict()) + "\n")
 
-        if include_predictions:
+        if store_predictions_in_memory:
             all_predictions.extend(batch_predictions)
             all_back_translation_predictions.extend(batch_back_translation_predictions)
 
-    if jsonl_file is not None:
-        jsonl_file.close()
-
     extra_args: Dict[str, Any] = {}
 
-    if include_predictions:
+    if store_predictions_in_memory:
         extra_args.update(predictions=all_predictions)
         extra_args.update(back_translation_predictions=all_back_translation_predictions)
 
