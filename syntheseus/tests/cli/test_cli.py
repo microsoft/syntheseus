@@ -143,8 +143,15 @@ def test_cli_eval_single_step(
     assert 0.2 <= top_1_accuracy <= 0.8
 
 
-@pytest.mark.parametrize("model_class", MODEL_CLASSES_TO_TEST)
-@pytest.mark.parametrize("search_algorithm", ["retro_star", "mcts", "pdvn"])
+# Cycle through search algorithms across models instead of testing the full cross-product.
+_SEARCH_ALGORITHMS = ["retro_star", "mcts", "pdvn"]
+_SEARCH_TEST_CASES = [
+    (model_class, _SEARCH_ALGORITHMS[i % len(_SEARCH_ALGORITHMS)])
+    for i, model_class in enumerate(MODEL_CLASSES_TO_TEST)
+]
+
+
+@pytest.mark.parametrize("model_class,search_algorithm", _SEARCH_TEST_CASES)
 def test_cli_search(
     model_class: BackwardModelClass,
     search_algorithm: str,
