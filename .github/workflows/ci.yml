@@ -20,6 +20,8 @@ jobs:
     name: test-core (Python ${{ matrix.python-version }})
     steps:
     - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # Fetch full history so setuptools_scm can determine version from tags
     - uses: conda-incubator/setup-miniconda@v3
       with:
         mamba-version: "*"
@@ -57,6 +59,8 @@ jobs:
     - name: Free extra disk space
       uses: jlumbroso/free-disk-space@main
     - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # Fetch full history so setuptools_scm can determine version from tags
     - uses: conda-incubator/setup-miniconda@v3
       with:
         mamba-version: "*"

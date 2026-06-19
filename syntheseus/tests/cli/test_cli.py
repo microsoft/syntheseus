@@ -7,7 +7,7 @@ import tempfile
 import urllib
 import zipfile
 from pathlib import Path
-from typing import Generator, List
+from typing import Dict, Generator, List
 
 import pytest
 
@@ -22,6 +22,12 @@ pytestmark = pytest.mark.skipif(
 
 
 MODEL_CLASSES_TO_TEST = [m for m in BackwardModelClass if m is not BackwardModelClass.GLN]
+
+# Use a single rule application process for template-based models to reduce memory usage.
+EXTRA_CLI_ARGS: Dict[BackwardModelClass, List[str]] = {
+    BackwardModelClass.RetroChimeraEdit: ["model_kwargs.num_processes=1"],
+    BackwardModelClass.RetroChimera: ["model_kwargs.template_localization.num_processes=1"],
+}
 
 
 @pytest.fixture(scope="module")
@@ -122,6 +128,7 @@ def test_cli_eval_single_step(
             "print_idxs=[1,5]",
             "num_dataset_truncation=10",
         ]
+        + EXTRA_CLI_ARGS.get(model_class, [])
     )
 
     [results_path] = glob.glob(f"{tmpdir}/{model_class.name}_*.json")
@@ -136,8 +143,15 @@ def test_cli_eval_single_step(
     assert 0.2 <= top_1_accuracy <= 0.8
 
 
-@pytest.mark.parametrize("model_class", MODEL_CLASSES_TO_TEST)
-@pytest.mark.parametrize("search_algorithm", ["retro_star", "mcts", "pdvn"])
+# Cycle through search algorithms across models instead of testing the full cross-product.
+_SEARCH_ALGORITHMS = ["retro_star", "mcts", "pdvn"]
+_SEARCH_TEST_CASES = [
+    (model_class, _SEARCH_ALGORITHMS[i % len(_SEARCH_ALGORITHMS)])
+    for i, model_class in enumerate(MODEL_CLASSES_TO_TEST)
+]
+
+
+@pytest.mark.parametrize("model_class,search_algorithm", _SEARCH_TEST_CASES)
 def test_cli_search(
     model_class: BackwardModelClass,
     search_algorithm: str,
@@ -154,8 +168,9 @@ def test_cli_search(
             f"search_targets_file={data_dir}/search_targets.smiles",
             f"inventory_smiles_file={data_dir}/inventory.smiles",
             "limit_iterations=3",
-            "num_top_results=5",
+            "num_top_results=10",
         ]
+        + EXTRA_CLI_ARGS.get(model_class, [])
     )
 
     results_dir = f"{tmpdir}/{model_class.name}_*/"

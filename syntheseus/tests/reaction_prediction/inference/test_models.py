@@ -14,11 +14,18 @@ pytestmark = pytest.mark.skipif(
 
 MODEL_CLASSES_TO_TEST = [m for m in BackwardModelClass if m is not BackwardModelClass.GLN]
 
+# Use a single rule application process for template-based models to reduce memory usage.
+RULE_SERVER_KWARGS = {"num_processes": 1}
+EXTRA_MODEL_KWARGS = {
+    BackwardModelClass.RetroChimeraEdit: RULE_SERVER_KWARGS,
+    BackwardModelClass.RetroChimera: {"template_localization": RULE_SERVER_KWARGS},
+}
+
 
 @pytest.fixture(params=MODEL_CLASSES_TO_TEST)
 def model(request) -> ExternalBackwardReactionModel:
     model_cls = request.param.value
-    return model_cls()
+    return model_cls(**EXTRA_MODEL_KWARGS.get(request.param, {}))
 
 
 @pytest.mark.forked

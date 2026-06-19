@@ -10,6 +10,7 @@ def are_single_step_models_installed():
         import local_retro  # noqa: F401
         import megan  # noqa: F401
         import mhnreact  # noqa: F401
+        import retrochimera  # noqa: F401
         import root_aligned  # noqa: F401
 
         return True
