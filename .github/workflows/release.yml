@@ -7,23 +7,82 @@ on:
         required: true
         type: string
 
-permissions:
-  contents: write
-
 jobs:
   push-tag:
     runs-on: ubuntu-latest
+    # Only allow releases from main.
+    if: github.ref == 'refs/heads/main'
+    environment: release
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ inputs.version }}
     steps:
       - uses: actions/checkout@v4
+      - name: Validate version
+        # Reject anything that is not in the `x.y.z` format.
+        run: |
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Version '$VERSION' is not in the x.y.z format."
+            exit 1
+          fi
       - name: Configure Git
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-      - run: |
-          git tag -a v${{ inputs.version }} -m "Release v${{ inputs.version }}"
-          git push origin v${{ inputs.version }}
+      - name: Create and push tag
+        run: |
+          git tag -a "v$VERSION" -m "Release v$VERSION"
+          git push origin "v$VERSION"
+
   build-docs:
     needs: push-tag
     uses: ./.github/workflows/docs.yml
     with:
       versions: ${{ inputs.version }} stable
+
+  build:
+    needs: build-docs
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v${{ inputs.version }}
+          fetch-depth: 0  # Full history and tags so setuptools_scm derives the version.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Build sdist and wheel
+        run: |
+          python -m pip install --upgrade build twine
+          python -m build
+      - name: Verify built version matches the requested tag
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          ls -l dist/
+          test -f "dist/syntheseus-${VERSION}.tar.gz"
+      - name: Check distribution metadata
+        run: twine check dist/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/syntheseus
+    permissions:
+      id-token: write  # Required for OIDC trusted publishing to PyPI.
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
