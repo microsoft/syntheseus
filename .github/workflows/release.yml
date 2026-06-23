@@ -35,14 +35,15 @@ jobs:
           git tag -a "v$VERSION" -m "Release v$VERSION"
           git push origin "v$VERSION"
 
-  build-docs:
+  docs-build:
     needs: push-tag
     uses: ./.github/workflows/docs.yml
     with:
       versions: ${{ inputs.version }} stable
+      deploy: false
 
   build:
-    needs: build-docs
+    needs: docs-build
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -86,3 +87,10 @@ jobs:
           path: dist/
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+
+  docs-deploy:
+    needs: publish
+    uses: ./.github/workflows/docs.yml
+    with:
+      versions: ${{ inputs.version }} stable
+      deploy: true
