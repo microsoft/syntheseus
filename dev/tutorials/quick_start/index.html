@@ -1557,12 +1557,12 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>Let's start by creating a test molecule and querying LocalRetro for proposed reactions.</p>
+<p>Let's start by creating a test molecule and querying RetroChimera for proposed reactions.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -1581,16 +1581,29 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </clipboard-copy>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">syntheseus</span><span class="w"> </span><span class="kn">import</span> <span class="n">Molecule</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">syntheseus.reaction_prediction.inference</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocalRetroModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">syntheseus.reaction_prediction.inference</span><span class="w"> </span><span class="kn">import</span> <span class="n">RetroChimeraModel</span>
 
-<span class="n">test_mol</span> <span class="o">=</span> <span class="n">Molecule</span><span class="p">(</span><span class="s2">"Cc1ccc(-c2ccc(C)cc2)cc1"</span><span class="p">)</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">LocalRetroModel</span><span class="p">()</span>
+<span class="n">test_mol</span> <span class="o">=</span> <span class="n">Molecule</span><span class="p">(</span><span class="s2">"COc1ccc(-c2ccc(F)cc2)cc1"</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">RetroChimeraModel</span><span class="p">()</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-1">from syntheseus import Molecule
-from syntheseus.reaction_prediction.inference import LocalRetroModel
+from syntheseus.reaction_prediction.inference import RetroChimeraModel
 
-test_mol = Molecule("Cc1ccc(-c2ccc(C)cc2)cc1")
-model = LocalRetroModel()</div>
+test_mol = Molecule("COc1ccc(-c2ccc(F)cc2)cc1")
+model = RetroChimeraModel()</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>(...model loading logs...)
+</pre>
 </div>
 </div>
 </div>
@@ -1603,7 +1616,7 @@ model = LocalRetroModel()</div>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>Note that we didn't provide a path to the model checkpoint, so <code>syntheseus</code> will download a default checkpoint trained on USPTO-50K and cache it for later use. This behaviour can be overriden by providing a <code>model_dir</code> argument.</p>
+<p>Note that we didn't provide a path to the model checkpoint, so <code>syntheseus</code> will download a default checkpoint trained on Pistachio and cache it for later use. This behaviour can be overriden by providing a <code>model_dir</code> argument.</p>
 </div>
 </div>
 </div>
@@ -1640,7 +1653,7 @@ model = LocalRetroModel()</div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>/home/krmaziar/.cache/torch/syntheseus/LocalRetro_backward
+<pre>/data/cache/syntheseus/RetroChimera_backward
 </pre>
 </div>
 </div>
@@ -1707,9 +1720,11 @@ print_results(results)</div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>1: Cc1ccc(B(O)O)cc1 + Cc1ccc(Br)cc1
-2: Cc1ccc(B(O)O)cc1 + Cc1ccc(I)cc1
-3: Cc1ccc(Br)cc1 + Cc1ccc([Mg+])cc1
+<pre>1: COc1ccc(B(O)O)cc1 + Fc1ccc(Br)cc1
+2: COc1ccc([Mg]Br)cc1 + Fc1ccc(Br)cc1
+3: COc1ccc(B(O)O)cc1 + Fc1ccc(I)cc1
+4: COc1ccc([Mg]Br)cc1 + Fc1ccc(Cl)cc1
+5: COc1ccc(Br)cc1 + Fc1ccc(Br)cc1
 </pre>
 </div>
 </div>
@@ -1723,7 +1738,6 @@ print_results(results)</div>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>We only got 3 results (despite requesting 5) as <code>syntheseus</code> automatically deduplicates the model outputs.</p>
 <p>As all single-step models are set up in a consistent way, it's easy to run several models and compare their outputs.</p>
 </div>
 </div>
@@ -1755,6 +1769,9 @@ print_results(results)</div>
     <span class="n">LocalRetroModel</span><span class="p">(),</span>
     <span class="n">MEGANModel</span><span class="p">(),</span>
     <span class="n">MHNreactModel</span><span class="p">(),</span>
+    <span class="n">RetroChimeraModel</span><span class="p">(),</span>
+    <span class="n">RetroChimeraEditModel</span><span class="p">(),</span>
+    <span class="n">RetroChimeraDeNovoModel</span><span class="p">(),</span>
     <span class="n">RetroKNNModel</span><span class="p">(),</span>
     <span class="n">RootAlignedModel</span><span class="p">(),</span>
 <span class="p">]</span>
@@ -1776,6 +1793,9 @@ models = [
     LocalRetroModel(),
     MEGANModel(),
     MHNreactModel(),
+    RetroChimeraModel(),
+    RetroChimeraEditModel(),
+    RetroChimeraDeNovoModel(),
     RetroKNNModel(),
     RootAlignedModel(),
 ]
@@ -1799,13 +1819,17 @@ for model in models:
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Chemformer:  Cc1ccc(Br)cc1 + Cc1ccc(Br)cc1
-Graph2Edits: Cc1ccc(Br)cc1 + Cc1ccc([Sn](C)(C)C)cc1
-LocalRetro:  Cc1ccc(B(O)O)cc1 + Cc1ccc(Br)cc1
-MEGAN:       Cc1ccc(Br)cc1 + Cc1ccc([Mg+])cc1
-MHNreact:    Cc1ccc(Br)cc1 + Cc1ccc([Mg+])cc1
-RetroKNN:    Cc1ccc(B(O)O)cc1 + Cc1ccc(Br)cc1
-RootAligned: Cc1ccc(Br)cc1 + Cc1ccc([Mg+])cc1
+<pre>(...model loading logs...)
+Chemformer:  COc1ccc(Cl)cc1 + OB(O)c1ccc(F)cc1
+Graph2Edits: COc1ccc([Mg+])cc1 + Fc1ccc(Br)cc1
+LocalRetro:  COc1ccc(Br)cc1 + OB(O)c1ccc(F)cc1
+MEGAN:       COc1ccc(Br)cc1 + OB(O)c1ccc(F)cc1
+MHNreact:    COc1ccc(Br)cc1 + OB(O)c1ccc(F)cc1
+RetroChimera: COc1ccc(B(O)O)cc1 + Fc1ccc(Br)cc1
+RetroChimeraEdit: COc1ccc(B(O)O)cc1 + Fc1ccc(Br)cc1
+RetroChimeraDeNovo: COc1ccc(B(O)O)cc1 + Fc1ccc(Br)cc1
+RetroKNN:    COc1ccc(Cl)cc1 + OB(O)c1ccc(F)cc1
+RootAligned: COc1ccc(B(O)O)cc1 + Fc1ccc(Br)cc1
 </pre>
 </div>
 </div>
@@ -1839,8 +1863,8 @@ RootAligned: Cc1ccc(Br)cc1 + Cc1ccc([Mg+])cc1
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -1866,19 +1890,24 @@ RootAligned: Cc1ccc(Br)cc1 + Cc1ccc([Mg+])cc1
 <span class="c1"># Set up a reaction model with caching enabled. Number of reactions</span>
 <span class="c1"># to request from the model at each step of the search needs to be</span>
 <span class="c1"># provided at construction time.</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">LocalRetroModel</span><span class="p">(</span><span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default_num_results</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">RetroChimeraModel</span><span class="p">(</span><span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default_num_results</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 
 <span class="c1"># Dummy inventory with just two purchasable molecules.</span>
 <span class="n">inventory</span> <span class="o">=</span> <span class="n">SmilesListInventory</span><span class="p">(</span>
-    <span class="n">smiles_list</span><span class="o">=</span><span class="p">[</span><span class="s2">"Cc1ccc(B(O)O)cc1"</span><span class="p">,</span> <span class="s2">"O=Cc1ccc(I)cc1"</span><span class="p">]</span>
+    <span class="n">smiles_list</span><span class="o">=</span><span class="p">[</span>
+        <span class="s2">"COB(OC)OC"</span><span class="p">,</span>
+        <span class="s2">"CCCCOB(OCCCC)OCCCC"</span><span class="p">,</span>
+        <span class="s2">"COc1ccc(Br)cc1"</span><span class="p">,</span>
+        <span class="s2">"Fc1ccc(I)cc1"</span><span class="p">,</span>
+    <span class="p">]</span>
 <span class="p">)</span>
 
 <span class="n">search_algorithm</span> <span class="o">=</span> <span class="n">AndOr_BreadthFirstSearch</span><span class="p">(</span>
     <span class="n">reaction_model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
     <span class="n">mol_inventory</span><span class="o">=</span><span class="n">inventory</span><span class="p">,</span>
-    <span class="n">limit_iterations</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>  <span class="c1"># max number of algorithm iterations</span>
-    <span class="n">limit_reaction_model_calls</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>  <span class="c1"># max number of model calls</span>
-    <span class="n">time_limit_s</span><span class="o">=</span><span class="mf">60.0</span>  <span class="c1"># max runtime in seconds</span>
+    <span class="n">limit_iterations</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>  <span class="c1"># max number of algorithm iterations</span>
+    <span class="n">limit_reaction_model_calls</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>  <span class="c1"># max number of model calls</span>
+    <span class="n">time_limit_s</span><span class="o">=</span><span class="mf">30.0</span>  <span class="c1"># max runtime in seconds</span>
 <span class="p">)</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-5">from syntheseus.search.mol_inventory import SmilesListInventory
@@ -1889,20 +1918,38 @@ from syntheseus.search.algorithms.breadth_first import (
 # Set up a reaction model with caching enabled. Number of reactions
 # to request from the model at each step of the search needs to be
 # provided at construction time.
-model = LocalRetroModel(use_cache=True, default_num_results=10)
+model = RetroChimeraModel(use_cache=True, default_num_results=3)
 
 # Dummy inventory with just two purchasable molecules.
 inventory = SmilesListInventory(
-    smiles_list=["Cc1ccc(B(O)O)cc1", "O=Cc1ccc(I)cc1"]
+    smiles_list=[
+        "COB(OC)OC",
+        "CCCCOB(OCCCC)OCCCC",
+        "COc1ccc(Br)cc1",
+        "Fc1ccc(I)cc1",
+    ]
 )
 
 search_algorithm = AndOr_BreadthFirstSearch(
     reaction_model=model,
     mol_inventory=inventory,
-    limit_iterations=100,  # max number of algorithm iterations
-    limit_reaction_model_calls=100,  # max number of model calls
-    time_limit_s=60.0  # max runtime in seconds
+    limit_iterations=10,  # max number of algorithm iterations
+    limit_reaction_model_calls=10,  # max number of model calls
+    time_limit_s=30.0  # max runtime in seconds
 )</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>(...model loading logs...)
+</pre>
 </div>
 </div>
 </div>
@@ -1968,7 +2015,7 @@ search_algorithm = AndOr_BreadthFirstSearch(
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Explored 1256 nodes
+<pre>Explored 66 nodes
 </pre>
 </div>
 </div>
@@ -2010,7 +2057,7 @@ search_algorithm = AndOr_BreadthFirstSearch(
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">syntheseus.search.graph.and_or</span><span class="w"> </span><span class="kn">import</span> <span class="n">AndNode</span>
 
-<span class="c1"># Extract the routes simply in the order they were found.</span>
+<span class="c1"># Extract the routes in the order they were found.</span>
 <span class="n">routes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">iter_routes_time_order</span><span class="p">(</span><span class="n">output_graph</span><span class="p">,</span> <span class="n">max_routes</span><span class="o">=</span><span class="mi">10</span><span class="p">))</span>
 
 <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">route</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">routes</span><span class="p">):</span>
@@ -2022,7 +2069,7 @@ search_algorithm = AndOr_BreadthFirstSearch(
 )
 from syntheseus.search.graph.and_or import AndNode
 
-# Extract the routes simply in the order they were found.
+# Extract the routes in the order they were found.
 routes = list(iter_routes_time_order(output_graph, max_routes=10))
 
 for idx, route in enumerate(routes):
@@ -2040,7 +2087,7 @@ for idx, route in enumerate(routes):
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>Route 1 consists of 2 reactions
-Route 2 consists of 3 reactions
+Route 2 consists of 2 reactions
 </pre>
 </div>
 </div>
@@ -2103,8 +2150,8 @@ for idx, route in enumerate(routes):
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <p>The contents of the files <code>route_{1, 2}.pdf</code> should look roughly like the below.</p>
-<img align="top" alt="No description has been provided for this image" src="https://github.com/microsoft/syntheseus/assets/61470923/f3d93324-9920-43b1-9d61-a4386e20a654" width="320px"/>
-<img align="top" alt="No description has been provided for this image" src="https://github.com/microsoft/syntheseus/assets/61470923/e12489b4-e129-4d7e-822f-75da5aaf7af5" width="320px"/>
+<img align="top" alt="No description has been provided for this image" src="../../images/route_1.png" width="320px"/>
+<img align="top" alt="No description has been provided for this image" src="../../images/route_2.png" width="320px"/>
 </div>
 </div>
 </div>
