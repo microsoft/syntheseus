@@ -153,12 +153,14 @@ class ReactionModel(
         self,
         *,
         remove_duplicates: bool = True,
+        remove_product_in_reactants: bool = False,
         default_num_results: int = DEFAULT_NUM_RESULTS,
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
         self.default_num_results = default_num_results
         self._remove_duplicates = remove_duplicates
+        self._remove_product_in_reactants = remove_product_in_reactants
 
     def __call__(
         self, inputs: list[InputType], num_results: Optional[int] = None
@@ -203,13 +205,16 @@ class ReactionModel(
 
     def filter_reactions(self, reaction_list: Sequence[ReactionType]) -> Sequence[ReactionType]:
         """
-        Filters a list of reactions. In the base version this just removes duplicates,
-        but subclasses could add additional behaviour or override this.
+        Filters a list of reactions. In the base version this just removes (i) duplicates,
+        and (ii) reactions where the product is also in the reactants (if the corresponding
+        flags are set), but subclasses could add additional behaviour or override this.
         """
+        output: Sequence[ReactionType] = list(reaction_list)
+        if self._remove_product_in_reactants:
+            output = [rxn for rxn in output if rxn.unique_products.isdisjoint(rxn.unique_reactants)]
         if self._remove_duplicates:
-            return deduplicate_keeping_order(reaction_list)
-        else:
-            return list(reaction_list)
+            output = deduplicate_keeping_order(output)
+        return output
 
     def get_model_info(self) -> dict[str, Any]:
         return {}
