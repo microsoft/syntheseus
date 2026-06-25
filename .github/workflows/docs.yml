@@ -8,7 +8,10 @@ on:
       versions:
         required: true
         type: string
-  workflow_dispatch:
+      deploy:
+        required: false
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -34,4 +37,7 @@ jobs:
           restore-keys: |
             mkdocs-material-
       - run: pip install mkdocs-material mkdocs-jupyter mike
-      - run: mike deploy --push --update-aliases ${{ inputs.versions != '' && inputs.versions || 'dev' }}
+      - if: ${{ github.event_name == 'push' || inputs.deploy }}
+        run: mike deploy --push --update-aliases ${{ inputs.versions != '' && inputs.versions || 'dev' }}
+      - if: ${{ github.event_name != 'push' && !inputs.deploy }}
+        run: mkdocs build --strict
