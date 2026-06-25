@@ -6,7 +6,7 @@ Each of the model types can be loaded from a *single directory*, possibly contai
 Example invocation:
     python ./cli/eval_single_step.py \
         data_dir=[DATA_DIR] \
-        model_class=RetroKNN \
+        model_class=RetroChimera \
         model_dir=[MODEL_DIR]
 """
 

@@ -7,7 +7,7 @@ Example invocation:
     python ./syntheseus/cli/search.py \
         inventory_smiles_file=[INVENTORY_SMILES_FILE_PATH] \
         search_target="NC1=Nc2ccc(F)cc2C2CCCC12" \
-        model_class=LocalRetro \
+        model_class=RetroChimera \
         model_dir=[MODEL_DIR] \
         time_limit_s=60
 """

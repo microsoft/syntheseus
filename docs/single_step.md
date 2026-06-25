@@ -1,9 +1,19 @@
-Syntheseus currently supports 8 established single-step models.
+Syntheseus currently supports 11 single-step models: RetroChimera (which we recommend as default), its two submodels, and 8 additional external models.
 
-For convenience, for each model we include a default checkpoint trained on USPTO-50K.
+For convenience, for each model we include a default checkpoint (trained on Pistachio in the case of RetroChimera, and on USPTO-50K otherwise).
 If no checkpoint directory is provided during model loading, `syntheseus` will automatically download a default checkpoint and cache it on disk for future use.
 The default path for the cache is `$HOME/.cache/torch/syntheseus`, but it can be overriden by setting the `SYNTHESEUS_CACHE_DIR` environment variable.
-See table below for the links to the default checkpoints.
+See tables below for the links to the default checkpoints.
+
+#### Recommended models (trained on Pistachio)
+
+| Model checkpoint link                                          | Source |
+|----------------------------------------------------------------|--------|
+| [RetroChimera](https://figshare.com/ndownloader/files/59468882) | trained by us |
+| [RetroChimeraEdit](https://figshare.com/ndownloader/files/61362964) | trained by us |
+| [RetroChimeraDeNovo](https://figshare.com/ndownloader/files/61360657) | trained by us |
+
+#### Other models (trained on USPTO-50K)
 
 | Model checkpoint link                                          | Source |
 |----------------------------------------------------------------|--------|
@@ -16,9 +26,9 @@ See table below for the links to the default checkpoints.
 | [RetroKNN](https://figshare.com/ndownloader/files/45662430)    | trained by us |
 | [RootAligned](https://figshare.com/ndownloader/files/42012792) | released by authors |
 
-??? note "More advanced datasets"
+??? note "Choice of dataset"
 
-    The USPTO-50K dataset is well-established but relatively small. Advanced users may prefer to retrain their models of interest on a larger dataset, such as USPTO-FULL or Pistachio. To do that, please follow the instructions in the original model repositories.
+    The USPTO-50K dataset is well-established but relatively small. Advanced users may prefer to either use our Pistachio-trained models, or retrain any model class of interest on their own data. To do that, please follow the instructions in the original model repositories.
 
 In `reaction_prediction/cli/eval.py` a forward model can be used for computing back-translation (round-trip) accuracy.
 See [here](https://figshare.com/ndownloader/files/42012708) for a Chemformer checkpoint finetuned for forward prediction on USPTO-50K. As for the backward direction, pretrained weights released by original authors were used as a starting point.
