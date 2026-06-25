@@ -9,11 +9,11 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Add option to filter out reactions where the product is also one of the reactants ([#148](https://github.com/microsoft/syntheseus/pull/148)) ([@jla-gardner])
 - Integrate the RetroChimera model ([#156](https://github.com/microsoft/syntheseus/pull/156)) ([@kmaziarz])
 - Implement resumability for single-step evaluations ([#149](https://github.com/microsoft/syntheseus/pull/149), [#155](https://github.com/microsoft/syntheseus/pull/155)) ([@jla-gardner], [@kmaziarz])
 - Add abstractions for filtering backward model proposals ([#151](https://github.com/microsoft/syntheseus/pull/151)) ([@kmaziarz])
 - Pass molecule creation options through `molecule_bag_to_smiles` ([#152](https://github.com/microsoft/syntheseus/pull/152)) ([@kmaziarz])
+- Add option to filter out reactions where the product is also one of the reactants ([#148](https://github.com/microsoft/syntheseus/pull/148)) ([@jla-gardner])
 
 ## [0.7.2] - 2026-01-30
 
