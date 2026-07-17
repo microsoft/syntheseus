@@ -7,11 +7,11 @@ import tempfile
 import urllib
 import zipfile
 from pathlib import Path
-from typing import Dict, Generator, List
+from typing import Dict, Generator, List, Optional
 
 import pytest
 
-from syntheseus.reaction_prediction.inference.config import BackwardModelClass
+from syntheseus.reaction_prediction.inference.config import BackwardModelClass, ForwardModelClass
 from syntheseus.reaction_prediction.utils.downloading import get_figshare_download_link
 from syntheseus.reaction_prediction.utils.testing import are_single_step_models_installed
 
@@ -143,22 +143,39 @@ def test_cli_eval_single_step(
     assert 0.2 <= top_1_accuracy <= 0.8
 
 
-# Cycle through search algorithms across models instead of testing the full cross-product.
-_SEARCH_ALGORITHMS = ["retro_star", "mcts", "pdvn"]
-_SEARCH_TEST_CASES = [
-    (model_class, _SEARCH_ALGORITHMS[i % len(_SEARCH_ALGORITHMS)])
-    for i, model_class in enumerate(MODEL_CLASSES_TO_TEST)
+# Prepare backward-forward model combinations. To keep the number of tests manageable, we first test
+# each backward model without forward, and then RetroChimera with each forward model as filter.
+_SEARCH_MODEL_COMBINATIONS = [
+    (model_class, None) for model_class in MODEL_CLASSES_TO_TEST
+] + [
+    (BackwardModelClass.RetroChimera, model_class) for model_class in ForwardModelClass
 ]
 
 
-@pytest.mark.parametrize("model_class,search_algorithm", _SEARCH_TEST_CASES)
+# Cycle through search algorithms across models instead of testing the full cross-product.
+_SEARCH_ALGORITHMS = ["retro_star", "mcts", "pdvn"]
+_SEARCH_TEST_CASES = [
+    (*model_combination, _SEARCH_ALGORITHMS[i % len(_SEARCH_ALGORITHMS)])
+    for i, model_combination in enumerate(_SEARCH_MODEL_COMBINATIONS)
+]
+
+
+@pytest.mark.parametrize(
+    "model_class,forward_model_class,search_algorithm", _SEARCH_TEST_CASES
+)
 def test_cli_search(
     model_class: BackwardModelClass,
+    forward_model_class: Optional[ForwardModelClass],
     search_algorithm: str,
     data_dir: Path,
     tmpdir: Path,
     search_cli_argv: List[str],
 ) -> None:
+    forward_filter_args = (
+        [f"forward_filter.model_class={forward_model_class}", "forward_filter.top_k=10"]
+        if forward_model_class is not None
+        else []
+    )
     run_cli_with_argv(
         search_cli_argv
         + [
@@ -170,6 +187,7 @@ def test_cli_search(
             "limit_iterations=3",
             "num_top_results=10",
         ]
+        + forward_filter_args
         + EXTRA_CLI_ARGS.get(model_class, [])
     )
 
@@ -182,3 +200,12 @@ def test_cli_search(
     # Assert that a solution was found.
     assert results["soln_time_rxn_model_calls"] < math.inf
     assert len(glob.glob(f"{results_dir}/route_*.pdf")) >= 1
+
+    if forward_model_class is not None:
+        assert 0.1 <= results["filter_acceptance_rate"] <= 0.9
+        assert results["filter_acceptance_rate_per_filter"] == {
+            "forward": results["filter_acceptance_rate"]
+        }
+    else:
+        assert "filter_acceptance_rate" not in results
+        assert "filter_acceptance_rate_per_filter" not in results
