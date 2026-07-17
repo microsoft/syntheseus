@@ -638,7 +638,7 @@ def run_from_config(
             print(f"Evaluation already complete (results at {output_dir}), skipping")
             return
 
-    get_model_fn = partial(get_model, batch_size=config.batch_size, num_gpus=config.num_gpus)
+    get_model_fn = partial(get_model, num_gpus=config.num_gpus)
     model = get_model_fn(config, remove_duplicates=config.skip_repeats)
 
     if OmegaConf.is_missing(config.back_translation_config, "model_class"):
