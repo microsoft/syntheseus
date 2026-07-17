@@ -7,6 +7,10 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+env:
+  # Temporarily disable sharded repodata until fixed upstream.
+  MAMBA_USE_SHARDED_REPODATA: "false"
+
 jobs:
   test-core:
     runs-on: ubuntu-latest
