@@ -144,9 +144,10 @@ def test_cli_eval_single_step(
 
 
 # Prepare backward-forward model combinations. To keep the number of tests manageable, we first test
-# each backward model without forward, and then RetroChimera with each forward model as filter.
+# each backward model without forward, and then Graph2Edits with each forward model as filter. We
+# use Graph2Edits because it is both fast to load and not 100% feasible.
 _SEARCH_MODEL_COMBINATIONS = [(model_class, None) for model_class in MODEL_CLASSES_TO_TEST] + [
-    (BackwardModelClass.RetroChimera, model_class) for model_class in ForwardModelClass
+    (BackwardModelClass.Graph2Edits, model_class) for model_class in ForwardModelClass
 ]
 
 
