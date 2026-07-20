@@ -145,9 +145,7 @@ def test_cli_eval_single_step(
 
 # Prepare backward-forward model combinations. To keep the number of tests manageable, we first test
 # each backward model without forward, and then RetroChimera with each forward model as filter.
-_SEARCH_MODEL_COMBINATIONS = [
-    (model_class, None) for model_class in MODEL_CLASSES_TO_TEST
-] + [
+_SEARCH_MODEL_COMBINATIONS = [(model_class, None) for model_class in MODEL_CLASSES_TO_TEST] + [
     (BackwardModelClass.RetroChimera, model_class) for model_class in ForwardModelClass
 ]
 
@@ -160,9 +158,7 @@ _SEARCH_TEST_CASES = [
 ]
 
 
-@pytest.mark.parametrize(
-    "model_class,forward_model_class,search_algorithm", _SEARCH_TEST_CASES
-)
+@pytest.mark.parametrize("model_class,forward_model_class,search_algorithm", _SEARCH_TEST_CASES)
 def test_cli_search(
     model_class: BackwardModelClass,
     forward_model_class: Optional[ForwardModelClass],
