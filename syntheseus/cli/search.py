@@ -31,7 +31,7 @@ import yaml
 from omegaconf import MISSING, DictConfig, OmegaConf
 from tqdm import tqdm
 
-from syntheseus import Molecule
+from syntheseus import BackwardReactionModel, ForwardReactionModel, Molecule
 from syntheseus.reaction_prediction.filters.forward import ForwardReactionFilterModel
 from syntheseus.reaction_prediction.filters.wrapper import FilteredBackwardReactionModel
 from syntheseus.reaction_prediction.inference.config import BackwardModelConfig, ForwardModelConfig
@@ -269,14 +269,15 @@ def run_from_config(config: SearchConfig) -> Path:
     )
 
     # Load the single-step model
-    search_rxn_model = get_model_fn(  # type: ignore
-        config, default_num_results=config.num_top_results
+    search_rxn_model = cast(
+        BackwardReactionModel,
+        get_model_fn(config, default_num_results=config.num_top_results),
     )
 
     # Optionally wrap the backward model with one or more filter models.
     filtering_enabled = not OmegaConf.is_missing(config.forward_filter, "model_class")
     if filtering_enabled:
-        forward_model = get_model_fn(config.forward_filter)
+        forward_model = cast(ForwardReactionModel, get_model_fn(config.forward_filter))
 
         forward_filter = ForwardReactionFilterModel(
             forward_model=forward_model,
