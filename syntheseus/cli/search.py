@@ -32,6 +32,7 @@ from omegaconf import MISSING, DictConfig, OmegaConf
 from tqdm import tqdm
 
 from syntheseus import BackwardReactionModel, ForwardReactionModel, Molecule
+from syntheseus.reaction_prediction.chem.utils import remove_stereo_information
 from syntheseus.reaction_prediction.filters.forward import ForwardReactionFilterModel
 from syntheseus.reaction_prediction.filters.wrapper import FilteredBackwardReactionModel
 from syntheseus.reaction_prediction.inference.config import BackwardModelConfig, ForwardModelConfig
@@ -208,6 +209,7 @@ class BaseSearchConfig(SearchAlgorithmConfig):
 
     use_gpu: bool = True  # Whether to use a GPU
     canonicalize_inventory: bool = False  # Whether to canonicalize the inventory SMILES
+    remove_stereo_from_targets: bool = False  # Whether to remove stereochemistry from targets
 
     # Fields configuring the reaction model (on top of the arguments from `BackwardModelConfig`)
     num_top_results: int = 50  # Number of results to request
@@ -256,6 +258,9 @@ def run_from_config(config: SearchConfig) -> Path:
     else:
         with open(config.search_targets_file, "rt") as f_targets:
             search_targets = [line.strip() for line in f_targets]
+
+    if config.remove_stereo_from_targets:
+        search_targets = [remove_stereo_information(Molecule(smi)).smiles for smi in search_targets]
 
     if not config.save_graph and config.num_routes_to_plot == 0:
         logger.warning(

@@ -14,6 +14,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 - Add support for filtering backward model proposals ([#151](https://github.com/microsoft/syntheseus/pull/151), [#159](https://github.com/microsoft/syntheseus/pull/159)) ([@kmaziarz])
 - Pass molecule creation options through `molecule_bag_to_smiles` ([#152](https://github.com/microsoft/syntheseus/pull/152)) ([@kmaziarz])
 - Add option to filter out reactions where the product is also one of the reactants ([#148](https://github.com/microsoft/syntheseus/pull/148)) ([@jla-gardner])
+- Add flag to remove stereo information during search ([#161](https://github.com/microsoft/syntheseus/pull/161)) ([@kmaziarz])
 
 ## [0.7.2] - 2026-01-30
 
