@@ -37,6 +37,8 @@ jobs:
 
   docs-build:
     needs: push-tag
+    permissions:
+      contents: write
     uses: ./.github/workflows/docs.yml
     with:
       versions: ${{ inputs.version }} stable
@@ -90,6 +92,8 @@ jobs:
 
   docs-deploy:
     needs: publish
+    permissions:
+      contents: write
     uses: ./.github/workflows/docs.yml
     with:
       versions: ${{ inputs.version }} stable
