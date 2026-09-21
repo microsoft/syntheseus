@@ -7,6 +7,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+
+- Update `retrochimera@1.3.0` ([#167](https://github.com/microsoft/syntheseus/pull/167)) ([@lgeiger])
+
 ## [0.8.0] - 2026-07-31
 
 ### Added
@@ -179,3 +183,4 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 [@jagarridotorres]: https://github.com/jagarridotorres
 [@fiberleif]: https://github.com/fiberleif
 [@jla-gardner]: https://github.com/jla-gardner
+[@lgeiger]: https://github.com/lgeiger
