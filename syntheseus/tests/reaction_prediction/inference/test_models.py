@@ -2,7 +2,7 @@ import pytest
 
 from syntheseus.interface.bag import Bag
 from syntheseus.interface.molecule import Molecule
-from syntheseus.reaction_prediction.inference.config import BackwardModelClass
+from syntheseus.reaction_prediction.inference.config import BackwardModelClass, ForwardModelClass
 from syntheseus.reaction_prediction.inference_base import ExternalBackwardReactionModel
 from syntheseus.reaction_prediction.utils.testing import are_single_step_models_installed
 
@@ -13,12 +13,16 @@ pytestmark = pytest.mark.skipif(
 
 
 MODEL_CLASSES_TO_TEST = [m for m in BackwardModelClass if m is not BackwardModelClass.GLN]
+FORWARD_MODEL_CLASSES_TO_TEST = list(ForwardModelClass)
 
 # Use a single rule application process for template-based models to reduce memory usage.
 RULE_SERVER_KWARGS = {"num_processes": 1}
 EXTRA_MODEL_KWARGS = {
     BackwardModelClass.RetroChimeraEdit: RULE_SERVER_KWARGS,
     BackwardModelClass.RetroChimera: {"template_localization": RULE_SERVER_KWARGS},
+}
+EXTRA_FORWARD_MODEL_KWARGS = {
+    ForwardModelClass.Chemformer: {"is_forward": True},
 }
 
 
@@ -53,3 +57,16 @@ def test_call(model: ExternalBackwardReactionModel) -> None:
 
     for p in model.get_parameters():
         assert isinstance(p, torch.Tensor)
+
+
+@pytest.mark.parametrize("model_class", FORWARD_MODEL_CLASSES_TO_TEST)
+@pytest.mark.forked
+def test_forward_call(model_class: ForwardModelClass) -> None:
+    forward_model = model_class.value(**EXTRA_FORWARD_MODEL_KWARGS.get(model_class, {}))
+    reactants = Bag([Molecule("Cc1ccc(Br)cc1"), Molecule("Cc1ccc(B(O)O)cc1")])
+    [result] = forward_model([reactants], num_results=10)
+
+    assert result
+    assert all(prediction.reactants == reactants for prediction in result)
+    assert forward_model.is_forward()
+    assert not forward_model.is_backward()

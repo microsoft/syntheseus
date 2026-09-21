@@ -6,6 +6,7 @@ from omegaconf import MISSING
 
 from syntheseus.reaction_prediction.inference import (
     ChemformerModel,
+    ForwardChimeraDeNovoModel,
     GLNModel,
     Graph2EditsModel,
     LocalRetroModel,
@@ -21,6 +22,7 @@ from syntheseus.reaction_prediction.inference import (
 
 class ForwardModelClass(Enum):
     Chemformer = ChemformerModel
+    ForwardChimeraDeNovo = ForwardChimeraDeNovoModel
 
 
 class BackwardModelClass(Enum):

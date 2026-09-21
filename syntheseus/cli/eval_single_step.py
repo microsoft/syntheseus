@@ -92,9 +92,7 @@ class BaseEvalConfig:
     resumable: bool = False  # Write predictions incrementally to allow resuming after interruption
 
     # Fields relevant to back translation
-    back_translation_config: ForwardModelConfig = field(
-        default_factory=lambda: ForwardModelConfig(model_kwargs={"is_forward": True})
-    )
+    back_translation_config: ForwardModelConfig = field(default_factory=ForwardModelConfig)
     back_translation_num_results: int = 1
 
 

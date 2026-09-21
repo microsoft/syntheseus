@@ -188,7 +188,7 @@ def search_algorithm_config_to_kwargs(config: SearchAlgorithmConfig) -> Dict[str
 class ForwardFilterConfig(ForwardModelConfig):
     """Config for filtering backward model proposals via a forward reaction model."""
 
-    model_kwargs: Dict[str, Any] = field(default_factory=lambda: {"is_forward": True})
+    model_kwargs: Dict[str, Any] = field(default_factory=dict)
 
     # Number of top forward predictions to check the proposed product against.
     top_k: int = 5
