@@ -7,6 +7,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Integrate `ForwardChimeraDeNovo` model ([#168](https://github.com/microsoft/syntheseus/pull/168)) ([@lgeiger])
+
 ### Changed
 
 - Update `retrochimera@1.3.0` ([#167](https://github.com/microsoft/syntheseus/pull/167)) ([@lgeiger])
