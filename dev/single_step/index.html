@@ -481,6 +481,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#forward-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Forward models
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -797,6 +808,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#forward-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Forward models
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -894,8 +916,26 @@ See tables below for the links to the default checkpoints.</p>
 <summary>Choice of dataset</summary>
 <p>The USPTO-50K dataset is well-established but relatively small. Advanced users may prefer to either use our Pistachio-trained models, or retrain any model class of interest on their own data. To do that, please follow the instructions in the original model repositories.</p>
 </details>
-<p>In <code>reaction_prediction/cli/eval.py</code> a forward model can be used for computing back-translation (round-trip) accuracy.
-See <a href="https://figshare.com/ndownloader/files/42012708">here</a> for a Chemformer checkpoint finetuned for forward prediction on USPTO-50K. As for the backward direction, pretrained weights released by original authors were used as a starting point.</p>
+<h4 id="forward-models">Forward models</h4>
+<p>In <code>syntheseus/cli/eval_single_step.py</code>, a forward model can be used for computing back-translation (round-trip) accuracy.</p>
+<table>
+<thead>
+<tr>
+<th>Model checkpoint link</th>
+<th>Training data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://figshare.com/ndownloader/files/66654872">ForwardChimeraDeNovo</a></td>
+<td>Pistachio</td>
+</tr>
+<tr>
+<td><a href="https://figshare.com/ndownloader/files/42012708">Chemformer</a></td>
+<td>USPTO-50K</td>
+</tr>
+</tbody>
+</table>
 <details class="info">
 <summary>Licenses</summary>
 <p>All checkpoints were produced in a way that involved external model repositories, hence may be affected by the exact license each model was released with.
