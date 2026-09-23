@@ -30,8 +30,14 @@ See tables below for the links to the default checkpoints.
 
     The USPTO-50K dataset is well-established but relatively small. Advanced users may prefer to either use our Pistachio-trained models, or retrain any model class of interest on their own data. To do that, please follow the instructions in the original model repositories.
 
-In `reaction_prediction/cli/eval.py` a forward model can be used for computing back-translation (round-trip) accuracy.
-See [here](https://figshare.com/ndownloader/files/42012708) for a Chemformer checkpoint finetuned for forward prediction on USPTO-50K. As for the backward direction, pretrained weights released by original authors were used as a starting point.
+#### Forward models
+
+In `syntheseus/cli/eval_single_step.py`, a forward model can be used for computing back-translation (round-trip) accuracy.
+
+| Model checkpoint link                                                   | Training data |
+|-------------------------------------------------------------------------|---------------|
+| [ForwardChimeraDeNovo](https://figshare.com/ndownloader/files/66654872) | Pistachio     |
+| [Chemformer](https://figshare.com/ndownloader/files/42012708)           | USPTO-50K     |
 
 ??? info "Licenses"
     All checkpoints were produced in a way that involved external model repositories, hence may be affected by the exact license each model was released with.

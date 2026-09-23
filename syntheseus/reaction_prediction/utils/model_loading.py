@@ -3,7 +3,11 @@ from typing import Union
 from omegaconf import OmegaConf
 
 from syntheseus.interface.models import ReactionModel
-from syntheseus.reaction_prediction.inference.config import BackwardModelConfig, ForwardModelConfig
+from syntheseus.reaction_prediction.inference.config import (
+    BackwardModelConfig,
+    ForwardModelClass,
+    ForwardModelConfig,
+)
 
 
 def get_model(
@@ -14,11 +18,16 @@ def get_model(
     if overlapping_kwargs:
         raise ValueError(f"Model kwargs overlap: {overlapping_kwargs}")
 
+    config_model_kwargs = config.model_kwargs
+    # Chemformer uses one class for both directions
+    if config.model_class is ForwardModelClass.Chemformer:
+        config_model_kwargs = {**config_model_kwargs, "is_forward": True}
+
     def model_fn(device):
         return config.model_class.value(
             model_dir=OmegaConf.select(config, "model_dir"),
             device=device,
-            **config.model_kwargs,
+            **config_model_kwargs,
             **model_kwargs,
         )
 
