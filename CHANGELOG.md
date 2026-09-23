@@ -5,7 +5,7 @@ All notable changes to the project are documented in this file.
 The format follows [Common Changelog](https://common-changelog.org/),
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.9.0] - 2026-09-23
 
 ### Added
 
@@ -169,7 +169,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 :seedling: Initial public release, containing several multi-step search algorithms and a minimal interface for single-step models.
 
-[Unreleased]: https://github.com/microsoft/syntheseus/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/microsoft/syntheseus/compare/v0.9.0...HEAD
 [0.1.0]: https://github.com/microsoft/syntheseus/releases/tag/v0.1.0
 [0.2.0]: https://github.com/microsoft/syntheseus/releases/tag/v0.2.0
 [0.3.0]: https://github.com/microsoft/syntheseus/releases/tag/v0.3.0
@@ -181,6 +181,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 [0.7.1]: https://github.com/microsoft/syntheseus/releases/tag/v0.7.1
 [0.7.2]: https://github.com/microsoft/syntheseus/releases/tag/v0.7.2
 [0.8.0]: https://github.com/microsoft/syntheseus/releases/tag/v0.8.0
+[0.9.0]: https://github.com/microsoft/syntheseus/releases/tag/v0.9.0
 
 [@austint]: https://github.com/AustinT
 [@kmaziarz]: https://github.com/kmaziarz
