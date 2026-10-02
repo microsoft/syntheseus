@@ -271,6 +271,8 @@ def test_failure_cancels_siblings_and_retains_resumable_outputs(
     original = search._run_target
 
     def run_target(index, *args):
+        if index == 1:
+            assert completed.wait(timeout=5)
         stats = original(index, *args)
         if index == 0:
             completed.set()
@@ -279,7 +281,6 @@ def test_failure_cancels_siblings_and_retains_resumable_outputs(
     class FailingModel(RecordingBackwardModel):
         def _get_reactions(self, inputs, num_results):
             if any(input.smiles == "CCC" for input in inputs):
-                assert completed.wait(timeout=5)
                 raise RuntimeError("inference failed")
             return super()._get_reactions(inputs, num_results)
 
