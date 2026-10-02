@@ -86,14 +86,14 @@ class InferenceBroker(Generic[InputType, ReactionType]):
     ) -> None:
         self.close(cancel_pending=exc_type is not None)
 
-    def close(self, cancel_pending: bool = False) -> None:
-        """Reject new work, finish running inference, and resolve all submitted futures."""
+    def close(self, cancel_pending: bool = False, wait: bool = True) -> None:
+        """Reject new work and optionally wait for inference and submitted futures."""
         with self._state_lock:
             if cancel_pending:
                 self._cancel_pending.set()
             self._closing.set()
             thread = self._thread
-        if thread is not None:
+        if wait and thread is not None:
             thread.join()
 
     def submit(

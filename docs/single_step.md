@@ -81,3 +81,7 @@ running inference to finish. Inference failures reach every waiting caller and r
 subsequent submissions. Cancellation is cooperative, not an interruption of a running
 model call. Search algorithms accept a `should_cancel` predicate without changing their
 reaction-model call counts.
+
+When coordinating several brokers, signal each with
+`close(cancel_pending=True, wait=False)` before waiting for any worker. Calling
+`close()` afterwards, or exiting the context, still waits for running inference.

@@ -217,6 +217,34 @@ def test_close_drains_submitted_work_and_cannot_restart() -> None:
             pass
 
 
+def test_close_can_cancel_without_waiting_for_running_inference() -> None:
+    started = threading.Event()
+    release = threading.Event()
+
+    class BlockingModel(RecordingModel):
+        def _get_reactions(self, inputs, num_results):
+            started.set()
+            assert release.wait(timeout=5)
+            return super()._get_reactions(inputs, num_results)
+
+    backend = BlockingModel()
+    with InferenceBroker(backend, 1, 0, 1) as broker:
+        first = broker.submit([Molecule("CC")], 1)[0]
+        assert started.wait(timeout=5)
+        pending = broker.submit([Molecule("CCC")], 1)[0]
+        try:
+            broker.close(cancel_pending=True, wait=False)
+            assert not first.done()
+            with pytest.raises(RuntimeError, match="not running"):
+                broker.submit([Molecule("CCCC")], 1)
+        finally:
+            release.set()
+        for future in [first, pending]:
+            with pytest.raises(CancelledError):
+                future.result(timeout=5)
+    assert len(backend.calls) == 1
+
+
 @pytest.mark.parametrize(
     ("batch_size", "wait_s", "queue_size"),
     [(0, 0, 1), (1, -1, 1), (1, math.inf, 1), (1, math.nan, 1), (1, 0, 0)],
