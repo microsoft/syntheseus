@@ -6,7 +6,7 @@ import random
 import warnings
 from collections.abc import Collection
 from datetime import datetime
-from typing import Generic, Optional, Sequence, TypeVar
+from typing import Callable, Generic, Optional, Sequence, TypeVar
 
 from syntheseus.interface.models import BackwardReactionModel
 from syntheseus.interface.molecule import Molecule
@@ -81,6 +81,7 @@ class SearchAlgorithm(MinimalSearchAlgorithm[GraphType, AlgReturnType]):
         random_state: Optional[random.Random] = None,
         prevent_repeat_mol_in_trees: bool = False,
         stop_on_first_solution: bool = False,
+        should_cancel: Optional[Callable[[], bool]] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -95,6 +96,7 @@ class SearchAlgorithm(MinimalSearchAlgorithm[GraphType, AlgReturnType]):
         self.set_depth = set_depth
         self.set_has_solution = set_has_solution
         self.stop_on_first_solution = stop_on_first_solution
+        self._should_cancel = should_cancel
 
         # Unique nodes
         if self.requires_tree and unique_nodes:
@@ -153,9 +155,10 @@ class SearchAlgorithm(MinimalSearchAlgorithm[GraphType, AlgReturnType]):
 
     def run_from_graph(self, graph: GraphType) -> AlgReturnType:
         self.setup(graph)
-        output = self._run_from_graph_after_setup(graph)
-        self.teardown(graph)
-        return output
+        try:
+            return self._run_from_graph_after_setup(graph)
+        finally:
+            self.teardown(graph)
 
     @abc.abstractmethod
     def _run_from_graph_after_setup(self, graph: GraphType) -> AlgReturnType:
@@ -178,7 +181,8 @@ class SearchAlgorithm(MinimalSearchAlgorithm[GraphType, AlgReturnType]):
             datetime.now() - self._start_time
         ).total_seconds()  # NOTE: `self._start_time` is set in `setup`
         return (
-            (elapsed_time >= self.time_limit_s)
+            (self._should_cancel is not None and self._should_cancel())
+            or (elapsed_time >= self.time_limit_s)
             or (self.reaction_model.num_calls() >= self.limit_reaction_model_calls)
             or (len(graph) >= self.limit_graph_nodes)
             or (self.stop_on_first_solution and graph.root_node.has_solution)

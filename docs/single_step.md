@@ -42,3 +42,42 @@ In `syntheseus/cli/eval_single_step.py`, a forward model can be used for computi
 ??? info "Licenses"
     All checkpoints were produced in a way that involved external model repositories, hence may be affected by the exact license each model was released with.
     For more details about a particular model see the top of the corresponding model wrapper file in `reaction_prediction/inference/`.
+
+## Sharing batched inference
+
+`InferenceBroker` collects compatible requests from independent callers and runs the
+backend on a single worker. Use one `BrokeredBackwardReactionModel` per search to keep
+caches, call counts, and resets independent:
+
+```python
+from concurrent.futures import ThreadPoolExecutor
+
+from syntheseus import Molecule
+from syntheseus.reaction_prediction.inference.toy_models import LinearMoleculesToyModel
+from syntheseus.reaction_prediction.utils.batching import (
+    BrokeredBackwardReactionModel,
+    InferenceBroker,
+)
+
+backend = LinearMoleculesToyModel(use_cache=False)
+with InferenceBroker(backend, batch_size=8, batch_wait_s=0.01, max_queue_size=32) as broker:
+    models = [BrokeredBackwardReactionModel(broker, use_cache=True) for _ in range(2)]
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        futures = [
+            executor.submit(model, [Molecule(smiles)])
+            for model, smiles in zip(models, ["COCS", "CC"])
+        ]
+        predictions = [future.result() for future in futures]
+```
+
+`BrokeredForwardReactionModel` provides the same isolation for forward models. Keep
+filter wrappers per search rather than sharing their mutable acceptance statistics.
+Requests with different result counts or equal inputs are placed in separate batches,
+so model-level deduplication cannot discard caller-specific input metadata.
+
+The backend must have caching disabled; caching belongs to each facade. Exiting normally
+drains submitted requests. Exiting with an exception cancels pending work and waits for
+running inference to finish. Inference failures reach every waiting caller and reject
+subsequent submissions. Cancellation is cooperative, not an interruption of a running
+model call. Search algorithms accept a `should_cancel` predicate without changing their
+reaction-model call counts.
