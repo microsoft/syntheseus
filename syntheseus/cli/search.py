@@ -452,9 +452,9 @@ def _run_concurrent_targets(
             cancel_event.set()
             for future in futures:
                 future.cancel()
-            backward_broker.close(cancel_pending=True)
+            backward_broker.close(cancel_pending=True, wait=False)
             if forward_broker is not None:
-                forward_broker.close(cancel_pending=True)
+                forward_broker.close(cancel_pending=True, wait=False)
             raise
 
         logger.info("Backward inference batch sizes: %s", backward_broker.batch_sizes)

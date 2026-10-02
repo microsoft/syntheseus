@@ -5,7 +5,7 @@ import math
 import pickle
 import threading
 import time
-from concurrent.futures import CancelledError
+from concurrent.futures import CancelledError, ThreadPoolExecutor
 from pathlib import Path
 from typing import Sequence
 
@@ -341,6 +341,84 @@ def test_initial_submission_failure_cancels_started_searches(
         search.run_from_config(config)
     assert cancelled.is_set()
     assert not any(thread.name == "syntheseus-inference" for thread in threading.enumerate())
+
+
+def test_failure_signals_both_brokers_before_waiting_for_inference(tmp_path, monkeypatch) -> None:
+    backward_started = threading.Event()
+    forward_started = threading.Event()
+    forward_queued = threading.Event()
+    forward_cancelled = threading.Event()
+    release_backward = threading.Event()
+    release_forward = threading.Event()
+    pending_futures = []
+
+    class BlockingBackward(RecordingBackwardModel):
+        def _get_reactions(self, inputs, num_results):
+            backward_started.set()
+            assert release_backward.wait(timeout=10)
+            return super()._get_reactions(inputs, num_results)
+
+    class BlockingForward(RecordingForwardModel):
+        def _get_reactions(self, inputs, num_results):
+            forward_started.set()
+            assert release_forward.wait(timeout=10)
+            return super()._get_reactions(inputs, num_results)
+
+    class TrackingBroker(search.InferenceBroker):
+        def close(self, cancel_pending=False, wait=True):
+            super().close(cancel_pending=cancel_pending, wait=wait)
+            if cancel_pending and self.model.is_forward():
+                forward_cancelled.set()
+
+    def run_target(index, smiles, config, algorithm, *args):
+        model = algorithm.reaction_model
+        assert isinstance(model, search.FilteredBackwardReactionModel)
+        if index == 0:
+            assert backward_started.wait(timeout=5)
+            assert forward_queued.wait(timeout=5)
+            raise RuntimeError("target failed")
+        if index == 1:
+            model.backward_model([Molecule(smiles)])
+        else:
+            forward_filter = model.filter_models["forward"]
+            assert isinstance(forward_filter, search.ForwardReactionFilterModel)
+            facade = forward_filter.forward_model
+            assert isinstance(facade, search.BrokeredForwardReactionModel)
+            first = facade._broker.submit([Bag([Molecule("C")])], 1)[0]
+            assert forward_started.wait(timeout=5)
+            pending = facade._broker.submit([Bag([Molecule("CC")])], 1)[0]
+            pending_futures.append(pending)
+            forward_queued.set()
+            first.result(timeout=10)
+        raise AssertionError("Running targets should be cancelled")
+
+    monkeypatch.setattr(search, "InferenceBroker", TrackingBroker)
+    monkeypatch.setattr(search, "_run_target", run_target)
+    targets = ["CC", "CCC", "CCCC"]
+    config = _config(tmp_path, targets, max_active_searches=3, inference_batch_size=1)
+    backward = BlockingBackward(use_cache=False)
+    forward = BlockingForward(use_cache=False)
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        running = executor.submit(
+            search._run_concurrent_targets,
+            config,
+            targets,
+            backward,
+            forward,
+            search.SmilesListInventory(["C"]),
+            tmp_path / "results",
+        )
+        try:
+            assert forward_queued.wait(timeout=5)
+            assert forward_cancelled.wait(timeout=5)
+        finally:
+            release_backward.set()
+            release_forward.set()
+        with pytest.raises(RuntimeError, match="target failed"):
+            running.result(timeout=5)
+    assert len(forward.batches) == 1
+    with pytest.raises(CancelledError):
+        pending_futures[0].result(timeout=5)
 
 
 def test_plotting_is_serialized_and_routes_are_saved(tmp_path, backends, monkeypatch) -> None:
