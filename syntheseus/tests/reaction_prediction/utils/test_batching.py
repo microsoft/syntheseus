@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 import threading
-from concurrent.futures import CancelledError, ThreadPoolExecutor
+from concurrent.futures import CancelledError, Future, ThreadPoolExecutor
 from contextlib import ExitStack
 from typing import Sequence
 
@@ -12,10 +12,14 @@ from syntheseus import BackwardReactionModel, Bag, ForwardReactionModel, Molecul
 from syntheseus.interface.reaction import SingleProductReaction
 from syntheseus.reaction_prediction.filters.forward import ForwardReactionFilterModel
 from syntheseus.reaction_prediction.filters.wrapper import FilteredBackwardReactionModel
+from syntheseus.reaction_prediction.utils import batching
 from syntheseus.reaction_prediction.utils.batching import (
     BrokeredBackwardReactionModel,
     BrokeredForwardReactionModel,
     InferenceBroker,
+    _can_admit,
+    _InferenceTicket,
+    _read_timeout,
 )
 
 
@@ -41,6 +45,186 @@ class RecordingModel(BackwardReactionModel):
             ]
             for input in inputs
         ]
+
+
+def _ticket(smiles: str, num_results: int) -> _InferenceTicket[Molecule, SingleProductReaction]:
+    future: Future[Sequence[SingleProductReaction]] = Future()
+    return _InferenceTicket(Molecule(smiles), num_results, 100.0, future)
+
+
+@pytest.mark.parametrize(
+    ("smiles", "num_results", "expected"),
+    [("CCCC", 1, True), ("CCCC", 2, False), ("CC", 1, False), ("CCC", 1, False)],
+)
+def test_admission_policy_is_pure(smiles, num_results, expected) -> None:
+    batch = [_ticket("CC", 1), _ticket("CCC", 1)]
+    candidate = _ticket(smiles, num_results)
+    assert _can_admit(batch, candidate) == expected
+    assert len(batch) == 2
+    assert all(not ticket.future.running() and not ticket.future.done() for ticket in batch)
+    assert not candidate.future.running() and not candidate.future.done()
+
+
+def test_admission_checks_result_count_before_comparing_inputs() -> None:
+    class FailingEquality(Molecule):
+        def __eq__(self, other):
+            raise AssertionError("Inputs should not be compared")
+
+    ticket = _ticket("CC", 1)
+    ticket.input = FailingEquality("CC")
+    assert not _can_admit([ticket], _ticket("CCC", 2))
+
+
+@pytest.mark.parametrize(
+    ("now", "closing", "expected"),
+    [
+        (99.0, False, 0.05),
+        (99.98, False, 0.02),
+        (100.0, False, 0.0),
+        (101.0, False, 0.0),
+        (99.0, True, 0.0),
+    ],
+)
+def test_timeout_policy_uses_explicit_clock_and_lifecycle_values(now, closing, expected) -> None:
+    timeout = _read_timeout(deadline=100.0, now=now, closing=closing)
+    assert timeout == pytest.approx(expected)
+    assert 0.0 <= timeout <= 0.05
+
+
+@pytest.mark.parametrize(("wait_s", "closing"), [(0.0, False), (30.0, True)])
+def test_polling_admits_already_queued_tickets(monkeypatch, wait_s, closing) -> None:
+    backend = RecordingModel()
+    broker = InferenceBroker(backend, 3, wait_s, 3)
+    release = threading.Event()
+    original_get = broker._queue.get
+    first_read = True
+
+    def get(*args, **kwargs):
+        nonlocal first_read
+        if first_read:
+            first_read = False
+            assert release.wait(timeout=5)
+        return original_get(*args, **kwargs)
+
+    monkeypatch.setattr(broker._queue, "get", get)
+    with broker:
+        try:
+            futures = broker.submit([Molecule("CC"), Molecule("CCC"), Molecule("CCCC")], 1)
+            if closing:
+                broker.close(wait=False)
+        finally:
+            release.set()
+        assert all(future.result(timeout=5) for future in futures)
+    assert broker.batch_sizes == [3]
+    assert len(backend.calls) == 1
+
+
+def test_classification_failure_resolves_unclassified_and_queued_tickets(monkeypatch) -> None:
+    release = threading.Event()
+
+    def fail(batch, candidate):
+        assert release.wait(timeout=5)
+        raise RuntimeError("admission failed")
+
+    monkeypatch.setattr(batching, "_can_admit", fail)
+    backend = RecordingModel()
+    with InferenceBroker(backend, 2, 0.5, 3) as broker:
+        try:
+            futures = broker.submit([Molecule("CC"), Molecule("CCC"), Molecule("CCCC")], 1)
+        finally:
+            release.set()
+        for future in futures:
+            with pytest.raises(RuntimeError, match="admission failed"):
+                future.result(timeout=5)
+        with pytest.raises(RuntimeError, match="admission failed"):
+            broker.submit([Molecule("CCCCC")], 1)
+    assert not backend.calls
+
+
+def test_failure_retains_deferred_ticket_ownership_across_batches(monkeypatch) -> None:
+    release = threading.Event()
+    calls = 0
+
+    def admit(batch, candidate):
+        nonlocal calls
+        calls += 1
+        assert release.wait(timeout=5)
+        if calls == 2:
+            raise RuntimeError("deferred batch failed")
+        return _can_admit(batch, candidate)
+
+    monkeypatch.setattr(batching, "_can_admit", admit)
+    backend = RecordingModel()
+    with InferenceBroker(backend, 3, 0.5, 4) as broker:
+        try:
+            first = broker.submit([Molecule("CC")], 1)[0]
+            remaining = broker.submit([Molecule("CCC"), Molecule("CCCC"), Molecule("CCCCC")], 2)
+        finally:
+            release.set()
+        assert first.result(timeout=5)
+        for future in remaining:
+            with pytest.raises(RuntimeError, match="deferred batch failed"):
+                future.result(timeout=5)
+    assert broker.batch_sizes == [1]
+    assert len(backend.calls) == 1
+
+
+def test_initial_read_failure_resolves_queued_tickets(monkeypatch) -> None:
+    broker = InferenceBroker(RecordingModel(), 3, 0, 3)
+    release = threading.Event()
+    original_get = broker._queue.get
+    first_read = True
+
+    def get(*args, **kwargs):
+        nonlocal first_read
+        if first_read:
+            first_read = False
+            assert release.wait(timeout=5)
+            raise RuntimeError("queue read failed")
+        return original_get(*args, **kwargs)
+
+    monkeypatch.setattr(broker._queue, "get", get)
+    with broker:
+        try:
+            futures = broker.submit([Molecule("CC"), Molecule("CCC"), Molecule("CCCC")], 1)
+        finally:
+            release.set()
+        for future in futures:
+            with pytest.raises(RuntimeError, match="queue read failed"):
+                future.result(timeout=5)
+
+
+@pytest.mark.parametrize("cancel", [True, False])
+def test_publication_accounts_for_every_owned_ticket(cancel) -> None:
+    started = threading.Event()
+    release = threading.Event()
+
+    class BlockingModel(RecordingModel):
+        def _get_reactions(self, inputs, num_results):
+            started.set()
+            assert release.wait(timeout=5)
+            return super()._get_reactions(inputs, num_results)
+
+    backend = BlockingModel()
+    with InferenceBroker(backend, 2, 0.1, 3) as broker:
+
+        def after_first_result(future):
+            if cancel:
+                broker.close(cancel_pending=True, wait=False)
+            else:
+                raise SystemExit("publication failed")
+
+        try:
+            futures = broker.submit([Molecule("CC"), Molecule("CCC"), Molecule("CCCC")], 1)
+            assert started.wait(timeout=5)
+            futures[0].add_done_callback(after_first_result)
+        finally:
+            release.set()
+        assert futures[0].result(timeout=5)
+        for future in futures[1:]:
+            with pytest.raises(CancelledError if cancel else SystemExit):
+                future.result(timeout=5)
+    assert len(backend.calls) == 1
 
 
 def test_batches_requests_and_preserves_order() -> None:

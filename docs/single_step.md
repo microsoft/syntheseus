@@ -74,12 +74,15 @@ with InferenceBroker(backend, batch_size=8, batch_wait_s=0.01, max_queue_size=32
 filter wrappers per search rather than sharing their mutable acceptance statistics.
 Requests with different result counts or equal inputs are placed in separate batches,
 so model-level deduplication cannot discard caller-specific input metadata.
+The wait deadline limits blocking, not admission of already-queued compatible requests:
+an expired wait or normal shutdown still polls the queue to finish the batch.
 
 The backend must have caching disabled; caching belongs to each facade. Exiting normally
 drains submitted requests. Exiting with an exception cancels pending work and waits for
 running inference to finish. Inference failures reach every waiting caller and reject
 subsequent submissions. Cancellation is cooperative, not an interruption of a running
-model call. Search algorithms accept a `should_cancel` predicate without changing their
+model call. Collection and publication failures also fail every owned or queued request.
+Search algorithms accept a `should_cancel` predicate without changing their
 reaction-model call counts.
 
 When coordinating several brokers, signal each with

@@ -11,7 +11,7 @@ import time
 from concurrent.futures import CancelledError, Future
 from dataclasses import dataclass
 from types import TracebackType
-from typing import Any, Generic, Optional, Sequence
+from typing import Any, Generic, Iterable, Optional, Sequence
 
 from syntheseus.interface.bag import Bag
 from syntheseus.interface.models import (
@@ -33,6 +33,19 @@ class _InferenceTicket(Generic[InputType, ReactionType]):
     num_results: int
     queued_at: float
     future: Future[Sequence[ReactionType]]
+
+
+def _can_admit(
+    batch: Sequence[_InferenceTicket[InputType, ReactionType]],
+    candidate: _InferenceTicket[InputType, ReactionType],
+) -> bool:
+    same_result_count = candidate.num_results == batch[0].num_results
+    # Cache keys ignore metadata, so equal inputs must keep separate inference contexts.
+    return same_result_count and not any(ticket.input == candidate.input for ticket in batch)
+
+
+def _read_timeout(deadline: float, now: float, closing: bool) -> float:
+    return 0.0 if closing else min(0.05, max(0.0, deadline - now))
 
 
 class InferenceBroker(Generic[InputType, ReactionType]):
@@ -123,80 +136,97 @@ class InferenceBroker(Generic[InputType, ReactionType]):
         return futures
 
     def _run(self) -> None:
-        pending: Optional[_InferenceTicket[InputType, ReactionType]] = None
-        while pending is not None or not (self._closing.is_set() and self._queue.empty()):
-            if pending is not None:
-                ticket = pending
-                pending = None
-            else:
-                try:
-                    ticket = self._queue.get(timeout=0.05)
-                except queue.Empty:
-                    continue
+        deferred: Optional[_InferenceTicket[InputType, ReactionType]] = None
+        owned: dict[Future[Sequence[ReactionType]], _InferenceTicket[InputType, ReactionType]] = {}
+        try:
+            while deferred is not None or not (self._closing.is_set() and self._queue.empty()):
+                if deferred is not None:
+                    ticket = deferred
+                    deferred = None
+                else:
+                    try:
+                        ticket = self._queue.get(timeout=0.05)
+                    except queue.Empty:
+                        continue
 
-            if not ticket.future.set_running_or_notify_cancel():
-                continue
-            batch = [ticket]
-            try:
+                owned[ticket.future] = ticket
+                if not ticket.future.set_running_or_notify_cancel():
+                    del owned[ticket.future]
+                    continue
+                batch = [ticket]
                 deadline = ticket.queued_at + self._batch_wait_s
                 while len(batch) < self._batch_size and not self._cancel_pending.is_set():
-                    remaining = deadline - time.monotonic()
+                    timeout = _read_timeout(deadline, time.monotonic(), self._closing.is_set())
                     try:
-                        if remaining <= 0 or self._closing.is_set():
-                            next_ticket = self._queue.get_nowait()
-                        else:
-                            next_ticket = self._queue.get(timeout=min(remaining, 0.05))
+                        candidate = self._queue.get(timeout=timeout)
                     except queue.Empty:
-                        if remaining > 0 and not self._closing.is_set():
+                        if timeout > 0 and not self._closing.is_set():
                             continue
                         break
 
-                    # Model cache keys ignore metadata: equal inputs from different callers
-                    # must not be deduplicated together, especially with stochastic models.
-                    if next_ticket.num_results != ticket.num_results or any(
-                        item.input == next_ticket.input for item in batch
-                    ):
-                        pending = next_ticket
+                    owned[candidate.future] = candidate
+                    if not _can_admit(batch, candidate):
+                        deferred = candidate
                         break
-                    if next_ticket.future.set_running_or_notify_cancel():
-                        batch.append(next_ticket)
+                    if candidate.future.set_running_or_notify_cancel():
+                        batch.append(candidate)
+                    else:
+                        del owned[candidate.future]
 
                 if self._cancel_pending.is_set():
                     for item in batch:
                         item.future.set_exception(CancelledError())
-                    continue
-
-                outputs = self.model([item.input for item in batch], num_results=ticket.num_results)
-                if len(outputs) != len(batch):
-                    raise RuntimeError(
-                        f"Model returned {len(outputs)} outputs for {len(batch)} inputs"
-                    )
-                outputs = [copy.deepcopy(output) for output in outputs]
-                self.batch_sizes.append(len(batch))
-                for item, output in zip(batch, outputs):
-                    if self._cancel_pending.is_set():
-                        item.future.set_exception(CancelledError())
-                    else:
-                        item.future.set_result(output)
-            except BaseException as error:
-                logger.exception("Shared reaction inference failed")
-                with self._state_lock:
-                    self._failure = error
-                    self._closing.set()
+                else:
+                    outputs = self._predict_batch(batch)
+                    self._publish_batch(batch, outputs)
                 for item in batch:
-                    if not item.future.done():
-                        item.future.set_exception(error)
-                if pending is not None:
-                    if pending.future.set_running_or_notify_cancel():
-                        pending.future.set_exception(error)
-                    pending = None
-                while True:
-                    try:
-                        queued = self._queue.get_nowait()
-                    except queue.Empty:
-                        return
-                    if queued.future.set_running_or_notify_cancel():
-                        queued.future.set_exception(error)
+                    del owned[item.future]
+        except BaseException as error:
+            self._fail_owned_and_queued(owned.values(), error)
+
+    def _predict_batch(
+        self, batch: Sequence[_InferenceTicket[InputType, ReactionType]]
+    ) -> list[Sequence[ReactionType]]:
+        outputs = self.model([ticket.input for ticket in batch], num_results=batch[0].num_results)
+        if len(outputs) != len(batch):
+            raise RuntimeError(f"Model returned {len(outputs)} outputs for {len(batch)} inputs")
+        outputs = [copy.deepcopy(output) for output in outputs]
+        self.batch_sizes.append(len(batch))
+        return outputs
+
+    def _publish_batch(
+        self,
+        batch: Sequence[_InferenceTicket[InputType, ReactionType]],
+        outputs: Sequence[Sequence[ReactionType]],
+    ) -> None:
+        for ticket, output in zip(batch, outputs):
+            if self._cancel_pending.is_set():
+                ticket.future.set_exception(CancelledError())
+            else:
+                ticket.future.set_result(output)
+
+    def _reject_tickets(
+        self, tickets: Iterable[_InferenceTicket[InputType, ReactionType]], error: BaseException
+    ) -> None:
+        for ticket in tickets:
+            future = ticket.future
+            if not future.done() and (future.running() or future.set_running_or_notify_cancel()):
+                future.set_exception(error)
+
+    def _fail_owned_and_queued(
+        self, owned: Iterable[_InferenceTicket[InputType, ReactionType]], error: BaseException
+    ) -> None:
+        logger.exception("Shared inference worker failed")
+        with self._state_lock:
+            self._failure = error
+            self._closing.set()
+        self._reject_tickets(owned, error)
+        while True:
+            try:
+                queued = self._queue.get_nowait()
+            except queue.Empty:
+                return
+            self._reject_tickets([queued], error)
 
 
 class _BrokeredReactionModel(ReactionModel[InputType, ReactionType]):
