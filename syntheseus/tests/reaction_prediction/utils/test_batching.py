@@ -335,16 +335,37 @@ def test_validates_output_count() -> None:
             future.result(timeout=5)
 
 
-def test_cancelled_ticket_does_not_poison_broker() -> None:
+@pytest.mark.parametrize("cancelled_index", [0, 1])
+def test_cancelled_ticket_does_not_poison_broker(monkeypatch, cancelled_index) -> None:
     backend = RecordingModel()
-    with InferenceBroker(backend, 2, 0.1, 3) as broker:
-        first = broker.submit([Molecule("CC")], 1)[0]
-        cancelled = broker.submit([Molecule("CCC")], 1)[0]
-        cancelled.cancel()
-        last = broker.submit([Molecule("CCCC")], 1)[0]
-        assert first.result(timeout=5)
-        assert last.result(timeout=5)
-    assert not cancelled.running()
+    broker = InferenceBroker(backend, 2, 0, 3)
+    release = threading.Event()
+    original_get = broker._queue.get
+
+    def get(*args, **kwargs):
+        assert release.wait(timeout=5)
+        return original_get(*args, **kwargs)
+
+    monkeypatch.setattr(broker._queue, "get", get)
+    molecules = [Molecule("CC"), Molecule("CCC"), Molecule("CCCC")]
+    with broker:
+        try:
+            futures = broker.submit(molecules, 1)
+            cancelled = futures[cancelled_index]
+            assert cancelled.cancel()
+            assert cancelled.cancelled()
+        finally:
+            release.set()
+        for index, future in enumerate(futures):
+            if index == cancelled_index:
+                with pytest.raises(CancelledError):
+                    future.result(timeout=5)
+            else:
+                assert future.result(timeout=5)[0].product == molecules[index]
+        assert broker.submit([Molecule("CCCCC")], 1)[0].result(timeout=5)
+    inferred = [molecule for inputs, _ in backend.calls for molecule in inputs]
+    assert molecules[cancelled_index] not in inferred
+    assert len(inferred) == 3
 
 
 def test_cancellation_checks_cache_hits_without_faking_counts() -> None:
