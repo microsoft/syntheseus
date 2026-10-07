@@ -61,7 +61,7 @@ jobs:
     name: test-models (${{ matrix.runner == 'ubuntu-latest' && 'CPU' || 'GPU' }})
     steps:
     - name: Free extra disk space
-      uses: jlumbroso/free-disk-space@main
+      uses: jlumbroso/free-disk-space@ceedf095f4ec1a097402bc6bd80831f2e1a6fde6 # v2.0.0
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         fetch-depth: 0  # Fetch full history so setuptools_scm can determine version from tags
