@@ -77,6 +77,31 @@ class BaseAlgorithmTest(abc.ABC):
         solution_time = get_first_solution_time(output_graph)
         assert solution_time == 1
 
+    def test_cooperative_cancellation(self, retrosynthesis_task1: RetrosynthesisTask) -> None:
+        alg = self.setup_algorithm(
+            reaction_model=retrosynthesis_task1.reaction_model,
+            mol_inventory=retrosynthesis_task1.inventory,
+            should_cancel=lambda: True,
+        )
+        graph, _ = alg.run_from_mol(retrosynthesis_task1.target_mol)
+        assert len(graph) == 1
+        assert alg.reaction_model.num_calls() == 0
+        assert not hasattr(alg, "_start_time")
+
+    def test_teardown_after_failure(self, retrosynthesis_task1: RetrosynthesisTask, monkeypatch):
+        alg = self.setup_algorithm(
+            reaction_model=retrosynthesis_task1.reaction_model,
+            mol_inventory=retrosynthesis_task1.inventory,
+        )
+
+        def fail(graph):
+            raise RuntimeError("search failed")
+
+        monkeypatch.setattr(alg, "_run_from_graph_after_setup", fail)
+        with pytest.raises(RuntimeError, match="search failed"):
+            alg.run_from_mol(retrosynthesis_task1.target_mol)
+        assert not hasattr(alg, "_start_time")
+
     def test_smoke2(self, retrosynthesis_task4: RetrosynthesisTask) -> None:
         """
         A second "smoke test": the algorithm should be able to fully expand and solve a small
