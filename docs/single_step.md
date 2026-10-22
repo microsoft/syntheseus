@@ -63,28 +63,22 @@ backend = LinearMoleculesToyModel(use_cache=False)
 with InferenceBroker(backend, batch_size=8, batch_wait_s=0.01, max_queue_size=32) as broker:
     models = [BrokeredBackwardReactionModel(broker, use_cache=True) for _ in range(2)]
     with ThreadPoolExecutor(max_workers=2) as executor:
-        futures = [
-            executor.submit(model, [Molecule(smiles)])
-            for model, smiles in zip(models, ["COCS", "CC"])
-        ]
-        predictions = [future.result() for future in futures]
+        predictions = list(
+            executor.map(lambda model, smiles: model([Molecule(smiles)]), models, ["COCS", "CC"])
+        )
 ```
 
 `BrokeredForwardReactionModel` provides the same isolation for forward models. Keep
-filter wrappers per search rather than sharing their mutable acceptance statistics.
-Requests with different result counts or equal inputs are placed in separate batches,
-so model-level deduplication cannot discard caller-specific input metadata.
-The wait deadline limits blocking, not admission of already-queued compatible requests:
-an expired wait or normal shutdown still polls the queue to finish the batch.
+filter wrappers per search to retain independent acceptance statistics.
 
-The backend must have caching disabled; caching belongs to each facade. Exiting normally
-drains submitted requests. Exiting with an exception cancels pending work and waits for
-running inference to finish. Inference failures reach every waiting caller and reject
-subsequent submissions. Cancellation is cooperative, not an interruption of a running
-model call. Collection and publication failures also fail every owned or queued request.
-Search algorithms accept a `should_cancel` predicate without changing their
-reaction-model call counts.
+Calls block until predictions are ready. `num_results=None` uses the backend's default
+result count. Each caller receives independent prediction objects.
 
-When coordinating several brokers, signal each with
-`close(cancel_pending=True, wait=False)` before waiting for any worker. Calling
-`close()` afterwards, or exiting the context, still waits for running inference.
+If a call fails during admission, its not-yet-running requests are cancelled; running
+inference is left to finish. Normal context exit or `close()` finishes other accepted requests. Exiting the context with an
+exception, or calling `close(cancel_pending=True)`, aborts unfinished requests with
+`CancelledError`. Running inference cannot be interrupted. Inference failures reach
+waiting callers and reject later calls.
+
+When shutting down multiple brokers, call `close(cancel_pending=True, wait=False)` on
+all of them before waiting with `close()`.

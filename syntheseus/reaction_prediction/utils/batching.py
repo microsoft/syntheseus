@@ -11,7 +11,7 @@ import time
 from concurrent.futures import CancelledError, Future
 from dataclasses import dataclass
 from types import TracebackType
-from typing import Any, Generic, Iterable, Optional, Sequence
+from typing import Any, Generic, Optional, Sequence
 
 from syntheseus.interface.bag import Bag
 from syntheseus.interface.models import (
@@ -109,12 +109,15 @@ class InferenceBroker(Generic[InputType, ReactionType]):
         if wait and thread is not None:
             thread.join()
 
-    def submit(
-        self, inputs: list[InputType], num_results: int
-    ) -> list[Future[Sequence[ReactionType]]]:
-        futures: list[Future[Sequence[ReactionType]]] = [Future() for _ in inputs]
+    def __call__(
+        self, inputs: list[InputType], num_results: Optional[int] = None
+    ) -> list[Sequence[ReactionType]]:
+        num_results = self.model.default_num_results if num_results is None else num_results
+        futures: list[Future[Sequence[ReactionType]]] = []
         try:
-            for input, future in zip(inputs, futures):
+            for input in inputs:
+                future: Future[Sequence[ReactionType]] = Future()
+                futures.append(future)
                 ticket = _InferenceTicket(input, num_results, time.monotonic(), future)
                 while True:
                     with self._state_lock:
@@ -133,11 +136,11 @@ class InferenceBroker(Generic[InputType, ReactionType]):
             for future in futures:
                 future.cancel()
             raise
-        return futures
+        return [future.result() for future in futures]
 
     def _run(self) -> None:
         deferred: Optional[_InferenceTicket[InputType, ReactionType]] = None
-        owned: dict[Future[Sequence[ReactionType]], _InferenceTicket[InputType, ReactionType]] = {}
+        owned: list[_InferenceTicket[InputType, ReactionType]] = []
         try:
             while deferred is not None or not (self._closing.is_set() and self._queue.empty()):
                 if deferred is not None:
@@ -148,10 +151,10 @@ class InferenceBroker(Generic[InputType, ReactionType]):
                         ticket = self._queue.get(timeout=0.05)
                     except queue.Empty:
                         continue
+                    owned.append(ticket)
 
-                owned[ticket.future] = ticket
                 if not ticket.future.set_running_or_notify_cancel():
-                    del owned[ticket.future]
+                    owned.clear()
                     continue
                 batch = [ticket]
                 deadline = ticket.queued_at + self._batch_wait_s
@@ -164,25 +167,24 @@ class InferenceBroker(Generic[InputType, ReactionType]):
                             continue
                         break
 
-                    owned[candidate.future] = candidate
+                    owned.append(candidate)
                     if not _can_admit(batch, candidate):
                         deferred = candidate
                         break
                     if candidate.future.set_running_or_notify_cancel():
                         batch.append(candidate)
                     else:
-                        del owned[candidate.future]
+                        owned.pop()
 
-                if self._cancel_pending.is_set():
-                    for item in batch:
+                outputs = None if self._cancel_pending.is_set() else self._predict_batch(batch)
+                for index, item in enumerate(batch):
+                    if outputs is None or self._cancel_pending.is_set():
                         item.future.set_exception(CancelledError())
-                else:
-                    outputs = self._predict_batch(batch)
-                    self._publish_batch(batch, outputs)
-                for item in batch:
-                    del owned[item.future]
+                    else:
+                        item.future.set_result(outputs[index])
+                owned = [] if deferred is None else [deferred]
         except BaseException as error:
-            self._fail_owned_and_queued(owned.values(), error)
+            self._fail_owned_and_queued(owned, error)
 
     def _predict_batch(
         self, batch: Sequence[_InferenceTicket[InputType, ReactionType]]
@@ -194,39 +196,22 @@ class InferenceBroker(Generic[InputType, ReactionType]):
         self.batch_sizes.append(len(batch))
         return outputs
 
-    def _publish_batch(
-        self,
-        batch: Sequence[_InferenceTicket[InputType, ReactionType]],
-        outputs: Sequence[Sequence[ReactionType]],
-    ) -> None:
-        for ticket, output in zip(batch, outputs):
-            if self._cancel_pending.is_set():
-                ticket.future.set_exception(CancelledError())
-            else:
-                ticket.future.set_result(output)
-
-    def _reject_tickets(
-        self, tickets: Iterable[_InferenceTicket[InputType, ReactionType]], error: BaseException
-    ) -> None:
-        for ticket in tickets:
-            future = ticket.future
-            if not future.done() and (future.running() or future.set_running_or_notify_cancel()):
-                future.set_exception(error)
-
     def _fail_owned_and_queued(
-        self, owned: Iterable[_InferenceTicket[InputType, ReactionType]], error: BaseException
+        self, owned: list[_InferenceTicket[InputType, ReactionType]], error: BaseException
     ) -> None:
         logger.exception("Shared inference worker failed")
         with self._state_lock:
             self._failure = error
             self._closing.set()
-        self._reject_tickets(owned, error)
         while True:
             try:
-                queued = self._queue.get_nowait()
+                owned.append(self._queue.get_nowait())
             except queue.Empty:
-                return
-            self._reject_tickets([queued], error)
+                break
+        for ticket in owned:
+            future = ticket.future
+            if not future.done() and (future.running() or future.set_running_or_notify_cancel()):
+                future.set_exception(error)
 
 
 class _BrokeredReactionModel(ReactionModel[InputType, ReactionType]):
@@ -260,7 +245,7 @@ class _BrokeredReactionModel(ReactionModel[InputType, ReactionType]):
     def _get_reactions(
         self, inputs: list[InputType], num_results: int
     ) -> list[Sequence[ReactionType]]:
-        return [future.result() for future in self._broker.submit(inputs, num_results)]
+        return self._broker(inputs, num_results=num_results)
 
     def is_forward(self) -> bool:
         return self._broker.model.is_forward()

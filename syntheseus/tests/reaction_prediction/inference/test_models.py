@@ -72,28 +72,31 @@ def test_brokered_retrochimera_call(monkeypatch) -> None:
         Molecule("Cc1ccc(-c2ccc(C)cc2)cc1"),
         Molecule("COc1ccc(-c2ccc(C)cc2)cc1"),
     ]
-    broker = InferenceBroker(model, batch_size=2, batch_wait_s=0, max_queue_size=2)
-    release = threading.Event()
-    original_get = broker._queue.get
     original_predict = model._get_reactions
     inference_threads: list[int] = []
-
-    def get(*args, **kwargs):
-        assert release.wait(timeout=5)
-        return original_get(*args, **kwargs)
 
     def predict(inputs, num_results):
         inference_threads.append(threading.get_ident())
         return original_predict(inputs, num_results)
 
-    monkeypatch.setattr(broker._queue, "get", get)
+    broker = InferenceBroker(model, batch_size=2, batch_wait_s=0, max_queue_size=2)
+    release = threading.Event()
+    get, put = broker._queue.get, broker._queue.put_nowait
+
+    def get_when_released(*args, **kwargs):
+        assert release.wait(timeout=5)
+        return get(*args, **kwargs)
+
+    def put_and_release(ticket):
+        put(ticket)
+        if broker._queue.qsize() == len(molecules):
+            release.set()
+
+    monkeypatch.setattr(broker._queue, "get", get_when_released)
+    monkeypatch.setattr(broker._queue, "put_nowait", put_and_release)
     monkeypatch.setattr(model, "_get_reactions", predict)
     with broker:
-        try:
-            futures = broker.submit(molecules, num_results=20)
-        finally:
-            release.set()
-        outputs = [future.result(timeout=600) for future in futures]
+        outputs = broker(molecules, num_results=20)
     assert broker.batch_sizes == [2]
     assert len(inference_threads) == 1
     assert inference_threads[0] != threading.get_ident()

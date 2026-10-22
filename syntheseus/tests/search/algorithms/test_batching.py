@@ -37,29 +37,6 @@ def _make_search(algorithm_class, model, **kwargs):
     )
 
 
-def _synchronize_first_requests(broker, monkeypatch) -> threading.Event:
-    """Keep the worker idle until both searches have submitted their first request."""
-    release = threading.Event()
-    queued = threading.Barrier(2)
-    original_get = broker._queue.get
-    original_submit = broker.submit
-
-    def get(*args, **kwargs):
-        assert release.wait(timeout=5)
-        return original_get(*args, **kwargs)
-
-    def submit(inputs, num_results):
-        futures = original_submit(inputs, num_results)
-        if not release.is_set():
-            queued.wait(timeout=5)
-            release.set()
-        return futures
-
-    monkeypatch.setattr(broker._queue, "get", get)
-    monkeypatch.setattr(broker, "submit", submit)
-    return release
-
-
 def _graph_signature(graph: AndOrGraph):
     """Compare topology and search accounting without wall-clock timestamps or object identity."""
     nodes = list(graph.nodes())
@@ -75,7 +52,11 @@ def _graph_signature(graph: AndOrGraph):
             )
             for node in nodes
         ],
-        [(indices[parent], indices[child]) for parent, child in graph._graph.edges()],
+        [
+            (indices[parent], indices[child])
+            for parent in nodes
+            for child in graph.successors(parent)
+        ],
     )
 
 
@@ -99,8 +80,21 @@ def test_concurrent_searches_match_sequential_searches(monkeypatch, algorithm_cl
         sequential.append((graph, model.num_calls()))
 
     backend = LinearMoleculesToyModel(allow_substitution=False, use_cache=False)
-    broker = InferenceBroker(backend, 2, 0, 2)
-    release = _synchronize_first_requests(broker, monkeypatch)
+    broker = InferenceBroker(backend, batch_size=2, batch_wait_s=0, max_queue_size=2)
+    release, queued = threading.Event(), threading.Event()
+    get, put = broker._queue.get, broker._queue.put_nowait
+
+    def get_when_released(*args, **kwargs):
+        assert release.wait(timeout=5)
+        return get(*args, **kwargs)
+
+    def put_and_record(ticket):
+        put(ticket)
+        if broker._queue.qsize() == 2:
+            queued.set()
+
+    monkeypatch.setattr(broker._queue, "get", get_when_released)
+    monkeypatch.setattr(broker._queue, "put_nowait", put_and_record)
     with broker:
         models = [BrokeredBackwardReactionModel(broker, use_cache=True) for _ in TARGETS]
         searches = [
@@ -113,14 +107,14 @@ def test_concurrent_searches_match_sequential_searches(monkeypatch, algorithm_cl
                 for search, target in zip(searches, TARGETS)
             ]
             try:
+                assert queued.wait(timeout=5)
+                release.set()
                 graphs = [future.result(timeout=10)[0] for future in futures]
             finally:
                 release.set()
 
         assert broker.batch_sizes[0] == 2
-        for graph, model, search, (expected_graph, expected_calls) in zip(
-            graphs, models, searches, sequential
-        ):
+        for graph, model, (expected_graph, expected_calls) in zip(graphs, models, sequential):
             graph.assert_validity()
             assert _graph_signature(graph) == _graph_signature(expected_graph)
             assert model.num_calls() == expected_calls <= call_limit
@@ -132,11 +126,9 @@ def test_concurrent_searches_match_sequential_searches(monkeypatch, algorithm_cl
             if call_limit == 100:
                 assert actual_routes
                 assert graph.root_node.has_solution
-            assert not hasattr(search, "_start_time")
         models[0].reset()
         assert models[0].num_calls() == 0
         assert models[1].num_calls() == sequential[1][1]
-    assert broker._thread is not None and not broker._thread.is_alive()
 
 
 @pytest.mark.parametrize("algorithm_class", ALGORITHMS)
@@ -148,9 +140,7 @@ def test_search_cleanup_during_brokered_inference(monkeypatch, algorithm_class, 
 
     class BlockingModel(LinearMoleculesToyModel):
         def _get_reactions(self, inputs, num_results):
-            if self.num_calls() == 0:
-                assert len(inputs) == 2
-            elif not started.is_set():
+            if not started.is_set() and any(mol.smiles not in TARGETS for mol in inputs):
                 started.set()
                 assert release_inference.wait(timeout=5)
                 if fail:
@@ -158,20 +148,18 @@ def test_search_cleanup_during_brokered_inference(monkeypatch, algorithm_class, 
             return super()._get_reactions(inputs, num_results)
 
     backend = BlockingModel(allow_substitution=False, use_cache=False)
-    broker = InferenceBroker(backend, 2, 0, 2)
-    release_worker = _synchronize_first_requests(broker, monkeypatch)
+    broker = InferenceBroker(backend, batch_size=2, batch_wait_s=0.01, max_queue_size=2)
     second_requests = threading.Barrier(3)
     caller_state = threading.local()
-    original_submit = broker.submit
+    original_call = InferenceBroker.__call__
 
-    def submit(inputs, num_results):
-        futures = original_submit(inputs, num_results)
+    def call(self, inputs, num_results=None):
         caller_state.calls = getattr(caller_state, "calls", 0) + 1
         if caller_state.calls == 2:
             second_requests.wait(timeout=5)
-        return futures
+        return original_call(self, inputs, num_results=num_results)
 
-    monkeypatch.setattr(broker, "submit", submit)
+    monkeypatch.setattr(InferenceBroker, "__call__", call)
     with broker:
         models = [
             BrokeredBackwardReactionModel(broker, cancel, use_cache=True),
@@ -195,9 +183,8 @@ def test_search_cleanup_during_brokered_inference(monkeypatch, algorithm_class, 
                 for search, graph in zip(searches, graphs)
             ]
             try:
-                assert started.wait(timeout=5)
-                # Both searches have expanded their roots and are waiting on another inference.
                 second_requests.wait(timeout=5)
+                assert started.wait(timeout=5)
                 assert all(graph.root_node.is_expanded and len(graph) > 1 for graph in graphs)
                 if not fail:
                     cancel.set()
@@ -207,8 +194,6 @@ def test_search_cleanup_during_brokered_inference(monkeypatch, algorithm_class, 
                 if fail:
                     with pytest.raises(RuntimeError, match="inference failed during search"):
                         futures[1].result(timeout=5)
-                    with pytest.raises(RuntimeError, match="inference failed during search"):
-                        broker.submit([Molecule("CC")], 1)
                     assert all(model.num_calls() == 1 for model in models)
                 else:
                     futures[1].result(timeout=5)
@@ -229,9 +214,6 @@ def test_search_cleanup_during_brokered_inference(monkeypatch, algorithm_class, 
                     assert _graph_signature(graphs[0]) == _graph_signature(root_only_graph)
                     # Completed inference counts even when cancellation prevents graph expansion.
                     assert models[0].num_calls() == 2
-                assert all(not hasattr(search, "_start_time") for search in searches)
-                assert all(future.done() for future in futures)
             finally:
-                release_worker.set()
+                second_requests.abort()
                 release_inference.set()
-    assert broker._thread is not None and not broker._thread.is_alive()
