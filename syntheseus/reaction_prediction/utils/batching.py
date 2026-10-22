@@ -1,4 +1,9 @@
-"""Batch inference requests while keeping each caller's model state independent."""
+"""Internal batching support for concurrent search, not a supported public API.
+
+Keep model facades and filter wrappers per search to isolate caches, call counts,
+resets, and filter acceptance statistics. Broker calls block until predictions are
+ready, preserve input order, and return independent prediction objects.
+"""
 
 from __future__ import annotations
 
@@ -49,11 +54,17 @@ def _read_timeout(deadline: float, now: float, closing: bool) -> float:
 
 
 class InferenceBroker(Generic[InputType, ReactionType]):
-    """Own one inference worker and batch requests from independent model facades.
+    """Internal worker that batches requests from independent model facades.
 
     The backend must have caching disabled. Enter the broker before submitting work;
-    exiting drains submitted work, or cancels pending work when the context raises.
-    Running inference is not interruptible.
+    ``num_results=None`` uses the backend's default result count. If admission fails,
+    the call's not-yet-running requests are cancelled. Normal exit drains other
+    accepted work; exceptional exit or ``close(cancel_pending=True)`` aborts unfinished
+    requests with ``CancelledError``. Running inference is not interruptible.
+    Inference failures reach waiting callers and reject later calls.
+
+    To shut down multiple brokers, signal each with
+    ``close(cancel_pending=True, wait=False)`` before waiting with ``close()``.
     """
 
     def __init__(
@@ -260,10 +271,10 @@ class _BrokeredReactionModel(ReactionModel[InputType, ReactionType]):
 class BrokeredBackwardReactionModel(
     _BrokeredReactionModel[Molecule, SingleProductReaction], BackwardReactionModel
 ):
-    """Backward model facade with caller-local cache, counters, and cancellation."""
+    """Internal backward model facade with caller-local cache, counters, and cancellation."""
 
 
 class BrokeredForwardReactionModel(
     _BrokeredReactionModel[Bag[Molecule], Reaction], ForwardReactionModel
 ):
-    """Forward model facade with caller-local cache, counters, and cancellation."""
+    """Internal forward model facade with caller-local cache, counters, and cancellation."""
