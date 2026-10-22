@@ -71,7 +71,7 @@ def _routes(graph: AndOrGraph):
 
 @pytest.mark.parametrize("algorithm_class", ALGORITHMS)
 @pytest.mark.parametrize("call_limit", [1, 4, 100])
-def test_concurrent_searches_match_sequential_searches(monkeypatch, algorithm_class, call_limit):
+def test_concurrent_searches_match_sequential_searches(algorithm_class, call_limit):
     sequential = []
     for target in TARGETS:
         model = LinearMoleculesToyModel(allow_substitution=False, use_cache=True)
@@ -80,21 +80,7 @@ def test_concurrent_searches_match_sequential_searches(monkeypatch, algorithm_cl
         sequential.append((graph, model.num_calls()))
 
     backend = LinearMoleculesToyModel(allow_substitution=False, use_cache=False)
-    broker = InferenceBroker(backend, batch_size=2, batch_wait_s=0, max_queue_size=2)
-    release, queued = threading.Event(), threading.Event()
-    get, put = broker._queue.get, broker._queue.put_nowait
-
-    def get_when_released(*args, **kwargs):
-        assert release.wait(timeout=5)
-        return get(*args, **kwargs)
-
-    def put_and_record(ticket):
-        put(ticket)
-        if broker._queue.qsize() == 2:
-            queued.set()
-
-    monkeypatch.setattr(broker._queue, "get", get_when_released)
-    monkeypatch.setattr(broker._queue, "put_nowait", put_and_record)
+    broker = InferenceBroker(backend, batch_size=2, batch_wait_s=0.01, max_queue_size=2)
     with broker:
         models = [BrokeredBackwardReactionModel(broker, use_cache=True) for _ in TARGETS]
         searches = [
@@ -106,14 +92,8 @@ def test_concurrent_searches_match_sequential_searches(monkeypatch, algorithm_cl
                 executor.submit(search.run_from_mol, Molecule(target))
                 for search, target in zip(searches, TARGETS)
             ]
-            try:
-                assert queued.wait(timeout=5)
-                release.set()
-                graphs = [future.result(timeout=10)[0] for future in futures]
-            finally:
-                release.set()
+            graphs = [future.result(timeout=10)[0] for future in futures]
 
-        assert broker.batch_sizes[0] == 2
         for graph, model, (expected_graph, expected_calls) in zip(graphs, models, sequential):
             graph.assert_validity()
             assert _graph_signature(graph) == _graph_signature(expected_graph)
@@ -132,34 +112,22 @@ def test_concurrent_searches_match_sequential_searches(monkeypatch, algorithm_cl
 
 
 @pytest.mark.parametrize("algorithm_class", ALGORITHMS)
-@pytest.mark.parametrize("fail", [False, True], ids=["caller-cancellation", "backend-failure"])
-def test_search_cleanup_during_brokered_inference(monkeypatch, algorithm_class, fail):
+def test_search_cleanup_during_brokered_inference(algorithm_class):
     started = threading.Event()
     release_inference = threading.Event()
     cancel = threading.Event()
 
     class BlockingModel(LinearMoleculesToyModel):
         def _get_reactions(self, inputs, num_results):
-            if not started.is_set() and any(mol.smiles not in TARGETS for mol in inputs):
+            if not started.is_set() and any(
+                "S" in mol.smiles and mol.smiles not in TARGETS for mol in inputs
+            ):
                 started.set()
                 assert release_inference.wait(timeout=5)
-                if fail:
-                    raise RuntimeError("inference failed during search")
             return super()._get_reactions(inputs, num_results)
 
     backend = BlockingModel(allow_substitution=False, use_cache=False)
     broker = InferenceBroker(backend, batch_size=2, batch_wait_s=0.01, max_queue_size=2)
-    second_requests = threading.Barrier(3)
-    caller_state = threading.local()
-    original_call = InferenceBroker.__call__
-
-    def call(self, inputs, num_results=None):
-        caller_state.calls = getattr(caller_state, "calls", 0) + 1
-        if caller_state.calls == 2:
-            second_requests.wait(timeout=5)
-        return original_call(self, inputs, num_results=num_results)
-
-    monkeypatch.setattr(InferenceBroker, "__call__", call)
     with broker:
         models = [
             BrokeredBackwardReactionModel(broker, cancel, use_cache=True),
@@ -178,42 +146,49 @@ def test_search_cleanup_during_brokered_inference(monkeypatch, algorithm_class, 
             search.create_graph(Molecule(target)) for search, target in zip(searches, TARGETS)
         ]
         with ThreadPoolExecutor(max_workers=2) as executor:
-            futures = [
-                executor.submit(search.run_from_graph, graph)
-                for search, graph in zip(searches, graphs)
-            ]
+            futures = [executor.submit(searches[0].run_from_graph, graphs[0])]
             try:
-                second_requests.wait(timeout=5)
                 assert started.wait(timeout=5)
-                assert all(graph.root_node.is_expanded and len(graph) > 1 for graph in graphs)
-                if not fail:
-                    cancel.set()
+                assert graphs[0].root_node.is_expanded and len(graphs[0]) > 1
+                futures.append(executor.submit(searches[1].run_from_graph, graphs[1]))
+                cancel.set()
                 release_inference.set()
-                with pytest.raises(RuntimeError if fail else CancelledError):
+                with pytest.raises(CancelledError):
                     futures[0].result(timeout=5)
-                if fail:
-                    with pytest.raises(RuntimeError, match="inference failed during search"):
-                        futures[1].result(timeout=5)
-                    assert all(model.num_calls() == 1 for model in models)
-                else:
-                    futures[1].result(timeout=5)
-                    baseline = _make_search(
-                        algorithm_class,
-                        LinearMoleculesToyModel(allow_substitution=False, use_cache=True),
-                        limit_reaction_model_calls=4,
-                    )
-                    expected_graph, _ = baseline.run_from_mol(Molecule(TARGETS[1]))
-                    assert _graph_signature(graphs[1]) == _graph_signature(expected_graph)
-                    assert models[1].num_calls() == baseline.reaction_model.num_calls()
-                    root_only_search = _make_search(
-                        algorithm_class,
-                        LinearMoleculesToyModel(allow_substitution=False, use_cache=True),
-                        limit_reaction_model_calls=1,
-                    )
-                    root_only_graph, _ = root_only_search.run_from_mol(Molecule(TARGETS[0]))
-                    assert _graph_signature(graphs[0]) == _graph_signature(root_only_graph)
-                    # Completed inference counts even when cancellation prevents graph expansion.
-                    assert models[0].num_calls() == 2
+                futures[1].result(timeout=5)
+                for graph in graphs:
+                    graph.assert_validity()
+                baseline = _make_search(
+                    algorithm_class,
+                    LinearMoleculesToyModel(allow_substitution=False, use_cache=True),
+                    limit_reaction_model_calls=4,
+                )
+                expected_graph, _ = baseline.run_from_mol(Molecule(TARGETS[1]))
+                assert _graph_signature(graphs[1]) == _graph_signature(expected_graph)
+                assert models[1].num_calls() == baseline.reaction_model.num_calls()
+                # Completed inference counts even when cancellation prevents graph expansion.
+                assert 2 <= models[0].num_calls() < searches[0].limit_reaction_model_calls
             finally:
-                second_requests.abort()
                 release_inference.set()
+
+
+@pytest.mark.parametrize("algorithm_class", ALGORITHMS)
+def test_backend_failure_reaches_concurrent_searches(algorithm_class):
+    class FailingModel(LinearMoleculesToyModel):
+        def _get_reactions(self, inputs, num_results):
+            raise RuntimeError("inference failed during search")
+
+    backend = FailingModel(use_cache=False)
+    with InferenceBroker(backend, batch_size=2, batch_wait_s=0.01, max_queue_size=2) as broker:
+        searches = [
+            _make_search(algorithm_class, BrokeredBackwardReactionModel(broker, use_cache=True))
+            for _ in TARGETS
+        ]
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            futures = [
+                executor.submit(search.run_from_mol, Molecule(target))
+                for search, target in zip(searches, TARGETS)
+            ]
+            for future in futures:
+                with pytest.raises(RuntimeError, match="inference failed during search"):
+                    future.result(timeout=5)

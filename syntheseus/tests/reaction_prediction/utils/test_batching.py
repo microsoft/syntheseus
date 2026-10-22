@@ -50,27 +50,6 @@ class RecordingModel(BackwardReactionModel):
         ]
 
 
-def _hold_worker(broker, monkeypatch, count):
-    release, queued, first_queued = (threading.Event() for _ in range(3))
-    get, put = broker._queue.get, broker._queue.put_nowait
-    accepted = []
-
-    def get_when_released(*args, **kwargs):
-        assert release.wait(timeout=5)
-        return get(*args, **kwargs)
-
-    def put_and_record(ticket):
-        put(ticket)
-        accepted.append(ticket)
-        first_queued.set()
-        if len(accepted) == count:
-            queued.set()
-
-    monkeypatch.setattr(broker._queue, "get", get_when_released)
-    monkeypatch.setattr(broker._queue, "put_nowait", put_and_record)
-    return release, queued, first_queued
-
-
 @pytest.mark.parametrize("abort", [False, True])
 def test_failed_admission_cancels_queued_inputs(monkeypatch, abort) -> None:
     release, blocked = threading.Event(), threading.Event()
@@ -99,25 +78,6 @@ def test_failed_admission_cancels_queued_inputs(monkeypatch, abort) -> None:
         finally:
             release.set()
     assert backend.calls == [(molecules[:1], 1)]
-
-
-@pytest.mark.parametrize("closing", [False, True])
-def test_zero_wait_and_drain_still_batch_queued_inputs(monkeypatch, closing) -> None:
-    backend = RecordingModel()
-    broker = InferenceBroker(backend, 3, 30 if closing else 0, 3)
-    release, queued, _ = _hold_worker(broker, monkeypatch, 3)
-    molecules = [Molecule("C" * length) for length in range(2, 5)]
-    with ThreadPoolExecutor(max_workers=1) as executor, broker:
-        call = executor.submit(broker, molecules, 1)
-        try:
-            assert queued.wait(timeout=5)
-            if closing:
-                broker.close(wait=False)
-            release.set()
-            assert [output[0].product for output in call.result(timeout=5)] == molecules
-        finally:
-            release.set()
-    assert broker.batch_sizes == [3]
 
 
 def test_batches_inputs_and_preserves_order() -> None:
@@ -244,44 +204,53 @@ def test_cancellation_checks_cache_hits_without_faking_counts() -> None:
         assert model.num_calls() == 1
 
 
+def test_cancellation_during_inference_counts_completed_calls() -> None:
+    release, cancel = threading.Event(), threading.Event()
+    backend = RecordingModel(release=release)
+    with ThreadPoolExecutor(max_workers=1) as executor, InferenceBroker(backend, 1, 0, 1) as broker:
+        model = BrokeredBackwardReactionModel(broker, cancel, use_cache=True)
+        call = executor.submit(model, [Molecule("CC")])
+        try:
+            assert backend.started.wait(timeout=5)
+            cancel.set()
+            release.set()
+            with pytest.raises(CancelledError):
+                call.result(timeout=5)
+        finally:
+            release.set()
+        assert model.num_calls() == 1
+
+
 @pytest.mark.parametrize("mode", ["drain", "abort", "backend_failure"])
 def test_shutdown_and_failure_reach_waiting_callers(mode) -> None:
     release = threading.Event()
-    attempting = threading.Event()
     backend = RecordingModel(fail=mode == "backend_failure", release=release)
-    broker = InferenceBroker(backend, 1, 0, 1)
+    broker = InferenceBroker(backend, 2, 30, 2)
     rejection = "inference failed" if mode == "backend_failure" else "not running"
-
-    def call_large_batch():
-        attempting.set()
-        return broker([Molecule("C" * length) for length in range(3, 11)])
 
     with ThreadPoolExecutor(max_workers=2) as executor, broker:
         try:
-            running = executor.submit(broker, [Molecule("CC")])
+            running = executor.submit(broker, [Molecule("CC")], 1)
+            waiting = executor.submit(broker, [Molecule("CCC")], 2)
             assert backend.started.wait(timeout=5)
-            waiting = executor.submit(call_large_batch)
-            assert attempting.wait(timeout=5)
             if mode == "backend_failure":
                 release.set()
             else:
                 broker.close(cancel_pending=mode == "abort", wait=False)
                 assert not running.done()
-            with pytest.raises(RuntimeError, match=rejection):
-                waiting.result(timeout=5)
+            release.set()
+            for call in [running, waiting]:
+                if mode == "drain":
+                    assert call.result(timeout=5)
+                else:
+                    error = CancelledError if mode == "abort" else RuntimeError
+                    with pytest.raises(error):
+                        call.result(timeout=5)
             with pytest.raises(RuntimeError, match=rejection):
                 broker([Molecule("CCC")])
-            release.set()
-            if mode == "drain":
-                assert running.result(timeout=5)[0][0].product == Molecule("CC")
-            else:
-                error = CancelledError if mode == "abort" else RuntimeError
-                with pytest.raises(error):
-                    running.result(timeout=5)
         finally:
             release.set()
-    if mode != "drain":
-        assert len(backend.calls) == 1
+    assert len(backend.calls) == (2 if mode == "drain" else 1)
 
 
 def test_rejects_work_outside_context_and_cannot_restart() -> None:

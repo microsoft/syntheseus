@@ -4,6 +4,7 @@ import abc
 import datetime
 import math
 import warnings
+from unittest.mock import Mock
 
 import pytest
 
@@ -86,7 +87,6 @@ class BaseAlgorithmTest(abc.ABC):
         graph, _ = alg.run_from_mol(retrosynthesis_task1.target_mol)
         assert len(graph) == 1
         assert alg.reaction_model.num_calls() == 0
-        assert not hasattr(alg, "_start_time")
 
     def test_teardown_after_failure(self, retrosynthesis_task1: RetrosynthesisTask, monkeypatch):
         alg = self.setup_algorithm(
@@ -94,13 +94,15 @@ class BaseAlgorithmTest(abc.ABC):
             mol_inventory=retrosynthesis_task1.inventory,
         )
 
-        def fail(graph):
+        def fail(*args, **kwargs):
             raise RuntimeError("search failed")
 
-        monkeypatch.setattr(alg, "_run_from_graph_after_setup", fail)
+        teardown = Mock(wraps=alg.teardown)
+        monkeypatch.setattr(alg, "teardown", teardown)
+        monkeypatch.setattr(alg.reaction_model, "_get_reactions", fail)
         with pytest.raises(RuntimeError, match="search failed"):
             alg.run_from_mol(retrosynthesis_task1.target_mol)
-        assert not hasattr(alg, "_start_time")
+        teardown.assert_called_once()
 
     def test_smoke2(self, retrosynthesis_task4: RetrosynthesisTask) -> None:
         """
