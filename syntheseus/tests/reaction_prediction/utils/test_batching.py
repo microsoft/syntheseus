@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import queue
 import threading
 from concurrent.futures import CancelledError, ThreadPoolExecutor
 from typing import Sequence
@@ -47,6 +48,76 @@ class RecordingModel(BackwardReactionModel):
             ]
             for input in inputs
         ]
+
+
+def _hold_worker(broker, monkeypatch, count):
+    release, queued, first_queued = (threading.Event() for _ in range(3))
+    get, put = broker._queue.get, broker._queue.put_nowait
+    accepted = []
+
+    def get_when_released(*args, **kwargs):
+        assert release.wait(timeout=5)
+        return get(*args, **kwargs)
+
+    def put_and_record(ticket):
+        put(ticket)
+        accepted.append(ticket)
+        first_queued.set()
+        if len(accepted) == count:
+            queued.set()
+
+    monkeypatch.setattr(broker._queue, "get", get_when_released)
+    monkeypatch.setattr(broker._queue, "put_nowait", put_and_record)
+    return release, queued, first_queued
+
+
+@pytest.mark.parametrize("abort", [False, True])
+def test_failed_admission_cancels_queued_inputs(monkeypatch, abort) -> None:
+    release, blocked = threading.Event(), threading.Event()
+    backend = RecordingModel(release=release)
+    broker = InferenceBroker(backend, 1, 0, 1)
+    molecules = [Molecule("C" * length) for length in range(2, 5)]
+    put = broker._queue.put_nowait
+
+    def observe_backpressure(ticket):
+        try:
+            put(ticket)
+        except queue.Full:
+            if ticket.input == molecules[-1]:
+                blocked.set()
+            raise
+
+    monkeypatch.setattr(broker._queue, "put_nowait", observe_backpressure)
+    with ThreadPoolExecutor(max_workers=1) as executor, broker:
+        call = executor.submit(broker, molecules, 1)
+        try:
+            assert backend.started.wait(timeout=5)
+            assert blocked.wait(timeout=5)
+            broker.close(cancel_pending=abort, wait=False)
+            with pytest.raises(RuntimeError, match="not running"):
+                call.result(timeout=5)
+        finally:
+            release.set()
+    assert backend.calls == [(molecules[:1], 1)]
+
+
+@pytest.mark.parametrize("closing", [False, True])
+def test_zero_wait_and_drain_still_batch_queued_inputs(monkeypatch, closing) -> None:
+    backend = RecordingModel()
+    broker = InferenceBroker(backend, 3, 30 if closing else 0, 3)
+    release, queued, _ = _hold_worker(broker, monkeypatch, 3)
+    molecules = [Molecule("C" * length) for length in range(2, 5)]
+    with ThreadPoolExecutor(max_workers=1) as executor, broker:
+        call = executor.submit(broker, molecules, 1)
+        try:
+            assert queued.wait(timeout=5)
+            if closing:
+                broker.close(wait=False)
+            release.set()
+            assert [output[0].product for output in call.result(timeout=5)] == molecules
+        finally:
+            release.set()
+    assert broker.batch_sizes == [3]
 
 
 def test_batches_inputs_and_preserves_order() -> None:

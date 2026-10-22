@@ -71,7 +71,7 @@ def _routes(graph: AndOrGraph):
 
 @pytest.mark.parametrize("algorithm_class", ALGORITHMS)
 @pytest.mark.parametrize("call_limit", [1, 4, 100])
-def test_concurrent_searches_match_sequential_searches(algorithm_class, call_limit):
+def test_concurrent_searches_match_sequential_searches(monkeypatch, algorithm_class, call_limit):
     sequential = []
     for target in TARGETS:
         model = LinearMoleculesToyModel(allow_substitution=False, use_cache=True)
@@ -80,7 +80,21 @@ def test_concurrent_searches_match_sequential_searches(algorithm_class, call_lim
         sequential.append((graph, model.num_calls()))
 
     backend = LinearMoleculesToyModel(allow_substitution=False, use_cache=False)
-    broker = InferenceBroker(backend, batch_size=2, batch_wait_s=0.01, max_queue_size=2)
+    broker = InferenceBroker(backend, batch_size=2, batch_wait_s=0, max_queue_size=2)
+    release, queued = threading.Event(), threading.Event()
+    get, put = broker._queue.get, broker._queue.put_nowait
+
+    def get_when_released(*args, **kwargs):
+        assert release.wait(timeout=5)
+        return get(*args, **kwargs)
+
+    def put_and_record(ticket):
+        put(ticket)
+        if broker._queue.qsize() == 2:
+            queued.set()
+
+    monkeypatch.setattr(broker._queue, "get", get_when_released)
+    monkeypatch.setattr(broker._queue, "put_nowait", put_and_record)
     with broker:
         models = [BrokeredBackwardReactionModel(broker, use_cache=True) for _ in TARGETS]
         searches = [
@@ -92,8 +106,14 @@ def test_concurrent_searches_match_sequential_searches(algorithm_class, call_lim
                 executor.submit(search.run_from_mol, Molecule(target))
                 for search, target in zip(searches, TARGETS)
             ]
-            graphs = [future.result(timeout=10)[0] for future in futures]
+            try:
+                assert queued.wait(timeout=5)
+                release.set()
+                graphs = [future.result(timeout=10)[0] for future in futures]
+            finally:
+                release.set()
 
+        assert broker.batch_sizes[0] == 2
         for graph, model, (expected_graph, expected_calls) in zip(graphs, models, sequential):
             graph.assert_validity()
             assert _graph_signature(graph) == _graph_signature(expected_graph)

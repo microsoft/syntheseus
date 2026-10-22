@@ -79,12 +79,26 @@ def test_brokered_retrochimera_call(monkeypatch) -> None:
         inference_threads.append(threading.get_ident())
         return original_predict(inputs, num_results)
 
+    broker = InferenceBroker(model, batch_size=2, batch_wait_s=0, max_queue_size=2)
+    release = threading.Event()
+    get, put = broker._queue.get, broker._queue.put_nowait
+
+    def get_when_released(*args, **kwargs):
+        assert release.wait(timeout=5)
+        return get(*args, **kwargs)
+
+    def put_and_release(ticket):
+        put(ticket)
+        if broker._queue.qsize() == len(molecules):
+            release.set()
+
+    monkeypatch.setattr(broker._queue, "get", get_when_released)
+    monkeypatch.setattr(broker._queue, "put_nowait", put_and_release)
     monkeypatch.setattr(model, "_get_reactions", predict)
-    with InferenceBroker(model, batch_size=2, batch_wait_s=0.01, max_queue_size=2) as broker:
+    with broker:
         outputs = broker(molecules, num_results=20)
-    assert sum(broker.batch_sizes) == len(molecules)
-    assert len(inference_threads) == len(broker.batch_sizes)
-    assert len(set(inference_threads)) == 1
+    assert broker.batch_sizes == [2]
+    assert len(inference_threads) == 1
     assert inference_threads[0] != threading.get_ident()
     assert model.cache_size == 0
     assert model.num_calls() == 2

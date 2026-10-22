@@ -114,23 +114,28 @@ class InferenceBroker(Generic[InputType, ReactionType]):
     ) -> list[Sequence[ReactionType]]:
         num_results = self.model.default_num_results if num_results is None else num_results
         futures: list[Future[Sequence[ReactionType]]] = []
-        for input in inputs:
-            future: Future[Sequence[ReactionType]] = Future()
-            ticket = _InferenceTicket(input, num_results, time.monotonic(), future)
-            while True:
-                with self._state_lock:
-                    if self._failure is not None:
-                        raise self._failure
-                    if self._thread is None or self._closing.is_set():
-                        raise RuntimeError("The inference broker is not running")
-                    try:
-                        self._queue.put_nowait(ticket)
-                    except queue.Full:
-                        pass
-                    else:
-                        break
-                self._closing.wait(timeout=0.01)
-            futures.append(future)
+        try:
+            for input in inputs:
+                future: Future[Sequence[ReactionType]] = Future()
+                futures.append(future)
+                ticket = _InferenceTicket(input, num_results, time.monotonic(), future)
+                while True:
+                    with self._state_lock:
+                        if self._failure is not None:
+                            raise self._failure
+                        if self._thread is None or self._closing.is_set():
+                            raise RuntimeError("The inference broker is not running")
+                        try:
+                            self._queue.put_nowait(ticket)
+                        except queue.Full:
+                            pass
+                        else:
+                            break
+                    self._closing.wait(timeout=0.01)
+        except BaseException:
+            for future in futures:
+                future.cancel()
+            raise
         return [future.result() for future in futures]
 
     def _run(self) -> None:
@@ -148,6 +153,9 @@ class InferenceBroker(Generic[InputType, ReactionType]):
                         continue
                     owned.append(ticket)
 
+                if not ticket.future.set_running_or_notify_cancel():
+                    owned.clear()
+                    continue
                 batch = [ticket]
                 deadline = ticket.queued_at + self._batch_wait_s
                 while len(batch) < self._batch_size and not self._cancel_pending.is_set():
@@ -163,7 +171,10 @@ class InferenceBroker(Generic[InputType, ReactionType]):
                     if not _can_admit(batch, candidate):
                         deferred = candidate
                         break
-                    batch.append(candidate)
+                    if candidate.future.set_running_or_notify_cancel():
+                        batch.append(candidate)
+                    else:
+                        owned.pop()
 
                 outputs = None if self._cancel_pending.is_set() else self._predict_batch(batch)
                 for index, item in enumerate(batch):
@@ -198,8 +209,9 @@ class InferenceBroker(Generic[InputType, ReactionType]):
             except queue.Empty:
                 break
         for ticket in owned:
-            if not ticket.future.done():
-                ticket.future.set_exception(error)
+            future = ticket.future
+            if not future.done() and (future.running() or future.set_running_or_notify_cancel()):
+                future.set_exception(error)
 
 
 class _BrokeredReactionModel(ReactionModel[InputType, ReactionType]):

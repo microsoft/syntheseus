@@ -74,7 +74,8 @@ filter wrappers per search to retain independent acceptance statistics.
 Calls block until predictions are ready. `num_results=None` uses the backend's default
 result count. Each caller receives independent prediction objects.
 
-Normal context exit or `close()` finishes accepted requests. Exiting the context with an
+If a call fails during admission, its not-yet-running requests are cancelled; running
+inference is left to finish. Normal context exit or `close()` finishes other accepted requests. Exiting the context with an
 exception, or calling `close(cancel_pending=True)`, aborts unfinished requests with
 `CancelledError`. Running inference cannot be interrupted. Inference failures reach
 waiting callers and reject later calls.
