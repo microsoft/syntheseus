@@ -365,6 +365,18 @@ def test_failure_signals_both_brokers_before_waiting_for_inference(tmp_path, mon
             return super()._get_reactions(inputs, num_results)
 
     class TrackingBroker(search.InferenceBroker):
+        def __init__(self, model, *args, **kwargs):
+            super().__init__(model, *args, **kwargs)
+            if model.is_forward():
+                put = self._queue.put_nowait
+
+                def observe_queued_input(ticket):
+                    put(ticket)
+                    if ticket.input == Bag([Molecule("CC")]):
+                        forward_queued.set()
+
+                monkeypatch.setattr(self._queue, "put_nowait", observe_queued_input)
+
         def close(self, cancel_pending=False, wait=True):
             super().close(cancel_pending=cancel_pending, wait=wait)
             if cancel_pending and self.model.is_forward():
@@ -384,12 +396,14 @@ def test_failure_signals_both_brokers_before_waiting_for_inference(tmp_path, mon
             assert isinstance(forward_filter, search.ForwardReactionFilterModel)
             facade = forward_filter.forward_model
             assert isinstance(facade, search.BrokeredForwardReactionModel)
-            first = facade._broker.submit([Bag([Molecule("C")])], 1)[0]
-            assert forward_started.wait(timeout=5)
-            pending = facade._broker.submit([Bag([Molecule("CC")])], 1)[0]
-            pending_futures.append(pending)
-            forward_queued.set()
-            first.result(timeout=10)
+            with ThreadPoolExecutor(max_workers=2) as forward_executor:
+                first = forward_executor.submit(facade, [Bag([Molecule("C")])], num_results=1)
+                assert forward_started.wait(timeout=5)
+                queued_facade = search.BrokeredForwardReactionModel(facade._broker, use_cache=False)
+                pending_futures.append(
+                    forward_executor.submit(queued_facade, [Bag([Molecule("CC")])], num_results=1)
+                )
+                first.result(timeout=10)
         raise AssertionError("Running targets should be cancelled")
 
     monkeypatch.setattr(search, "InferenceBroker", TrackingBroker)
