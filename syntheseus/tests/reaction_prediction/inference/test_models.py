@@ -4,6 +4,7 @@ from syntheseus.interface.bag import Bag
 from syntheseus.interface.molecule import Molecule
 from syntheseus.reaction_prediction.inference.config import BackwardModelClass, ForwardModelClass
 from syntheseus.reaction_prediction.inference_base import ExternalBackwardReactionModel
+from syntheseus.reaction_prediction.utils.batching import InferenceBroker
 from syntheseus.reaction_prediction.utils.testing import are_single_step_models_installed
 
 pytestmark = pytest.mark.skipif(
@@ -57,6 +58,27 @@ def test_call(model: ExternalBackwardReactionModel) -> None:
 
     for p in model.get_parameters():
         assert isinstance(p, torch.Tensor)
+
+
+@pytest.mark.forked
+def test_brokered_retrochimera_call() -> None:
+    model = BackwardModelClass.RetroChimera.value(
+        use_cache=False, **EXTRA_MODEL_KWARGS[BackwardModelClass.RetroChimera]
+    )
+    molecules = [
+        Molecule("Cc1ccc(-c2ccc(C)cc2)cc1"),
+        Molecule("COc1ccc(-c2ccc(C)cc2)cc1"),
+    ]
+    broker = InferenceBroker(model, batch_size=2, batch_wait_s=0.01, max_queue_size=2)
+    with broker:
+        outputs = broker(molecules, num_results=20)
+    assert model.cache_size == 0
+    assert model.num_calls() == 2
+    for molecule, reactions in zip(molecules, outputs):
+        assert reactions
+        assert all(reaction.product == molecule for reaction in reactions)
+    outputs[0][0].metadata["broker_test"] = True
+    assert all("broker_test" not in reaction.metadata for reaction in outputs[1])
 
 
 @pytest.mark.parametrize("model_class", FORWARD_MODEL_CLASSES_TO_TEST)
