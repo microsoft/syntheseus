@@ -5,6 +5,12 @@ All notable changes to the project are documented in this file.
 The format follows [Common Changelog](https://common-changelog.org/),
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Add opt-in concurrent target searches with batched inference to the search CLI via `max_active_searches`, `inference_batch_size`, and `inference_batch_wait_s`; serial execution remains the default ([#172](https://github.com/microsoft/syntheseus/pull/172)) ([@gabrieldernbach])
+
 ## [0.9.0] - 2026-09-23
 
 ### Added
@@ -189,3 +195,4 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 [@fiberleif]: https://github.com/fiberleif
 [@jla-gardner]: https://github.com/jla-gardner
 [@lgeiger]: https://github.com/lgeiger
+[@gabrieldernbach]: https://github.com/gabrieldernbach
