@@ -19,13 +19,18 @@ import json
 import logging
 import math
 import pickle
+import random
 import statistics
+import threading
+from concurrent.futures import FIRST_COMPLETED, CancelledError, Future, ThreadPoolExecutor, wait
+from contextlib import ExitStack, nullcontext
 from dataclasses import dataclass, field
 from enum import Enum
 from functools import partial
+from itertools import islice
 from pathlib import Path
 from pprint import pformat
-from typing import Any, Dict, Iterator, List, Optional, cast
+from typing import Any, ContextManager, Dict, Iterator, List, Optional, cast
 
 import yaml
 from omegaconf import MISSING, DictConfig, OmegaConf
@@ -36,10 +41,16 @@ from syntheseus.reaction_prediction.chem.utils import remove_stereo_information
 from syntheseus.reaction_prediction.filters.forward import ForwardReactionFilterModel
 from syntheseus.reaction_prediction.filters.wrapper import FilteredBackwardReactionModel
 from syntheseus.reaction_prediction.inference.config import BackwardModelConfig, ForwardModelConfig
+from syntheseus.reaction_prediction.utils.batching import (
+    BrokeredBackwardReactionModel,
+    BrokeredForwardReactionModel,
+    InferenceBroker,
+)
 from syntheseus.reaction_prediction.utils.config import get_config as cli_get_config
 from syntheseus.reaction_prediction.utils.misc import set_random_seed
 from syntheseus.reaction_prediction.utils.model_loading import get_model
 from syntheseus.search import INT_INF
+from syntheseus.search.algorithms.base import SearchAlgorithm
 from syntheseus.search.algorithms.best_first.retro_star import RetroStarSearch
 from syntheseus.search.algorithms.mcts import base as mcts_base
 from syntheseus.search.algorithms.mcts.molset import MolSetMCTS
@@ -215,6 +226,11 @@ class BaseSearchConfig(SearchAlgorithmConfig):
     num_top_results: int = 50  # Number of results to request
     reaction_model_use_cache: bool = True  # Whether to cache the results
 
+    # Concurrent target searches share inference; one active search preserves serial execution.
+    max_active_searches: int = 1
+    inference_batch_size: int = 8
+    inference_batch_wait_s: float = 0.01
+
     # Fields configuring what to save after the run
     save_graph: bool = True  # Whether to save the full reaction graph (can be large)
     num_routes_to_plot: int = 5  # Number of routes to extract and plot for a quick check
@@ -230,7 +246,230 @@ class SearchConfig(BackwardModelConfig, BaseSearchConfig):
     pass
 
 
+def _filter_model(
+    config: SearchConfig,
+    backward_model: BackwardReactionModel,
+    forward_model: Optional[ForwardReactionModel],
+) -> BackwardReactionModel:
+    if forward_model is None:
+        return backward_model
+    forward_filter = ForwardReactionFilterModel(
+        forward_model=forward_model,
+        top_k=config.forward_filter.top_k,
+        **cast(Dict[str, Any], OmegaConf.to_container(config.forward_filter.filter_kwargs)),
+    )
+    return FilteredBackwardReactionModel(
+        backward_model=backward_model, filter_models={"forward": forward_filter}
+    )
+
+
+def _run_target(
+    idx: int,
+    smiles: str,
+    config: SearchConfig,
+    alg: SearchAlgorithm,
+    num_targets: int,
+    results_dir_current_run: Path,
+    plot_lock: Optional[ContextManager[object]] = None,
+    cancel_event: Optional[threading.Event] = None,
+) -> Dict[str, Any]:
+    if cancel_event is not None and cancel_event.is_set():
+        raise CancelledError()
+    logger.info(f"Running search for target {smiles}")
+
+    results_dir = (
+        results_dir_current_run if num_targets == 1 else results_dir_current_run / str(idx)
+    )
+    results_dir.mkdir(parents=True, exist_ok=True)
+    logger.info(f"Outputs will be saved under {results_dir}")
+
+    results_lock_path = results_dir / ".lock"
+    results_stats_path = results_dir / "stats.json"
+    if results_lock_path.exists():
+        paths = [path for path in results_dir.iterdir() if path.is_file()]
+        logger.warning(
+            f"Lockfile was found which means the last run failed, purging {len(paths)} files"
+        )
+        for path in paths:
+            path.unlink()
+    elif results_stats_path.exists():
+        with open(results_stats_path, "rt") as f_stats:
+            stats = json.load(f_stats)
+        if stats.get("index") != idx or stats.get("smiles") != smiles:
+            raise RuntimeError(f"Data present under {results_dir} does not match the current run")
+        logger.info("Search results already exist, skipping")
+        return stats
+
+    results_lock_path.touch()
+    target = Molecule(smiles)
+    target_in_inventory = alg.mol_inventory.is_purchasable(target)
+    if target_in_inventory:
+        if config.expand_purchasable_target:
+            logger.info("Target is purchasable but will be expanded anyway")
+        else:
+            logger.info(
+                "Search will be a no-op as the target is purchasable; "
+                "set `expand_purchasable_target` if you want to expand it regardless"
+            )
+
+    alg.reset()
+    output_graph, _ = alg.run_from_mol(target)
+    if cancel_event is not None and cancel_event.is_set():
+        raise CancelledError()
+    logger.info(f"Finished search for target {smiles}")
+
+    for node in output_graph.nodes():
+        node.data["analysis_time"] = node.data["num_calls_rxn_model"]
+    soln_time_rxn_model_calls = get_first_solution_time(output_graph)
+    for node in output_graph.nodes():
+        node.data["analysis_time"] = (
+            node.creation_time - output_graph.root_node.creation_time
+        ).total_seconds()
+    soln_time_wallclock = get_first_solution_time(output_graph)
+
+    stats = {
+        "index": idx,
+        "smiles": smiles,
+        "target_in_inventory": target_in_inventory,
+        "rxn_model_calls_used": alg.reaction_model.num_calls(),
+        "num_nodes_in_final_tree": len(output_graph),
+        "soln_time_rxn_model_calls": soln_time_rxn_model_calls,
+        "soln_time_wallclock": soln_time_wallclock,
+    }
+    if isinstance(alg.reaction_model, FilteredBackwardReactionModel):
+        stats["filter_acceptance_rate"] = alg.reaction_model.acceptance_rate
+        stats["filter_acceptance_rate_per_filter"] = alg.reaction_model.acceptance_rate_per_filter
+    logger.info(pformat(stats))
+
+    with open(results_stats_path, "wt") as f_stats:
+        f_stats.write(json.dumps(stats, indent=2))
+    if config.save_graph:
+        with open(results_dir / "graph.pkl", "wb") as f_graph:
+            pickle.dump(output_graph, f_graph)
+
+    if config.num_routes_to_plot > 0:
+        with plot_lock or nullcontext():
+            logger.info(f"Extracting up to {config.num_routes_to_plot} routes for analysis")
+            routes: Iterator = iter_routes_time_order(
+                output_graph, max_routes=config.num_routes_to_plot
+            )
+            for route_idx, route in enumerate(routes):
+                with open(results_dir / f"route_{route_idx}.pkl", "wb") as f_route:
+                    pickle.dump(route, f_route)
+                visualize_kwargs: Dict[str, Any] = dict(
+                    graph=output_graph,
+                    filename=str(results_dir / f"route_{route_idx}.pdf"),
+                    nodes=route,
+                )
+                if isinstance(output_graph, AndOrGraph):
+                    visualize_andor(**visualize_kwargs)
+                elif isinstance(output_graph, MolSetGraph):
+                    visualize_molset(**visualize_kwargs)
+                else:
+                    assert False
+
+    results_lock_path.unlink()
+    return stats
+
+
+def _run_concurrent_targets(
+    config: SearchConfig,
+    search_targets: List[str],
+    backward_model: BackwardReactionModel,
+    forward_model: Optional[ForwardReactionModel],
+    mol_inventory: SmilesListInventory,
+    results_dir: Path,
+) -> List[Dict[str, Any]]:
+    active_searches = min(len(search_targets), config.max_active_searches)
+    queue_size = active_searches * config.inference_batch_size
+    wait_s = config.inference_batch_wait_s if active_searches > 1 else 0.0
+    cancel_event = threading.Event()
+    plot_lock = threading.Lock()
+    stats_by_index: Dict[int, Dict[str, Any]] = {}
+
+    with ExitStack() as stack:
+        backward_broker = stack.enter_context(
+            InferenceBroker(backward_model, config.inference_batch_size, wait_s, queue_size)
+        )
+        forward_broker = (
+            stack.enter_context(
+                InferenceBroker(forward_model, config.inference_batch_size, wait_s, queue_size)
+            )
+            if forward_model is not None
+            else None
+        )
+        executor = stack.enter_context(ThreadPoolExecutor(max_workers=active_searches))
+        progress = stack.enter_context(tqdm(total=len(search_targets)))
+
+        def submit(index: int, smiles: str) -> Future[Dict[str, Any]]:
+            target_backward = BrokeredBackwardReactionModel(
+                backward_broker, cancel_event, use_cache=config.reaction_model_use_cache
+            )
+            target_forward = (
+                BrokeredForwardReactionModel(
+                    forward_broker, cancel_event, use_cache=config.reaction_model_use_cache
+                )
+                if forward_broker is not None
+                else None
+            )
+            reaction_model = _filter_model(config, target_backward, target_forward)
+            algorithm = config.search_algorithm.value(
+                reaction_model=reaction_model,
+                mol_inventory=mol_inventory,
+                random_state=random.Random(f"0:{index}"),
+                should_cancel=cancel_event.is_set,
+                **search_algorithm_config_to_kwargs(config),
+            )
+            return executor.submit(
+                _run_target,
+                index,
+                smiles,
+                config,
+                algorithm,
+                len(search_targets),
+                results_dir,
+                plot_lock,
+                cancel_event,
+            )
+
+        target_iter = iter(enumerate(search_targets))
+        futures: Dict[Future[Dict[str, Any]], int] = {}
+        try:
+            for index, smiles in islice(target_iter, active_searches):
+                futures[submit(index, smiles)] = index
+            while futures:
+                done, _ = wait(futures, return_when=FIRST_COMPLETED)
+                for future in done:
+                    index = futures.pop(future)
+                    stats_by_index[index] = future.result()
+                    progress.update()
+                for _ in done:
+                    target = next(target_iter, None)
+                    if target is not None:
+                        index, smiles = target
+                        futures[submit(index, smiles)] = index
+        except BaseException:
+            cancel_event.set()
+            for future in futures:
+                future.cancel()
+            backward_broker.close(cancel_pending=True, wait=False)
+            if forward_broker is not None:
+                forward_broker.close(cancel_pending=True, wait=False)
+            raise
+
+        logger.info("Backward inference batch sizes: %s", backward_broker.batch_sizes)
+        if forward_broker is not None:
+            logger.info("Forward inference batch sizes: %s", forward_broker.batch_sizes)
+
+    return [stats_by_index[index] for index in range(len(search_targets))]
+
+
 def run_from_config(config: SearchConfig) -> Path:
+    if config.max_active_searches <= 0 or config.inference_batch_size <= 0:
+        raise ValueError("max_active_searches and inference_batch_size must be positive")
+    if not math.isfinite(config.inference_batch_wait_s) or config.inference_batch_wait_s < 0:
+        raise ValueError("inference_batch_wait_s must be finite and non-negative")
+    concurrent_search = config.max_active_searches > 1
     set_random_seed(0)
 
     print("Running search with the following config:")
@@ -259,6 +498,8 @@ def run_from_config(config: SearchConfig) -> Path:
         with open(config.search_targets_file, "rt") as f_targets:
             search_targets = [line.strip() for line in f_targets]
 
+    if not search_targets:
+        raise ValueError("Search targets file is empty")
     if config.remove_stereo_from_targets:
         search_targets = [remove_stereo_information(Molecule(smi)).smiles for smi in search_targets]
 
@@ -270,7 +511,7 @@ def run_from_config(config: SearchConfig) -> Path:
     get_model_fn = partial(
         get_model,
         num_gpus=int(config.use_gpu),
-        use_cache=config.reaction_model_use_cache,
+        use_cache=config.reaction_model_use_cache if not concurrent_search else False,
     )
 
     # Load the single-step model
@@ -281,29 +522,15 @@ def run_from_config(config: SearchConfig) -> Path:
 
     # Optionally wrap the backward model with one or more filter models.
     filtering_enabled = not OmegaConf.is_missing(config.forward_filter, "model_class")
-    if filtering_enabled:
-        forward_model = cast(ForwardReactionModel, get_model_fn(config.forward_filter))
-
-        forward_filter = ForwardReactionFilterModel(
-            forward_model=forward_model,
-            top_k=config.forward_filter.top_k,
-            **cast(Dict[str, Any], OmegaConf.to_container(config.forward_filter.filter_kwargs)),
-        )
-
-        search_rxn_model = FilteredBackwardReactionModel(
-            backward_model=search_rxn_model,
-            filter_models={"forward": forward_filter},
-        )
+    forward_model = (
+        cast(ForwardReactionModel, get_model_fn(config.forward_filter))
+        if filtering_enabled
+        else None
+    )
 
     # Set up the inventory
     mol_inventory = SmilesListInventory.load_from_file(
         config.inventory_smiles_file, canonicalize=config.canonicalize_inventory
-    )
-
-    alg = config.search_algorithm.value(
-        reaction_model=search_rxn_model,
-        mol_inventory=mol_inventory,
-        **search_algorithm_config_to_kwargs(config),
     )
 
     # Prepare the output directory
@@ -319,125 +546,25 @@ def run_from_config(config: SearchConfig) -> Path:
     logger.info("Setup completed")
     num_targets = len(search_targets)
 
-    all_stats: List[Dict[str, Any]] = []
-    for idx, smiles in enumerate(tqdm(search_targets)):
-        logger.info(f"Running search for target {smiles}")
-
-        if num_targets == 1:
-            results_dir = results_dir_current_run
-        else:
-            results_dir = results_dir_current_run / str(idx)
-
-        results_dir.mkdir(parents=True, exist_ok=True)
-        logger.info(f"Outputs will be saved under {results_dir}")
-
-        results_lock_path = results_dir / ".lock"
-        results_stats_path = results_dir / "stats.json"
-
-        if results_lock_path.exists():
-            paths = [path for path in results_dir.iterdir() if path.is_file()]
-            logger.warning(
-                f"Lockfile was found which means the last run failed, purging {len(paths)} files"
-            )
-
-            for path in paths:
-                path.unlink()
-        elif results_stats_path.exists():
-            with open(results_stats_path, "rt") as f_stats:
-                stats = json.load(f_stats)
-                if stats.get("index") != idx or stats.get("smiles") != smiles:
-                    raise RuntimeError(
-                        f"Data present under {results_dir} does not match the current run"
-                    )
-
-                all_stats.append(stats)
-
-            logger.info("Search results already exist, skipping")
-            continue
-
-        results_lock_path.touch()
-
-        target = Molecule(smiles)
-        target_in_inventory = mol_inventory.is_purchasable(target)
-
-        if target_in_inventory:
-            if config.expand_purchasable_target:
-                logger.info("Target is purchasable but will be expanded anyway")
-            else:
-                logger.info(
-                    "Search will be a no-op as the target is purchasable; "
-                    "set `expand_purchasable_target` if you want to expand it regardless"
-                )
-
-        alg.reset()
-        output_graph, _ = alg.run_from_mol(target)
-        logger.info(f"Finished search for target {smiles}")
-
-        # Time of first solution (rxn model calls)
-        for node in output_graph.nodes():
-            node.data["analysis_time"] = node.data["num_calls_rxn_model"]
-        soln_time_rxn_model_calls = get_first_solution_time(output_graph)
-
-        # Time of first solution (wallclock)
-        for node in output_graph.nodes():
-            node.data["analysis_time"] = (
-                node.creation_time - output_graph.root_node.creation_time
-            ).total_seconds()
-        soln_time_wallclock = get_first_solution_time(output_graph)
-
-        stats = {
-            "index": idx,
-            "smiles": smiles,
-            "target_in_inventory": target_in_inventory,
-            "rxn_model_calls_used": alg.reaction_model.num_calls(),
-            "num_nodes_in_final_tree": len(output_graph),
-            "soln_time_rxn_model_calls": soln_time_rxn_model_calls,
-            "soln_time_wallclock": soln_time_wallclock,
-        }
-
-        if filtering_enabled:
-            assert isinstance(search_rxn_model, FilteredBackwardReactionModel)
-            stats["filter_acceptance_rate"] = search_rxn_model.acceptance_rate
-            stats["filter_acceptance_rate_per_filter"] = search_rxn_model.acceptance_rate_per_filter
-
-        all_stats.append(stats)
-        logger.info(pformat(stats))
-
-        with open(results_stats_path, "wt") as f_stats:
-            f_stats.write(json.dumps(stats, indent=2))
-
-        if config.save_graph:
-            with open(results_dir / "graph.pkl", "wb") as f_graph:
-                pickle.dump(output_graph, f_graph)
-
-        if config.num_routes_to_plot > 0:
-            # Extract some synthesis routes in the order they were found
-            logger.info(f"Extracting up to {config.num_routes_to_plot} routes for analysis")
-
-            # TODO(kmaziarz): Add options to extract a diverse (or otherwise interesting) subset.
-            routes: Iterator = iter_routes_time_order(
-                output_graph, max_routes=config.num_routes_to_plot
-            )
-
-            for route_idx, route in enumerate(routes):
-                with open(results_dir / f"route_{route_idx}.pkl", "wb") as f_route:
-                    pickle.dump(route, f_route)
-
-                visualize_kwargs: Dict[str, Any] = dict(
-                    graph=output_graph,
-                    filename=str(results_dir / f"route_{route_idx}.pdf"),
-                    nodes=route,
-                )
-
-                if isinstance(output_graph, AndOrGraph):
-                    visualize_andor(**visualize_kwargs)
-                elif isinstance(output_graph, MolSetGraph):
-                    visualize_molset(**visualize_kwargs)
-                else:
-                    assert False
-
-        results_lock_path.unlink()
-        del results_dir
+    if concurrent_search:
+        all_stats = _run_concurrent_targets(
+            config,
+            search_targets,
+            search_rxn_model,
+            forward_model,
+            mol_inventory,
+            results_dir_current_run,
+        )
+    else:
+        alg = config.search_algorithm.value(
+            reaction_model=_filter_model(config, search_rxn_model, forward_model),
+            mol_inventory=mol_inventory,
+            **search_algorithm_config_to_kwargs(config),
+        )
+        all_stats = [
+            _run_target(idx, smiles, config, alg, num_targets, results_dir_current_run)
+            for idx, smiles in enumerate(tqdm(search_targets))
+        ]
 
     if num_targets > 1:
         logger.info(f"Writing summary statistics across all {num_targets} targets")
