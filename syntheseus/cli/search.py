@@ -30,7 +30,7 @@ from functools import partial
 from itertools import islice
 from pathlib import Path
 from pprint import pformat
-from typing import Any, ContextManager, Dict, Iterator, List, Optional, cast
+from typing import Any, ContextManager, Dict, Iterator, List, Optional, Set, cast
 
 import yaml
 from omegaconf import MISSING, DictConfig, OmegaConf
@@ -431,21 +431,18 @@ def _run_concurrent_targets(
             )
 
         target_iter = iter(enumerate(search_targets))
-        futures: Dict[Future[Dict[str, Any]], int] = {}
+        futures: Set[Future[Dict[str, Any]]] = set()
         try:
-            for index, smiles in islice(target_iter, active_searches):
-                futures[submit(index, smiles)] = index
-            while futures:
-                done, _ = wait(futures, return_when=FIRST_COMPLETED)
+            while True:
+                for index, smiles in islice(target_iter, active_searches - len(futures)):
+                    futures.add(submit(index, smiles))
+                if not futures:
+                    break
+                done, futures = wait(futures, return_when=FIRST_COMPLETED)
                 for future in done:
-                    index = futures.pop(future)
-                    stats_by_index[index] = future.result()
+                    stats = future.result()
+                    stats_by_index[stats["index"]] = stats
                     progress.update()
-                for _ in done:
-                    target = next(target_iter, None)
-                    if target is not None:
-                        index, smiles = target
-                        futures[submit(index, smiles)] = index
         except BaseException:
             cancel_event.set()
             for future in futures:
