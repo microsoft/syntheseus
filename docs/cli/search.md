@@ -27,7 +27,7 @@ syntheseus search \
     model_class=RetroChimera \
     max_active_searches=32 \
     inference_batch_size=8 \
-    inference_batch_wait_s=0.01
+    inference_batch_wait_s=0.01  # 10 ms
 ```
 
 `max_active_searches` bounds the number of active searches. `inference_batch_size` bounds

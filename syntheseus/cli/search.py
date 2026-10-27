@@ -229,7 +229,7 @@ class BaseSearchConfig(SearchAlgorithmConfig):
     # Concurrent target searches share inference; one active search preserves serial execution.
     max_active_searches: int = 1
     inference_batch_size: int = 8
-    inference_batch_wait_s: float = 0.01
+    inference_batch_wait_s: float = 0.01  # 10 ms
 
     # Fields configuring what to save after the run
     save_graph: bool = True  # Whether to save the full reaction graph (can be large)
