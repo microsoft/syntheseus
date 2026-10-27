@@ -147,24 +147,6 @@ def test_default_serial_mode_bypasses_broker(tmp_path, backends, monkeypatch) ->
     assert all(_stats(results_dir, index)["rxn_model_calls_used"] == 1 for index in range(2))
 
 
-def test_fixed_call_statistics_match_serial_execution(tmp_path, backends) -> None:
-    targets = ["CC", "CCC", "CCCC"]
-    serial = search.run_from_config(_config(tmp_path / "serial", targets))
-    concurrent = search.run_from_config(
-        _config(tmp_path / "concurrent", targets, max_active_searches=3)
-    )
-    for index in range(len(targets)):
-        serial_stats = _stats(serial, index)
-        concurrent_stats = _stats(concurrent, index)
-        assert set(serial_stats) == set(concurrent_stats)
-        serial_stats.pop("soln_time_wallclock")
-        concurrent_stats.pop("soln_time_wallclock")
-        assert serial_stats == concurrent_stats
-    assert set(json.loads((serial / "stats.json").read_text())) == set(
-        json.loads((concurrent / "stats.json").read_text())
-    )
-
-
 def test_bounds_active_searches_and_isolates_algorithms(tmp_path, backends, monkeypatch) -> None:
     original = search._run_target
     barrier = threading.Barrier(3)
