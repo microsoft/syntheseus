@@ -293,8 +293,7 @@ def _run_target(
         for path in paths:
             path.unlink()
     elif results_stats_path.exists():
-        with open(results_stats_path, "rt") as f_stats:
-            stats = json.load(f_stats)
+        stats = json.loads(results_stats_path.read_bytes())
         if stats.get("index") != idx or stats.get("smiles") != smiles:
             raise RuntimeError(f"Data present under {results_dir} does not match the current run")
         logger.info("Search results already exist, skipping")
