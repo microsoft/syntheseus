@@ -9,7 +9,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Add opt-in concurrent target searches with batched inference to the search CLI via `max_active_searches`, `inference_batch_size`, and `inference_batch_wait_s`; serial execution remains the default ([#172](https://github.com/microsoft/syntheseus/pull/172)) ([@gabrieldernbach])
+- Add optional concurrent target searches with batched inference to the search CLI ([#171](https://github.com/microsoft/syntheseus/pull/171), [#172](https://github.com/microsoft/syntheseus/pull/172)) ([@gabrieldernbach])
 
 ## [0.9.0] - 2026-09-23
 
