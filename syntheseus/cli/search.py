@@ -340,8 +340,7 @@ def _run_target(
         stats["filter_acceptance_rate_per_filter"] = alg.reaction_model.acceptance_rate_per_filter
     logger.info(pformat(stats))
 
-    with open(results_stats_path, "wt") as f_stats:
-        f_stats.write(json.dumps(stats, indent=2))
+    results_stats_path.write_text(json.dumps(stats, indent=2))
     if config.save_graph:
         with open(results_dir / "graph.pkl", "wb") as f_graph:
             pickle.dump(output_graph, f_graph)
