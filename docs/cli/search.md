@@ -30,24 +30,15 @@ syntheseus search \
     inference_batch_wait_s=0.01  # 10 ms
 ```
 
-`max_active_searches` bounds the number of active searches. `inference_batch_size` bounds
-each model batch, and `inference_batch_wait_s` limits how long a request waits for other
-requests to form a batch. The runner loads one backward backend and, when forward filtering
-is enabled, one forward backend. Each backend has one inference worker; per-target facades
-retain independent caches and reaction-model call budgets. Filter acceptance statistics,
-search algorithms, and node evaluators are also independent per target.
+`max_active_searches` limits the number of targets searched at once. `inference_batch_size`
+limits the number of molecules predicted together, while `inference_batch_wait_s` sets the
+maximum wait for other requests to fill a batch. Higher concurrency or larger batches may
+improve throughput, but can also increase memory use and per-target latency.
 
-Concurrent execution retains stereo removal, inventory checks, per-target statistics and
-graphs, route extraction, and the existing aggregate statistics. Plotting is serialized.
-Completed targets are still skipped on resume; failed targets retain their lockfiles so
-partial outputs are removed on the next run. A failure cancels the remaining searches and
-pending inference, but running model calls must finish before shutdown.
-
-Time limits include time spent waiting for inference. Wall-clock-limited searches and
-stochastic models can produce different routes or solve different targets than serial
-execution. Concurrent search is opt-in and does not guarantee serial-equivalent results
-or schedule-independent model augmentation. Model-specific augmentation and process
-tuning remain the responsibility of the model integration.
+Per-target time limits include waiting for inference. Concurrent execution can produce
+different routes or solve different targets than serial execution, especially with time-limited
+searches or stochastic models. Output layout and resume behavior remain unchanged. If a target
+fails, remaining work is cancelled; running model calls must finish before the command exits.
 
 !!! info
     When using one of the natively supported single-step models you can omit `model_dir`, which will cause `syntheseus` to use a default checkpoint (see [here](../single_step.md) for details).
