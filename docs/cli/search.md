@@ -15,6 +15,31 @@ Both the search targets and the purchasable molecules inventory are expected to 
 
 The `search` command accepts further arguments to configure the search algorithm; see `SearchConfig` in `cli/search.py` for the complete list.
 
+## Concurrent targets and batched inference
+
+Search remains serial by default (`max_active_searches=1`). To run independent target
+searches concurrently while batching their inference requests:
+
+```sh
+syntheseus search \
+    search_targets_file=targets.smi \
+    inventory_smiles_file=inventory.smi \
+    model_class=RetroChimera \
+    max_active_searches=32 \
+    inference_batch_size=8 \
+    inference_batch_wait_s=0.01  # 10 ms
+```
+
+`max_active_searches` limits the number of targets searched at once. `inference_batch_size`
+limits the number of molecules predicted together, while `inference_batch_wait_s` sets the
+maximum wait for other requests to fill a batch. Higher concurrency or larger batches may
+improve throughput, but can also increase memory use and per-target latency.
+
+Per-target time limits include waiting for inference. Concurrent execution can produce
+different routes or solve different targets than serial execution, especially with time-limited
+searches or stochastic models. Output layout and resume behavior remain unchanged. If a target
+fails, remaining work is cancelled; running model calls must finish before the command exits.
+
 !!! info
     When using one of the natively supported single-step models you can omit `model_dir`, which will cause `syntheseus` to use a default checkpoint (see [here](../single_step.md) for details).
 
