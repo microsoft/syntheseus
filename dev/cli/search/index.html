@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.0">
     
     
       
@@ -29,10 +29,10 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
       
       
 
@@ -588,6 +588,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#concurrent-targets-and-batched-inference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Concurrent targets and batched inference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#configuring-the-search-algorithm" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -793,6 +804,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#concurrent-targets-and-batched-inference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Concurrent targets and batched inference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#configuring-the-search-algorithm" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -834,6 +856,25 @@
 </code></pre></div>
 <p>Both the search targets and the purchasable molecules inventory are expected to be plain SMILES files, with one molecule per line.</p>
 <p>The <code>search</code> command accepts further arguments to configure the search algorithm; see <code>SearchConfig</code> in <code>cli/search.py</code> for the complete list.</p>
+<h2 id="concurrent-targets-and-batched-inference">Concurrent targets and batched inference</h2>
+<p>Search remains serial by default (<code>max_active_searches=1</code>). To run independent target
+searches concurrently while batching their inference requests:</p>
+<div class="highlight"><pre><span></span><code>syntheseus<span class="w"> </span>search<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="nv">search_targets_file</span><span class="o">=</span>targets.smi<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="nv">inventory_smiles_file</span><span class="o">=</span>inventory.smi<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="nv">model_class</span><span class="o">=</span>RetroChimera<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="nv">max_active_searches</span><span class="o">=</span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="nv">inference_batch_size</span><span class="o">=</span><span class="m">8</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="nv">inference_batch_wait_s</span><span class="o">=</span><span class="m">0</span>.01<span class="w">  </span><span class="c1"># 10 ms</span>
+</code></pre></div>
+<p><code>max_active_searches</code> limits the number of targets searched at once. <code>inference_batch_size</code>
+limits the number of molecules predicted together, while <code>inference_batch_wait_s</code> sets the
+maximum wait for other requests to fill a batch. Higher concurrency or larger batches may
+improve throughput, but can also increase memory use and per-target latency.</p>
+<p>Per-target time limits include waiting for inference. Concurrent execution can produce
+different routes or solve different targets than serial execution, especially with time-limited
+searches or stochastic models. Output layout and resume behavior remain unchanged. If a target
+fails, remaining work is cancelled; running model calls must finish before the command exits.</p>
 <div class="admonition info">
 <p class="admonition-title">Info</p>
 <p>When using one of the natively supported single-step models you can omit <code>model_dir</code>, which will cause <code>syntheseus</code> to use a default checkpoint (see <a href="../../single_step/">here</a> for details).</p>
@@ -892,10 +933,10 @@ For all of those algorithms you can vary hyperparameters such as the policy/valu
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.copy", "navigation.tabs"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.copy", "navigation.tabs"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../../assets/javascripts/bundle.c21346df.min.js"></script>
       
     
   <script data-mkdocs-jupyter-mathjax="{&quot;url&quot;: &quot;https://cdn.jsdelivr.net/npm/mathjax@4.1.3/tex-mml-chtml.js&quot;, &quot;version&quot;: 4}">
