@@ -31,7 +31,7 @@ viz = [
   "graphviz"
 ]
 dev = [
-  "pytest",
+  "pytest<9.2",
   "pytest-cov",
   "pytest-forked",
   "pytest-rerunfailures",
