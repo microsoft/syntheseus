@@ -19,6 +19,7 @@ from syntheseus.reaction_prediction.inference.config import (
     BackwardModelClass,
     ForwardModelClass,
 )
+from syntheseus.tests.search.conftest import make_inventory
 
 
 class RecordingBackwardModel(BackwardReactionModel):
@@ -401,7 +402,7 @@ def test_failure_signals_both_brokers_before_waiting_for_inference(tmp_path, mon
             targets,
             backward,
             forward,
-            search.SmilesListInventory(["C"]),
+            make_inventory(["C"]),
             tmp_path / "results",
         )
         try:

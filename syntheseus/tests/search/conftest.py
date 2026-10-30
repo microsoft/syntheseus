@@ -3,9 +3,9 @@ from __future__ import annotations
 
 import collections
 from dataclasses import dataclass, field, fields
-from typing import cast
 
 import pytest
+from rdkit import Chem
 
 from syntheseus.interface.bag import Bag
 from syntheseus.interface.models import BackwardReactionModel
@@ -22,7 +22,21 @@ from syntheseus.search.algorithms.breadth_first import (
 from syntheseus.search.graph.and_or import AndOrGraph
 from syntheseus.search.graph.molset import MolSetGraph
 from syntheseus.search.graph.route import SynthesisGraph
-from syntheseus.search.mol_inventory import BaseMolInventory, SmilesListInventory
+from syntheseus.search.mol_inventory import (
+    BaseMolInventory,
+    IdentityStandardiser,
+    MolInventory,
+    MolInventoryBuilder,
+)
+
+TASK1_INVENTORY_SMILES = ["CO", "CS"]
+
+
+def make_inventory(smiles: list[str]) -> MolInventory:
+    """Build an in-memory `MolInventory` of the given purchasable SMILES."""
+    return MolInventoryBuilder(IdentityStandardiser()).build(
+        (Chem.MolFromSmiles(s) for s in smiles), name="test", version="1"
+    )
 
 
 @dataclass
@@ -99,7 +113,7 @@ def retrosynthesis_task1(
     return RetrosynthesisTask(
         target_mol=cocs_mol,
         reaction_model=LinearMoleculesToyModel(use_cache=True),
-        inventory=SmilesListInventory(["CO", "CS"]),
+        inventory=make_inventory(TASK1_INVENTORY_SMILES),
         known_routes={"min-cost": best_route, "other": other_route},
     )
 
@@ -172,7 +186,7 @@ def retrosynthesis_task2(
     return RetrosynthesisTask(
         target_mol=cocs_mol,
         reaction_model=LinearMoleculesToyModel(use_cache=True),
-        inventory=SmilesListInventory(["CO", "CC"]),
+        inventory=make_inventory(["CO", "CC"]),
         known_routes=known_routes,
         incorrect_routes=incorrect_routes,
     )
@@ -191,7 +205,7 @@ def retrosynthesis_task3(cocs_mol: Molecule) -> RetrosynthesisTask:
     return RetrosynthesisTask(
         target_mol=cocs_mol,
         reaction_model=LinearMoleculesToyModel(use_cache=True),
-        inventory=SmilesListInventory(["CC"]),
+        inventory=make_inventory(["CC"]),
     )
 
 
@@ -209,7 +223,7 @@ def retrosynthesis_task4(cocs_mol: Molecule) -> RetrosynthesisTask:
     return RetrosynthesisTask(
         target_mol=cocs_mol,
         reaction_model=LinearMoleculesToyModel(allow_substitution=False, use_cache=True),
-        inventory=SmilesListInventory(["C", "O", "S"]),
+        inventory=make_inventory(["C", "O", "S"]),
     )
 
 
@@ -223,7 +237,7 @@ def retrosynthesis_task5() -> RetrosynthesisTask:
     return RetrosynthesisTask(
         target_mol=Molecule("CC", make_rdkit_mol=False),
         reaction_model=LinearMoleculesToyModel(allow_substitution=True, use_cache=True),
-        inventory=SmilesListInventory(["O"]),
+        inventory=make_inventory(["O"]),
     )
 
 
@@ -248,7 +262,7 @@ def retrosynthesis_task6() -> RetrosynthesisTask:
     return RetrosynthesisTask(
         target_mol=Molecule("CCCOC", make_rdkit_mol=False),
         reaction_model=LinearMoleculesToyModel(allow_substitution=True, use_cache=True),
-        inventory=SmilesListInventory(["CCCO", "CC", "COC", "O"]),
+        inventory=make_inventory(["CCCO", "CC", "COC", "O"]),
     )
 
 
@@ -262,13 +276,9 @@ def retrosynthesis_task7(retrosynthesis_task1: RetrosynthesisTask) -> Retrosynth
 
     data = {f.name: getattr(retrosynthesis_task1, f.name) for f in fields(retrosynthesis_task1)}
 
-    old_inventory = cast(SmilesListInventory, retrosynthesis_task1.inventory)
-    new_inventory = SmilesListInventory(
-        [mol.smiles for mol in old_inventory.to_purchasable_mols()]
-        + [retrosynthesis_task1.target_mol.smiles]
+    data["inventory"] = make_inventory(
+        TASK1_INVENTORY_SMILES + [retrosynthesis_task1.target_mol.smiles]
     )
-
-    data["inventory"] = new_inventory
     return RetrosynthesisTask(**data)  # type: ignore[arg-type]
 
 
@@ -306,7 +316,7 @@ def rxn_model_for_non_minimal_graphs(
 @pytest.fixture
 def inventory_for_graph_tests() -> BaseMolInventory:
     """Return a reaction model to help build the minimal graphs."""
-    return SmilesListInventory(["CC"])
+    return make_inventory(["CC"])
 
 
 def _complete_andor_graph_with_bfs(
