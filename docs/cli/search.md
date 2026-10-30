@@ -5,13 +5,24 @@
 ```
 syntheseus search \
     search_targets_file=[SMILES_FILE_WITH_SEARCH_TARGETS] \
-    inventory_smiles_file=[SMILES_FILE_WITH_PURCHASABLE_MOLECULES] \
+    inventory_file=[MOL_INVENTORY_FILE] \
     model_class=[MODEL_CLASS] \
     model_dir=[MODEL_DIR] \
     time_limit_s=[NUMBER_OF_SECONDS_PER_TARGET]
 ```
 
-Both the search targets and the purchasable molecules inventory are expected to be plain SMILES files, with one molecule per line.
+The search targets are expected to be a plain SMILES file, with one molecule per line. The purchasable molecules are a `MolInventory` file, prebuilt once from a SMILES file:
+
+```python
+from syntheseus.search.mol_inventory import IdentityStandardiser, MolInventoryBuilder
+
+inventory = MolInventoryBuilder(IdentityStandardiser()).build_from_file(
+    "inventory.smi", name="my-inventory", version="1", file_format="smi"
+)
+inventory.save("inventory.molinv")
+```
+
+Passing a plain SMILES file with `inventory_smiles_file` instead is deprecated.
 
 The `search` command accepts further arguments to configure the search algorithm; see `SearchConfig` in `cli/search.py` for the complete list.
 
@@ -23,7 +34,7 @@ searches concurrently while batching their inference requests:
 ```sh
 syntheseus search \
     search_targets_file=targets.smi \
-    inventory_smiles_file=inventory.smi \
+    inventory_file=inventory.molinv \
     model_class=RetroChimera \
     max_active_searches=32 \
     inference_batch_size=8 \

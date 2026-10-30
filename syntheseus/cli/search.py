@@ -5,7 +5,7 @@ each can be combined with Retro*, MCTS, or PDVN to perform search.
 
 Example invocation:
     python ./syntheseus/cli/search.py \
-        inventory_smiles_file=[INVENTORY_SMILES_FILE_PATH] \
+        inventory_file=[MOL_INVENTORY_FILE_PATH] \
         search_target="NC1=Nc2ccc(F)cc2C2CCCC12" \
         model_class=RetroChimera \
         model_dir=[MODEL_DIR] \
@@ -59,7 +59,8 @@ from syntheseus.search.analysis.route_extraction import iter_routes_time_order
 from syntheseus.search.analysis.solution_time import get_first_solution_time
 from syntheseus.search.graph.and_or import AndOrGraph
 from syntheseus.search.graph.molset import MolSetGraph
-from syntheseus.search.mol_inventory import SmilesListInventory
+from syntheseus.search.mol_inventory import BaseMolInventory, IdentityStandardiser, MolInventory
+from syntheseus.search.mol_inventory.deprecated import SmilesListInventory
 from syntheseus.search.node_evaluation import common as node_evaluation_common
 from syntheseus.search.utils.misc import lookup_by_name
 
@@ -214,7 +215,9 @@ class BaseSearchConfig(SearchAlgorithmConfig):
     search_target: str = MISSING
     search_targets_file: str = MISSING
 
-    inventory_smiles_file: str = MISSING  # Purchasable molecules
+    # Purchasable molecules (either a prebuilt `MolInventory` file or, deprecated, a SMILES file)
+    inventory_file: str = MISSING
+    inventory_smiles_file: str = MISSING
     results_dir: str = "."  # Directory to save the results in
     append_timestamp_to_dir: bool = True  # Whether to append the current time to directory name
 
@@ -375,7 +378,7 @@ def _run_concurrent_targets(
     search_targets: List[str],
     backward_model: BackwardReactionModel,
     forward_model: Optional[ForwardReactionModel],
-    mol_inventory: SmilesListInventory,
+    mol_inventory: BaseMolInventory,
     results_dir: Path,
 ) -> List[Dict[str, Any]]:
     active_searches = min(len(search_targets), config.max_active_searches)
@@ -524,9 +527,20 @@ def run_from_config(config: SearchConfig) -> Path:
     )
 
     # Set up the inventory
-    mol_inventory = SmilesListInventory.load_from_file(
-        config.inventory_smiles_file, canonicalize=config.canonicalize_inventory
-    )
+    inventory_file, inventory_smiles_file = [
+        cast(DictConfig, config).get(key) for key in ["inventory_file", "inventory_smiles_file"]
+    ]
+    if not ((inventory_file is None) ^ (inventory_smiles_file is None)):
+        raise ValueError(
+            "Exactly one of 'inventory_file' and 'inventory_smiles_file' should be provided"
+        )
+    mol_inventory: BaseMolInventory
+    if inventory_file is not None:
+        mol_inventory = MolInventory.load_from_file(inventory_file, IdentityStandardiser())
+    else:
+        mol_inventory = SmilesListInventory.load_from_file(
+            inventory_smiles_file, canonicalize=config.canonicalize_inventory
+        )
 
     # Prepare the output directory
     results_dir_top_level = Path(config.results_dir)

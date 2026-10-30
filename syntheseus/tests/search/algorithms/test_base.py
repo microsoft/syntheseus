@@ -18,8 +18,7 @@ from syntheseus.search.graph.base_graph import RetrosynthesisSearchGraph
 from syntheseus.search.graph.message_passing import has_solution_update, run_message_passing
 from syntheseus.search.graph.molset import MolSetGraph, MolSetNode
 from syntheseus.search.graph.route import SynthesisGraph
-from syntheseus.search.mol_inventory import SmilesListInventory
-from syntheseus.tests.search.conftest import RetrosynthesisTask
+from syntheseus.tests.search.conftest import RetrosynthesisTask, make_inventory
 
 
 class BaseAlgorithmTest(abc.ABC):
@@ -521,7 +520,7 @@ class BaseAlgorithmTest(abc.ABC):
         """
         alg = self.setup_algorithm(
             reaction_model=retrosynthesis_task5.reaction_model,
-            mol_inventory=SmilesListInventory([]),
+            mol_inventory=make_inventory([]),
             time_limit_s=10.0 * self.time_limit_multiplier,
             limit_iterations=1_000,
             limit_reaction_model_calls=100,
