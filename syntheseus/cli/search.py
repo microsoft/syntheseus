@@ -59,7 +59,11 @@ from syntheseus.search.analysis.route_extraction import iter_routes_time_order
 from syntheseus.search.analysis.solution_time import get_first_solution_time
 from syntheseus.search.graph.and_or import AndOrGraph
 from syntheseus.search.graph.molset import MolSetGraph
-from syntheseus.search.mol_inventory import BaseMolInventory, IdentityStandardiser, MolInventory
+from syntheseus.search.mol_inventory import (
+    BaseMolInventory,
+    IdentityStandardiser,
+    MolInventoryBuilder,
+)
 from syntheseus.search.mol_inventory.deprecated import SmilesListInventory
 from syntheseus.search.node_evaluation import common as node_evaluation_common
 from syntheseus.search.utils.misc import lookup_by_name
@@ -536,7 +540,7 @@ def run_from_config(config: SearchConfig) -> Path:
         )
     mol_inventory: BaseMolInventory
     if inventory_file is not None:
-        mol_inventory = MolInventory.load_from_file(inventory_file, IdentityStandardiser())
+        mol_inventory = MolInventoryBuilder(IdentityStandardiser()).load(inventory_file)
     else:
         mol_inventory = SmilesListInventory.load_from_file(
             inventory_smiles_file, canonicalize=config.canonicalize_inventory

@@ -103,7 +103,7 @@ def test_multi_structure_lookup() -> None:
 
 
 def test_standardiser_error_raises_lookup_error(inventory: MolInventory) -> None:
-    inventory = MolInventory(inventory._keys, inventory.metadata, FailingStandardiser())
+    inventory = MolInventory(inventory.keys, inventory.metadata, FailingStandardiser())
     with pytest.raises(InventoryLookupError):
         inventory.is_purchasable(Molecule("CO"))
 
@@ -125,11 +125,12 @@ def test_lookups_are_cached() -> None:
 
 def test_save_and_load_round_trip(inventory: MolInventory, tmp_path: Path) -> None:
     path = tmp_path / "inventory.molinv"
-    inventory.save(path)
-    loaded = MolInventory.load_from_file(path, IdentityStandardiser())
+    builder = MolInventoryBuilder(IdentityStandardiser())
+    builder.save(inventory, path)
+    loaded = builder.load(path)
 
     assert loaded.metadata == inventory.metadata
-    np.testing.assert_array_equal(loaded._keys, inventory._keys)
+    np.testing.assert_array_equal(loaded.keys, inventory.keys)
     for smiles in PURCHASABLE_SMILES + NON_PURCHASABLE_SMILES:
         mol = Molecule(smiles)
         assert loaded.is_purchasable(mol) == inventory.is_purchasable(mol)

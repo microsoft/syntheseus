@@ -16,10 +16,11 @@ The search targets are expected to be a plain SMILES file, with one molecule per
 ```python
 from syntheseus.search.mol_inventory import IdentityStandardiser, MolInventoryBuilder
 
-inventory = MolInventoryBuilder(IdentityStandardiser()).build_from_file(
+builder = MolInventoryBuilder(IdentityStandardiser())
+inventory = builder.build_from_file(
     "inventory.smi", name="my-inventory", version="1", file_format="smi"
 )
-inventory.save("inventory.molinv")
+builder.save(inventory, "inventory.molinv")
 ```
 
 Passing a plain SMILES file with `inventory_smiles_file` instead is deprecated.
