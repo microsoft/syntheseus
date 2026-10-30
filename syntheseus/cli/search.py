@@ -226,7 +226,7 @@ class BaseSearchConfig(SearchAlgorithmConfig):
     append_timestamp_to_dir: bool = True  # Whether to append the current time to directory name
 
     use_gpu: bool = True  # Whether to use a GPU
-    canonicalize_inventory: bool = False  # Whether to canonicalize the inventory SMILES
+    canonicalize_inventory: bool = False  # Whether to canonicalize `inventory_smiles_file`
     remove_stereo_from_targets: bool = False  # Whether to remove stereochemistry from targets
 
     # Fields configuring the reaction model (on top of the arguments from `BackwardModelConfig`)

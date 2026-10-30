@@ -11,7 +11,7 @@ class Standardiser(abc.ABC):
     """Maps a molecule to a list of molecules, e.g. splitting a salt into its components.
 
     Inventories record every molecule a standardiser returns for an entry as purchasable, and
-    store the standardiser's `name` and `version` so lookups can check they use the same one.
+    store the standardiser's `name` and `version` so loading can check it uses the same one.
     """
 
     @property

@@ -38,19 +38,15 @@ def inventory_key(mol: Chem.Mol, prefix: InChIKeyPrefix) -> str:
 
 
 class InventoryLookupError(Exception):
-    """A molecule's inventory key cannot be computed; clients can catch this."""
+    """A molecule cannot be standardised or keyed during lookup; clients can catch this."""
 
 
 class MolInventory(BaseMolInventory):
-    """Inventory of InChIKey prefixes, built by `MolInventoryBuilder`.
+    """Inventory of InChIKey prefixes, built and loaded by `MolInventoryBuilder`.
 
-    A lookup standardises the molecule with the inventory's standardiser and binary-searches its key
-    among the sorted keys, which `MolInventoryBuilder.load` memory-maps, so loading does no chemistry and
-    takes milliseconds. Keys cannot be turned back into molecules, so this inventory cannot list its
-    contents.
-
-    Lookups cost ~0.2 ms (mostly InChI generation) and searches repeat them for the same molecules,
-    so the results of the last `CACHE_SIZE` distinct SMILES are cached.
+    A lookup standardises the molecule with the inventory's standardiser and binary-searches the
+    sorted keys for the key of each resulting molecule. Keys cannot be turned back into molecules,
+    so this inventory cannot list its contents.
     """
 
     CACHE_SIZE = 100_000
@@ -58,7 +54,7 @@ class MolInventory(BaseMolInventory):
     def __init__(
         self, keys: np.ndarray, metadata: Mapping[str, Any], standardiser: Standardiser
     ) -> None:
-        """`keys` must be sorted and unique; use `MolInventoryBuilder.load` to read a prebuilt inventory."""
+        """`keys` must be sorted and unique; use `MolInventoryBuilder` to build or load one."""
         self._keys = keys
         self._metadata = dict(metadata)
         self._standardiser = standardiser
