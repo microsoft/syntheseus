@@ -66,7 +66,8 @@ class MolInventoryBuilder:
             "key": self.key_prefix.name,
             "standardiser": {"name": self.standardiser.name, "version": self.standardiser.version},
             "rdkit_version": rdkit.__version__,
-            "inchi_version": inchi.GetInchiVersion(),
+            # `GetInchiVersion` was added after RDKit 2024.03, the last release supporting Python 3.8.
+            "inchi_version": getattr(inchi, "GetInchiVersion", lambda: None)(),
             "source_sha256": source_sha256,
             "num_keys": len(batch_mol_hashed_keys),
         }
