@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import functools
 import json
 import warnings
+from collections import OrderedDict
 from collections.abc import Mapping
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
 from rdkit import Chem
@@ -59,7 +59,7 @@ class MolInventory(BaseMolInventory):
         self._metadata = dict(metadata)
         self._standardiser = standardiser
         self.key_prefix = InChIKeyPrefix[metadata["key"]]
-        self._cached_lookup = functools.lru_cache(maxsize=self.CACHE_SIZE)(self._lookup)
+        self._cache: OrderedDict[str, bool] = OrderedDict()
 
     @property
     def keys(self) -> np.ndarray:
@@ -78,17 +78,36 @@ class MolInventory(BaseMolInventory):
                 f"Molecule identifier {mol.identifier} will be ignored during inventory lookup"
             )
 
-        return self._cached_lookup(mol.smiles)
+        return self._cached_lookup(mol)
 
-    def _lookup(self, smiles: str) -> bool:
+    def _cached_lookup(self, mol: Molecule) -> bool:
+        if (cached := self._cached_result(mol.smiles)) is not None:
+            return cached
+
+        result = self._lookup(mol)
+        self._cache_result(mol.smiles, result)
+        return result
+
+    def _cached_result(self, smiles: str) -> Optional[bool]:
+        if smiles not in self._cache:
+            return None
+        self._cache.move_to_end(smiles)
+        return self._cache[smiles]
+
+    def _cache_result(self, smiles: str, result: bool) -> None:
+        self._cache[smiles] = result
+        if len(self._cache) > self.CACHE_SIZE:
+            self._cache.popitem(last=False)
+
+    def _lookup(self, mol: Molecule) -> bool:
         try:
-            standardised = self._standardiser.standardise(Chem.MolFromSmiles(smiles))
+            standardised = self._standardiser.standardise(mol.rdkit_mol)
         except Exception as e:
-            raise InventoryLookupError(f"Cannot standardise {smiles!r}") from e
+            raise InventoryLookupError(f"Cannot standardise {mol.smiles!r}") from e
         try:
             keys = [np.bytes_(inventory_key(m, self.key_prefix)) for m in standardised]
         except ValueError as e:
-            raise InventoryLookupError(f"Cannot compute the inventory key of {smiles!r}") from e
+            raise InventoryLookupError(f"Cannot compute the inventory key of {mol.smiles!r}") from e
 
         return all(self._contains(key) for key in keys)
 
