@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 from rdkit import Chem
+from rdkit.Chem import inchi
 
 from syntheseus.interface.molecule import Molecule
 from syntheseus.search.mol_inventory import (
@@ -16,6 +17,7 @@ from syntheseus.search.mol_inventory import (
     MolInventory,
     MolInventoryBuilder,
     Standardiser,
+    inventory_key,
 )
 
 PURCHASABLE_SMILES = ["CC", "c1ccccc1", "CCO", "Oc1ccccn1", "N", "C[C@H](N)O"]
@@ -96,6 +98,14 @@ def test_variants_match(inventory: MolInventory, variant: str) -> None:
 def test_key_prefix_stereo(key_prefix: InChIKeyPrefix, expected: dict[str, bool]) -> None:
     inventory = build(["C[C@H](N)O"], key_prefix=key_prefix)
     assert {s: inventory.is_purchasable(Molecule(s)) for s in expected} == expected
+
+
+@pytest.mark.parametrize("key_prefix", list(InChIKeyPrefix))
+@pytest.mark.parametrize("smiles", ["C[C@H](N)O", "C/C=C/C(=O)[O-]", "[13CH3]O", "Oc1ccccn1"])
+def test_inventory_key_is_standard_inchikey_prefix(key_prefix: InChIKeyPrefix, smiles: str) -> None:
+    """Keys must stay prefixes of the standard InChIKey, so previously built inventories stay valid."""
+    mol = Chem.MolFromSmiles(smiles)
+    assert inventory_key(mol, key_prefix) == inchi.MolToInchiKey(mol)[: key_prefix.value]
 
 
 def test_multi_structure_lookup() -> None:
