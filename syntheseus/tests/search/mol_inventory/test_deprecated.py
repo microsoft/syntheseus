@@ -1,9 +1,9 @@
-"""Tests for MolInventory objects, focusing on the provided SmilesListInventory."""
+"""Tests for the deprecated `SmilesListInventory`."""
 
 import pytest
 
 from syntheseus.interface.molecule import Molecule
-from syntheseus.search.mol_inventory import SmilesListInventory
+from syntheseus.search.mol_inventory.deprecated import SmilesListInventory
 
 PURCHASABLE_SMILES = ["CC", "c1ccccc1", "CCO"]
 NON_PURCHASABLE_SMILES = ["C", "C1CCCCC1", "OCCO"]

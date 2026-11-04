@@ -10,6 +10,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ### Added
 
 - Add optional concurrent target searches with batched inference to the search CLI ([#171](https://github.com/microsoft/syntheseus/pull/171), [#172](https://github.com/microsoft/syntheseus/pull/172)) ([@gabrieldernbach])
+- Add `MolInventory`, an InChIKey-based inventory prebuilt into a binary file by `MolInventoryBuilder` and memory-mapped at load ([#178](https://github.com/microsoft/syntheseus/pull/178)) ([@ghiander])
+- Add the `inventory_file` option to the search CLI ([#178](https://github.com/microsoft/syntheseus/pull/178)) ([@ghiander])
+
+### Changed
+
+- Deprecate `SmilesListInventory`, `ExplicitMolInventory` and the `inventory_smiles_file` search CLI option in favour of `MolInventory` ([#178](https://github.com/microsoft/syntheseus/pull/178)) ([@ghiander])
 
 ## [0.9.0] - 2026-09-23
 
@@ -196,3 +202,4 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 [@jla-gardner]: https://github.com/jla-gardner
 [@lgeiger]: https://github.com/lgeiger
 [@gabrieldernbach]: https://github.com/gabrieldernbach
+[@ghiander]: https://github.com/ghiander
