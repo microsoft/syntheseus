@@ -266,7 +266,7 @@ def compute_metrics(
 
     # Gather all evaluation args for the record.
     eval_args = {
-        "model_class": model.__class__.__name__,
+        "model_class": model.get_model_class_name(),
         "num_top_results": num_top_results,
         "fold": fold.name,
         "batch_size": batch_size,
@@ -281,7 +281,7 @@ def compute_metrics(
 
     if back_translation_model is not None:
         eval_args.update(
-            back_translation_model_class=back_translation_model.__class__.__name__,
+            back_translation_model_class=back_translation_model.get_model_class_name(),
             back_translation_num_results=back_translation_num_results,
         )
 
@@ -293,7 +293,7 @@ def compute_metrics(
 
         back_translation_metrics = TopKMetricsAccumulator(max_num_results=num_top_results)
 
-    print(f"Testing model {model.__class__.__name__} with args {eval_args}")
+    print(f"Testing model {model.get_model_class_name()} with args {eval_args}")
 
     # In resumable mode, predictions are already persisted in the JSONL file, so even if we want to
     # include them, we don't need to gather them in memory.

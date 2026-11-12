@@ -24,6 +24,9 @@ def test_parallel_reaction_model_cpu() -> None:
         model_fn=DummyModel, devices=["cpu"] * 4
     )
     assert parallel_model([]) == []
+    assert parallel_model.get_model_class_name() == "DummyModel"
+    assert parallel_model.get_model_info() == {}
+    assert list(parallel_model.get_parameters()) == []
 
 
 @pytest.mark.skipif(
