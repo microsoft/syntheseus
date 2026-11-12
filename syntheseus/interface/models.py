@@ -216,6 +216,9 @@ class ReactionModel(
             output = deduplicate_keeping_order(output)
         return output
 
+    def get_model_class_name(self) -> str:
+        return self.__class__.__name__
+
     def get_model_info(self) -> dict[str, Any]:
         return {}
 
