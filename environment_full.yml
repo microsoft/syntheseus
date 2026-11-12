@@ -6,13 +6,14 @@ channels:
   - conda-forge
   - defaults
 dependencies:
+  - dglteam/label/th24_cu121::dgl=2.4.0.th24.cu121
   - faiss-gpu                                   # RetroKNN
   - numpy
   - pandas                                      # RetroChimera
   - pip>=25.2
-  - pyg==2.5.2                                  # RetroChimera
+  - pyg==2.6.1                                  # RetroChimera
   - python==3.9.7
-  - pytorch=2.2.2=py3.9_cuda12.1_cudnn8.9.2_0
+  - pytorch=2.4.1=py3.9_cuda12.1_cudnn9.1.0_0
   - pytorch-lightning==2.2.2                    # Chemformer, RetroChimera
   - pytorch-sparse==0.6.18                      # RetroChimera
   - pytorch-cluster==1.6.3                      # RetroChimera
@@ -20,8 +21,6 @@ dependencies:
   - rdchiral_cpp                                # MHNreact, RetroChimera
   - rdkit=2023.09.6
   - scipy<1.12                                  # RetroChimera
-  - torchvision==0.17.2                         # RetroChimera
+  - torchvision==0.19.1                         # RetroChimera
   - pip:
-    - --find-links https://data.dgl.ai/wheels/torch-2.2/cu121/repo.html
-    - dgl==2.4.0                                # LocalRetro, RetroKNN
     - torchmetrics==1.5.1                       # Chemformer, RetroChimera
