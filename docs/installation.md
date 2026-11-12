@@ -60,8 +60,8 @@ git clone https://github.com/microsoft/syntheseus.git
 cd syntheseus
 ```
 
-Note that `environment_full.yml` pins the CUDA version (to 11.3) for reproducibility.
-If you want to use a different one, make sure to edit the environment file accordingly.
+Note that `environment_full.yml` pins PyTorch to 2.4.1 and CUDA to 12.1 for reproducibility.
+If you want to use different versions, make sure to edit the environment file accordingly.
 
 ??? info "Setting up GLN"
 
