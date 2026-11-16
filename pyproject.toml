@@ -71,24 +71,23 @@ namespaces = false
 
 [tool.setuptools_scm]
 
-[tool.black]
-line-length = 100
-include = '\.pyi?$'
-
 [tool.mypy]
 python_version = 3.9  # pin modern python version
 ignore_missing_imports = true
+allow_redefinition = true
 
 [tool.ruff]
 line-length = 100
-# Check https://beta.ruff.rs/docs/rules/ for full list of rules
-lint.select = [
+
+[tool.ruff.lint]
+# Check https://docs.astral.sh/ruff/rules/ for full list of rules
+select = [
   "E", "W",  # pycodestyle
   "F",  # Pyflakes
   "I",  # isort
   "NPY201",  # check for functions/constants deprecated in numpy 2.*
 ]
-lint.ignore = [
+ignore = [
   # W605: invalid escape sequence -- triggered by pseudo-LaTeX in comments
   "W605",
   # E501: Line too long -- triggered by comments and such. black deals with shortening.
@@ -96,3 +95,6 @@ lint.ignore = [
   # E741:  Do not use variables named 'l', 'o', or 'i' -- disagree with PEP8
   "E741",
 ]
+
+[tool.ruff.lint.per-file-ignores]
+"*.ipynb" = ["I", "F403", "F405"]

@@ -1,4 +1,5 @@
 """Tests for the `ReactionFilterModel` base class using a dummy filter."""
+
 from __future__ import annotations
 
 from typing import Sequence

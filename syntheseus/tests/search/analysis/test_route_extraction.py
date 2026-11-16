@@ -5,6 +5,7 @@ so tests here are not comprehensive and mostly focus on edge cases.
 NOTE: the tests here cover "min_cost_routes" method, but not more general
 "_iter_top_routes" method. This could be improved in the future.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -138,8 +139,7 @@ def test_max_routes(andor_graph_with_many_routes: AndOrGraph, max_routes: int) -
     """
     g = andor_graph_with_many_routes
     for route_extraction_function in [iter_routes_cost_order, iter_routes_time_order]:
-        # NOTE: type ignore is because mypy confused about type of route extraction function
-        all_routes = list(route_extraction_function(g, max_routes=max_routes))  # type: ignore[operator]
+        all_routes = list(route_extraction_function(g, max_routes=max_routes))
 
         # Test 1: check that max number of routes is reached
         if max_routes <= 0:
@@ -213,8 +213,7 @@ def test_has_solution_false(andor_graph_with_many_routes: AndOrGraph) -> None:
     for node in g.nodes():
         node.has_solution = False
     for route_extraction_function in [iter_routes_cost_order, iter_routes_time_order]:
-        # NOTE: type ignore is because mypy confused about type of route extraction function
-        all_routes = list(route_extraction_function(g, max_routes=1_000_000))  # type: ignore[operator]
+        all_routes = list(route_extraction_function(g, max_routes=1_000_000))
         assert len(all_routes) == 0
 
 

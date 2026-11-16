@@ -190,12 +190,12 @@ class TestPDVN_MCTS(BaseAlgorithmTest):
             v == 0 or (mol.smiles == "O" and v == 1)
             for mol, v in training_data.mol_to_synthesizability.items()
         )  # only "O" is solved (because it is purchasable)
-        assert training_data.mol_to_min_syn_cost == {
-            Molecule("O"): 0.0
-        }, "Only O is solved, and it has cost 0.0 since it is purchasable"
-        assert (
-            len(training_data.mol_to_reactions_for_min_syn) == 0
-        ), "Only solved molecule has no reactions"
+        assert training_data.mol_to_min_syn_cost == {Molecule("O"): 0.0}, (
+            "Only O is solved, and it has cost 0.0 since it is purchasable"
+        )
+        assert len(training_data.mol_to_reactions_for_min_syn) == 0, (
+            "Only solved molecule has no reactions"
+        )
 
     def test_by_hand_step3(
         self,

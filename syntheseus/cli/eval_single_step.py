@@ -360,12 +360,12 @@ def compute_metrics(
 
             output: Reaction
             if model.is_forward():
-                inputs.append(sample.reactants)
+                inputs.append(cast(InputType, sample.reactants))
                 output = Reaction(reactants=sample.reactants, products=sample.products)
             else:
-                assert (
-                    len(sample.products) == 1
-                ), f"Model expected a single target product, got {len(sample.products)}"
+                assert len(sample.products) == 1, (
+                    f"Model expected a single target product, got {len(sample.products)}"
+                )
                 [single_product] = sample.products
 
                 inputs.append(cast(InputType, single_product))

@@ -78,12 +78,12 @@ class MHNreactModel(ExternalBackwardReactionModel):
         if "templates+noise" in params.keys():
             self.model.templates = params["templates+noise"]
         else:
-            assert (
-                conf_dict["concat_rand_template_thresh"] == -1
-            ), "No templates+noise in checkpoint, but concat_rand_template_thresh is not -1"
-            assert (
-                conf_dict["template_fp_type2"] is None
-            ), "currently no support for template_fp_type2"
+            assert conf_dict["concat_rand_template_thresh"] == -1, (
+                "No templates+noise in checkpoint, but concat_rand_template_thresh is not -1"
+            )
+            assert conf_dict["template_fp_type2"] is None, (
+                "currently no support for template_fp_type2"
+            )
             self.model.set_templates(
                 self.model.template_list,
                 which=conf_dict.get("template_fp_type"),

@@ -1,12 +1,7 @@
-# This should not be necessary, except that `conda<4.11` has a bug dealing with `python>=3.10`
-# (see https://github.com/conda/conda/issues/10969), and the below makes that go away.
-default_language_version:
-  python: python3
-
 repos:
   # Generally useful pre-commit hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.3.0  # Use the ref you want to point at
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # v6.0.0
     hooks:
     -   id: check-added-large-files
     -   id: check-case-conflict
@@ -26,27 +21,20 @@ repos:
     -   id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
 
-  # latest version of black when this pre-commit config is being set up
-  - repo: https://github.com/psf/black
-    rev: 23.3.0
-    hooks:
-      - id: black
-        name: "black"
-        args: ["--config=pyproject.toml"]
-
-  # latest version of mypy at time pre-commit config is being set up
-  # NOTE: only checks code in "syntheseus" directory.
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.2.0
+    rev: fc0f09a29bb495f4a91f00266155d6282d52485d # v1.20.2
     hooks:
       - id: mypy
         name: "mypy"
         files: "syntheseus/"
-        args: ["--install-types", "--non-interactive"]
+        args:
+          - --warn-unused-ignores
+        additional_dependencies:
+          - types-PyYAML
 
-  # Latest ruff (does linting + more)
-  - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: 'v0.2.1'
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: 25bcf95026b96e2dd3c0aec3090c3d6ef6ca2e6c # v0.17.3
     hooks:
-      - id: ruff
+      - id: ruff-check
         args: [--fix]
+      - id: ruff-format

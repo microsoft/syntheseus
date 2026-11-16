@@ -228,7 +228,10 @@ class PDVN_MCTS(BaseMCTS[AndOrGraph, OrNode, AndNode], AndOrSearchAlgorithm[int]
         return reward_syn, reward_cost
 
     def _update_value_from_reward(
-        self, node: ANDOR_NODE, _: AndOrGraph, reward: tuple[float, float]  # type: ignore[override]
+        self,
+        node: ANDOR_NODE,  # type: ignore[override]
+        _: AndOrGraph,
+        reward: tuple[float, float],  # type: ignore[override]
     ) -> None:
         """
         This is essentially the "backup" step of MCTS, which updates the running reward
@@ -363,9 +366,9 @@ def pdvn_extract_training_data(graph: AndOrGraph) -> PDVNSearchData:
         mol_to_min_syn_cost={mol: c for mol, c in mol_to_min_route_cost.items() if c < math.inf},
         mol_to_reactions_for_min_syn=mol_to_reactions_for_min_syn,
     )
-    assert set(output.mol_to_synthesizability.keys()) >= set(
-        output.mol_to_min_syn_cost.keys()
-    ), "The solution status of every molecule with a min synthesis cost should be recorded"
+    assert set(output.mol_to_synthesizability.keys()) >= set(output.mol_to_min_syn_cost.keys()), (
+        "The solution status of every molecule with a min synthesis cost should be recorded"
+    )
     assert set(output.mol_to_min_syn_cost.keys()) >= set(
         output.mol_to_reactions_for_min_syn.keys()
     ), "Every molecule with reactions should have a min synthesis cost"

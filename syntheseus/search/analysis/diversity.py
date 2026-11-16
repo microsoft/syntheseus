@@ -57,9 +57,9 @@ def estimate_packing_number(
         return list()
 
     # Check argument type (leads to cryptic error message if not checked)
-    assert all(
-        isinstance(route, SynthesisGraph) for route in routes
-    ), "Routes must be of type SynthesisGraph."
+    assert all(isinstance(route, SynthesisGraph) for route in routes), (
+        "Routes must be of type SynthesisGraph."
+    )
 
     # Initialize random state
     random_state = random_state or random.Random()
@@ -85,7 +85,7 @@ def estimate_packing_number(
             max_packing_number,
         )
         logger.debug(
-            f"Run #{try_idx+1}/{num_tries}:"
+            f"Run #{try_idx + 1}/{num_tries}:"
             f" Found packing set of size {len(packing_set)}."
             f" (previous best size={len(best_packing_set)})."
         )
@@ -131,9 +131,9 @@ def _recursive_construct_packing_set(
         The remaining nodes now form a packing set.
     """
 
-    assert (
-        max_packing_number is None or max_packing_number > 0
-    ), "Max packing number must be positive."
+    assert max_packing_number is None or max_packing_number > 0, (
+        "Max packing number must be positive."
+    )
 
     # Base cases: simple greedy algorithm is optimal if there are no more than two routes
     if idx_end - idx_start <= 2:

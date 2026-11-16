@@ -45,7 +45,9 @@ def remove_stereo_information_from_reaction(reaction: ReactionType) -> ReactionT
         mol_kwargs["products"] = Bag([remove_stereo_information(mol) for mol in reaction.products])
 
     return reaction.__class__(
-        **mol_kwargs, identifier=reaction.identifier, metadata=reaction.metadata  # type: ignore[arg-type]
+        **mol_kwargs,  # type: ignore[arg-type]
+        identifier=reaction.identifier,
+        metadata=reaction.metadata,
     )
 
 

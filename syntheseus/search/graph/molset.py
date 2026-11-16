@@ -107,9 +107,9 @@ class MolSetGraph(RetrosynthesisSearchGraph[MolSetNode]):
         assert node in self
 
         # Check that reactions are acceptable
-        assert all(
-            r.product in node.mols for r in reactions
-        ), "All reactions must have a product in 'node'."
+        assert all(r.product in node.mols for r in reactions), (
+            "All reactions must have a product in 'node'."
+        )
 
         # Check whether it is already expanded.
         # NOTE: behaviour could change in the future to just yield a warning

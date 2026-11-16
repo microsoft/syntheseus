@@ -141,9 +141,9 @@ class AndOrGraph(RetrosynthesisSearchGraph[ANDOR_NODE]):
         assert node in self
 
         # Check that reactions are acceptable
-        assert all(
-            r.product == node.mol for r in reactions
-        ), "All reactions must have the same product."
+        assert all(r.product == node.mol for r in reactions), (
+            "All reactions must have the same product."
+        )
 
         # Check whether it is already expanded.
         # NOTE: behaviour could change in the future to just yield a warning
@@ -204,9 +204,9 @@ class AndOrGraph(RetrosynthesisSearchGraph[ANDOR_NODE]):
 
         # Find root reaction
         root_reactions = list(subgraph.successors(self.root_node))
-        assert (
-            len(root_reactions) == 1
-        ), f"There appears to be {len(root_reactions)} reactions for the root node (expected exactly 1)."
+        assert len(root_reactions) == 1, (
+            f"There appears to be {len(root_reactions)} reactions for the root node (expected exactly 1)."
+        )
         new_graph = SynthesisGraph(root_node=root_reactions[0].reaction)
 
         # Add all nodes and edges

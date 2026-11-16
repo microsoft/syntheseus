@@ -297,7 +297,14 @@ class TestMolSetMCTS(BaseAlgorithmTest):
         )
 
         # Check that only "C" node was expanded
-        assert output_graph.smiles_set_counter() == {("CC",): 1, ("C",): 1, ("CO",): 1, ("CS",): 1, ("O",): 1, ("S",): 1}  # type: ignore
+        assert output_graph.smiles_set_counter() == {  # type: ignore[attr-defined]
+            ("CC",): 1,
+            ("C",): 1,
+            ("CO",): 1,
+            ("CS",): 1,
+            ("O",): 1,
+            ("S",): 1,
+        }
         assert output_graph.root_node.has_solution
         assert get_first_solution_time(output_graph) == 2
 

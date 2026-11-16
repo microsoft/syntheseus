@@ -4,6 +4,7 @@ Tests for MolSet graph/nodes.
 Because a lot of the behaviour is implicitly tested when the algorithms are tested,
 the tests here are sparse and mainly check edge cases which won't come up in algorithms.
 """
+
 import pytest
 
 from syntheseus.interface.bag import Bag

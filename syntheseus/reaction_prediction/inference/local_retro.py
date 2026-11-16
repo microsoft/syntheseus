@@ -120,12 +120,12 @@ class LocalRetroModel(ExternalBackwardReactionModel):
             if raw_results:
                 raw_outputs, probabilities = zip(*raw_results)
             else:
-                raw_outputs = probabilities = []
+                raw_outputs = probabilities = []  # type: ignore[assignment]
 
             batch_predictions.append(
                 process_raw_smiles_outputs_backwards(
                     input=input,
-                    output_list=raw_outputs,
+                    output_list=raw_outputs,  # type: ignore[arg-type]
                     metadata_list=[{"probability": probability} for probability in probabilities],
                 )
             )
