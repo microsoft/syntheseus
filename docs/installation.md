@@ -60,7 +60,7 @@ git clone https://github.com/microsoft/syntheseus.git
 cd syntheseus
 ```
 
-Note that `environment_full.yml` pins the CUDA version (to 11.3) for reproducibility.
+Note that `environment_full.yml` pins the CUDA version (to 12.1) for reproducibility.
 If you want to use a different one, make sure to edit the environment file accordingly.
 
 ??? info "Setting up GLN"
