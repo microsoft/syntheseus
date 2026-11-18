@@ -11,6 +11,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 - Add optional concurrent target searches with batched inference to the search CLI ([#171](https://github.com/microsoft/syntheseus/pull/171), [#172](https://github.com/microsoft/syntheseus/pull/172)) ([@gabrieldernbach])
 
+### Fixed
+
+- Fix multi-GPU single-step evaluation ([#179](https://github.com/microsoft/syntheseus/pull/179)) ([@lgeiger])
+
 ## [0.9.0] - 2026-09-23
 
 ### Added

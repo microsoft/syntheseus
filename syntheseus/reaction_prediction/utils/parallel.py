@@ -1,5 +1,5 @@
 import math
-from typing import Callable, List, Sequence
+from typing import Any, Callable, Dict, List, Sequence
 
 import torch
 from more_itertools import chunked
@@ -45,3 +45,12 @@ class ParallelReactionModel(ReactionModel[InputType, ReactionType]):
 
     def is_forward(self) -> bool:
         return self._model_replicas[0].is_forward()
+
+    def get_model_class_name(self) -> str:
+        return self._model_replicas[0].get_model_class_name()
+
+    def get_model_info(self) -> Dict[str, Any]:
+        return self._model_replicas[0].get_model_info()
+
+    def get_parameters(self):
+        return self._model_replicas[0].get_parameters()
