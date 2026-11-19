@@ -1,4 +1,5 @@
 """Defines common fixtures for most search tests."""
+
 from __future__ import annotations
 
 import collections
@@ -269,7 +270,7 @@ def retrosynthesis_task7(retrosynthesis_task1: RetrosynthesisTask) -> Retrosynth
     )
 
     data["inventory"] = new_inventory
-    return RetrosynthesisTask(**data)  # type: ignore[arg-type]
+    return RetrosynthesisTask(**data)
 
 
 @pytest.fixture

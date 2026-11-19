@@ -92,7 +92,7 @@ class DiskReactionDataset(ReactionDataset[SampleType]):
 
     def _get_lines(self, fold: DataFold) -> Iterable[str]:
         if fold not in self._fold_to_path:
-            return []
+            return
         else:
             with open(self._fold_to_path[fold]) as f:
                 if self._data_format == DataFormat.CSV:

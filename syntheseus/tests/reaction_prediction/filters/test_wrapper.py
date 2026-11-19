@@ -1,4 +1,5 @@
 """Tests for `FilteredBackwardReactionModel` using dummy backward and filter models."""
+
 from __future__ import annotations
 
 from syntheseus.interface.molecule import Molecule

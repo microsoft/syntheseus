@@ -3,8 +3,7 @@ from typing import Generic, Iterable, Iterator, Protocol, TypeVar
 
 
 class Comparable(Protocol):
-    def __lt__(self, __other) -> bool:
-        ...
+    def __lt__(self, __other) -> bool: ...
 
 
 ElementT = TypeVar("ElementT", bound=Comparable)

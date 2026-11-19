@@ -56,7 +56,7 @@ class _NodeData_Algorithms(TypedDict, total=False):
 class _NodeData_Analysis(TypedDict, total=False):
     """Holds optional data used during analysis of search results."""
 
-    analysis_time: float  # Used to hold a node's creation time (measured any way) for analysis purposes
+    analysis_time: float  # Used to hold a node's creation time (measured any way) for analysis
     first_solution_time: float  # time of first solution (according to analysis_time)
     route_cost: float  # non-negative cost that this node contributes to the entire route
 

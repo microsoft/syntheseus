@@ -1,6 +1,7 @@
 """Tests of models. Note that models are tested implicitly in a lot of other places,
 so tests are somewhat minimal here.
 """
+
 from __future__ import annotations
 
 import pytest

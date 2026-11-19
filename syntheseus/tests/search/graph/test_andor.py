@@ -4,6 +4,7 @@ Tests for AND/OR graph/nodes.
 Because a lot of the behaviour is implicitly tested when the algorithms are tested,
 the tests here are sparse and mainly check edge cases which won't come up in algorithms.
 """
+
 import pytest
 
 from syntheseus.interface.bag import Bag
@@ -109,9 +110,7 @@ class TestAndOrGraph:
         elif reason == "reactions_dont_match":
             first_and_node: AndNode = list(  # type: ignore # doesn't understand OrNode children are always AndNode
                 andor_graph_non_minimal.successors(andor_graph_non_minimal.root_node)
-            )[
-                0
-            ]
+            )[0]
             first_and_node.reaction = SingleProductReaction(
                 product=Molecule("CCC"), reactants=first_and_node.reaction.reactants
             )

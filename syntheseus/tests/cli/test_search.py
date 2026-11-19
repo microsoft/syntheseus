@@ -51,7 +51,7 @@ def test_resume_search(tmpdir: Path) -> None:
         name="FlakyReactionModel", value=FlakyReactionModel
     )
 
-    config = OmegaConf.create(  # type: ignore
+    config = OmegaConf.create(
         SearchConfig(
             model_class="FlakyReactionModel",  # type: ignore[arg-type]
             search_algorithm="retro_star",  # type: ignore[arg-type]

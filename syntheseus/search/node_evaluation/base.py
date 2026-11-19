@@ -137,7 +137,7 @@ class ReactionModelBasedEvaluator(NoCacheNodeEvaluator[NodeType]):
 
         if "probability" not in metadata:
             raise ValueError("Cannot call node evaluator as reaction model probability is not set")
-        return metadata["probability"]  # type: ignore
+        return metadata["probability"]
 
     def _evaluate_nodes(self, nodes, graph=None) -> Sequence[float]:
         probs = np.asarray([self._get_probability(n, graph) for n in nodes])

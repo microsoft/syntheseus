@@ -117,7 +117,7 @@ class ChemformerModel(ExternalReactionModel[InputType, ReactionType]):
         batch = self._mols_to_batch(inputs)
 
         device_batch = {
-            key: val.to(self.device) if type(val) == torch.Tensor else val
+            key: val.to(self.device) if isinstance(val, torch.Tensor) else val
             for key, val in batch.items()
         }
 

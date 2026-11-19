@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 import pytest
 
 from syntheseus.interface.bag import Bag
@@ -18,7 +20,7 @@ FORWARD_MODEL_CLASSES_TO_TEST = list(ForwardModelClass)
 
 # Use a single rule application process for template-based models to reduce memory usage.
 RULE_SERVER_KWARGS = {"num_processes": 1}
-EXTRA_MODEL_KWARGS = {
+EXTRA_MODEL_KWARGS: Dict[BackwardModelClass, Dict[str, Any]] = {
     BackwardModelClass.RetroChimeraEdit: RULE_SERVER_KWARGS,
     BackwardModelClass.RetroChimera: {"template_localization": RULE_SERVER_KWARGS},
 }

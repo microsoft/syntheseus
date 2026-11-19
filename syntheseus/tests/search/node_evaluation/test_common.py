@@ -59,7 +59,7 @@ class TestReactionModelLogProbCost:
         node_val_expected = {}
         for idx, node in enumerate(nodes):
             prob = idx / (len(nodes) - 1)
-            node.reaction.metadata["probability"] = prob  # type: ignore
+            node.reaction.metadata["probability"] = prob
 
             node_val_expected[node] = (
                 -math.log(min(clip_probability_max, max(clip_probability_min, prob))) / temperature
