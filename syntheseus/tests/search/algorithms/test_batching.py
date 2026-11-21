@@ -16,8 +16,8 @@ from syntheseus.search.algorithms.best_first.retro_star import RetroStarSearch
 from syntheseus.search.algorithms.breadth_first import AndOr_BreadthFirstSearch
 from syntheseus.search.analysis.route_extraction import iter_routes_cost_order
 from syntheseus.search.graph.and_or import ANDOR_NODE, AndNode, AndOrGraph, OrNode
-from syntheseus.search.mol_inventory import SmilesListInventory
 from syntheseus.search.node_evaluation.common import ConstantNodeEvaluator
+from syntheseus.tests.search.conftest import make_inventory
 
 ALGORITHMS = [AndOr_BreadthFirstSearch, RetroStarSearch]
 TARGETS = ["COCS", "CCOC"]
@@ -31,7 +31,7 @@ def _make_search(algorithm_class, model, **kwargs):
         )
     return algorithm_class(
         reaction_model=model,
-        mol_inventory=SmilesListInventory(["C", "O", "S"]),
+        mol_inventory=make_inventory(["C", "O", "S"]),
         limit_iterations=1000,
         **kwargs,
     )
